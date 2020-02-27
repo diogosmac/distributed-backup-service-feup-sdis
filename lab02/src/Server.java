@@ -123,43 +123,6 @@ public class Server {
         };
         ses.scheduleAtFixedRate(advertise, 1, 1, TimeUnit.SECONDS);
 
-//        class ScheduleAdvertisements implements Runnable {
-//
-//            String unic_addr;
-//            int unic_port;
-//
-//            ScheduleAdvertisements(String addr, int port) {
-//                this.unic_addr = addr;
-//                this.unic_port = port;
-//            }
-//
-//            public void alert() {
-//                    String toSend = unic_addr + ' ' + unic_port;
-//                    byte[] bytesToSend = toSend.getBytes();
-//
-//                    DatagramPacket multicast_info = new DatagramPacket(
-//                            bytesToSend, bytesToSend.length);
-//
-//                    try { multicast.send(multicast_info); }
-//                    catch (IOException e) {
-//                        System.out.println("Couldn't send advertisement packet");
-//                    }
-//
-//                    this.run();
-//            }
-//
-//            public void run() {
-//                ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-//                executorService.schedule((Runnable) this::alert, 1, TimeUnit.SECONDS);
-//            }
-//
-//        }
-//
-//        Thread advertisementThread = new Thread(new ScheduleAdvertisements(
-//                unicast.getInetAddress().getHostAddress(), unicast.getPort()
-//        ));
-//        advertisementThread.start();
-
         while (!closeRequested.get()) {
 
             System.out.println("Waiting for request...");
@@ -183,6 +146,8 @@ public class Server {
 
         }
 
+        //After Close Request
+        ses.shutdown();
     }
 
 }
