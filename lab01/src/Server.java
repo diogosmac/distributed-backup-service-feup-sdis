@@ -75,7 +75,6 @@ public class Server {
             return;
         }
 
-        DatagramSocket responseSocket = new DatagramSocket();
         while (!closeRequested.get()) {
 
             System.out.println("Waiting for request...");
@@ -95,7 +94,7 @@ public class Server {
                     bytesToSend, bytesToSend.length,
                     packet.getAddress(), packet.getPort()
             );
-            responseSocket.send(response);
+            socket.send(response);
 
         }
 
