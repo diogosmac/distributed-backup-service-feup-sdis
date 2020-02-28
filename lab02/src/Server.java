@@ -1,7 +1,6 @@
 import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server {
@@ -12,7 +11,6 @@ public class Server {
     private static HashMap<String, String> dnsTable;
     private static AtomicBoolean closeRequested = new AtomicBoolean(false);
 
-    private static MulticastSocket multicast;
     private static DatagramSocket unicast;
 
     private static int openUnicast(int port) {
@@ -33,30 +31,6 @@ public class Server {
         System.out.println("\nServer opened:");
         System.out.println("\tIP Address: " + inetAddress.getHostAddress());
         System.out.println("\tPort: " + port + "\n");
-
-        return OK;
-
-    }
-
-    private static int openMulticast(String mcast_ip, int mcast_port) {
-
-        InetAddress mcast_addr;
-        try { mcast_addr = InetAddress.getByName(mcast_ip); }
-        catch (UnknownHostException e) {
-            System.out.println("Unknown host");
-            return ERROR;
-        }
-
-        SocketAddress sock_addr = new InetSocketAddress(mcast_addr, mcast_port);
-
-        try {
-            multicast = new MulticastSocket(sock_addr);
-            multicast.setTimeToLive(1);
-        }
-        catch (IOException e) {
-            System.out.println("Multicast socket exception");
-            return ERROR;
-        }
 
         return OK;
 
@@ -93,6 +67,10 @@ public class Server {
             return;
         }
 
+        InetAddress addr = InetAddress.getByName(args[1]);
+        int port = Integer.parseInt(args[2]);
+        ServerAdvertiser sa = new ServerAdvertiser(addr, port, "Teste");
+
         dnsTable = new HashMap<String, String>();
 
         int srvc_port = Integer.parseInt(args[0]);
@@ -100,28 +78,6 @@ public class Server {
             System.out.println("An error occurred while creating the server");
             return;
         }
-
-        String mcast_addr = args[1];
-        int mcast_port = Integer.parseInt(args[2]);
-        if (openMulticast(mcast_addr, mcast_port) != OK) {
-            System.out.println("An error occurred while opening the advertising socket");
-            return;
-        }
-
-        ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
-        Runnable advertise = () -> {
-            String toSend = unicast.getInetAddress().getHostAddress() + ' ' + unicast.getPort();
-            byte[] bytesToSend = toSend.getBytes();
-
-            DatagramPacket multicast_info = new DatagramPacket(
-                    bytesToSend, bytesToSend.length);
-
-            try { multicast.send(multicast_info); }
-            catch (IOException e) {
-                System.out.println("Couldn't send advertisement packet");
-            }
-        };
-        ses.scheduleAtFixedRate(advertise, 1, 1, TimeUnit.SECONDS);
 
         while (!closeRequested.get()) {
 
@@ -146,8 +102,8 @@ public class Server {
 
         }
 
-        //After Close Request
-        ses.shutdown();
+        //Shuts down Advertiser
+        sa.shutdown();
     }
 
 }
