@@ -12,6 +12,7 @@ public class Server {
     private static AtomicBoolean closeRequested = new AtomicBoolean(false);
 
     private static DatagramSocket unicast;
+    private static String service_addr;
 
     private static int openUnicast(int port) {
 
@@ -21,6 +22,8 @@ public class Server {
             System.out.println("Unknown unicast host");
             return ERROR;
         }
+
+        service_addr = inetAddress.getHostAddress();
 
         try { unicast = new DatagramSocket(port); }
         catch (SocketException e) {
@@ -67,10 +70,6 @@ public class Server {
             return;
         }
 
-        InetAddress addr = InetAddress.getByName(args[1]);
-        int port = Integer.parseInt(args[2]);
-        ServerAdvertiser sa = new ServerAdvertiser(addr, port, "Teste");
-
         dnsTable = new HashMap<String, String>();
 
         int srvc_port = Integer.parseInt(args[0]);
@@ -78,6 +77,13 @@ public class Server {
             System.out.println("An error occurred while creating the server");
             return;
         }
+
+        //Multicast
+        InetAddress mcast_addr = InetAddress.getByName(args[1]);
+        int mcast_port = Integer.parseInt(args[2]);
+        InetAddress service_addr_inet = InetAddress.getByName(service_addr);
+        ServerAdvertiser sa = new ServerAdvertiser(mcast_addr, mcast_port, service_addr_inet, srvc_port);
+        //=========
 
         while (!closeRequested.get()) {
 
