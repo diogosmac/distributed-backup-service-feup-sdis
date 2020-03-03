@@ -87,13 +87,13 @@ public class Server {
 
         while (!closeRequested.get()) {
 
-            System.out.println("Waiting for request...");
+            System.out.println("Waiting for request...\n");
             byte[] buff = new byte[Request.MAX_SIZE];
 
             DatagramPacket packet = new DatagramPacket(buff, Request.MAX_SIZE);
             unicast.receive(packet);
             String received = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Received:\n\t" + received + "\n");
+            System.out.println("\nReceived:\n\t" + received + "\n");
 
             String[] arguments = received.split(Request.BREAK);
             Request request = Request.fromArgs(arguments);

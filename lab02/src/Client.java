@@ -24,7 +24,7 @@ public class Client {
         MulticastSocket mcast_socket  = new MulticastSocket(mcast_port);
         mcast_socket.joinGroup(mcast_addr);
 
-        System.out.println("Juntei-me ao grupo!");
+//        System.out.println("Juntei-me ao grupo!");
 
         //Read from socket
         byte[] service_info_buff = new byte[Request.MAX_SIZE];
@@ -33,7 +33,7 @@ public class Client {
 
         //Handles responseDatagramPacket
         String mcasted_info = new String(mcast_response.getData(), 0, mcast_response.getLength());
-        System.out.println("Multicasted Info:\t" + mcasted_info + "\n");
+        System.out.println("\nMulticasted Info:\t" + mcasted_info);
 
         //Handles multicasted info
 
