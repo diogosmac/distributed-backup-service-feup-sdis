@@ -1,3 +1,5 @@
+package request;
+
 public class LookupRequest extends Request {
 
     private String dnsName;

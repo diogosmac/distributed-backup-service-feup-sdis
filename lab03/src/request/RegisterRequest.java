@@ -1,3 +1,5 @@
+package request;
+
 public class RegisterRequest extends Request {
 
     private String dnsName;

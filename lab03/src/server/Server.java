@@ -1,3 +1,7 @@
+package server;
+
+import request.Request;
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -43,11 +47,11 @@ public class Server implements ServerInterface {
     public static void main(String[] args) throws IOException {
 
         if (args.length != 1) {
-            System.out.println("Usage: java Server <remote_object_name>");
+            System.out.println("Usage: java Server.Server <remote_object_name>");
             return;
         }
 
-        dnsTable = new HashMap<String, String>();
+        dnsTable = new HashMap<>();
 
         try {
             Server obj = new Server();
@@ -55,20 +59,22 @@ public class Server implements ServerInterface {
 
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind("Hello", stub);
-            System.out.println("Server ready");
+            System.out.println("Server.Server ready");
         } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
+            System.err.println("Server.Server exception: " + e.toString());
+            return;
         }
 
     }
 
     @Override
     public String lookup() throws RemoteException {
-        return "ayy";
+        return "123sd12erygjf";
     }
 
     @Override
     public String register() throws RemoteException {
         return null;
     }
+
 }

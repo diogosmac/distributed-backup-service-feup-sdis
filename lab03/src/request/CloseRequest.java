@@ -1,3 +1,5 @@
+package request;
+
 public class CloseRequest extends Request {
     public CloseRequest() { this.type = "close"; }
     public String toString() { return type; }

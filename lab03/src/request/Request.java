@@ -1,3 +1,5 @@
+package request;
+
 public abstract class Request {
     static final String BREAK = " ";
     static final int MAX_SIZE = 256;
