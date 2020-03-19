@@ -5,11 +5,13 @@
 In this iteration of the application, multicast communication is used. The server broadcasts to a multicast socket, which the client can listen to in order to obtain the address and port of the server, to which it can send the commands.
 
 ## Server
-Through your Terminal, you can run the server \[xxx\]
+Through your Terminal, you can run the server, naming the remote object appropriately.
 
-> **Usage**: java Server \<tbd>
+> **Usage**: java Server \<remote_object_name>
 >
-> **Example**: `java Server <tbd>`
+> **Example**: `java Server test`
+
+Press `CTRL + C` to stop the server.
 
 ## Client
 Through your Terminal, you can send requests to the server, and receive the response.
@@ -18,9 +20,9 @@ Through your Terminal, you can send requests to the server, and receive the resp
 
 #### Register a DNS name:
 
-> **Usage:** java Client \<tbd> register \<DNS name> \<IP address>
+> **Usage:** java Client \<host_name> \<remote_object_name> register \<DNS name> \<IP address>
 >
-> **Example**: `java Client <tbd> register website.com 192.168.1.76`
+> **Example**: `java Client localhost test register website.com 192.168.1.76`
  
 The server will respond:
 - the new table size (e.g. **1**), if the DNS name was successfully registered
@@ -28,9 +30,9 @@ The server will respond:
 
 #### Lookup a DNS name:
 
-> **Usage:**: java Client \<tbd> lookup \<DNS name>
+> **Usage:**: java Client \<host_name> \<remote_object_name> lookup \<DNS name>
 >
-> **Example**: `java Client <tbd> lookup website.com`
+> **Example**: `java Client localhost test lookup website.com`
 
 The server will respond:
 - the corresponding IP address (e.g. **192.168.1.76**), if the DNS name had been previously registered
@@ -40,20 +42,10 @@ The server will respond:
 
 #### Reset the Database:
 
-> **Usage:** java Client \<tbd> reset
+> **Usage:** java Client \<host_name> \<remote_object_name> reset
 >
-> **Example**: `java Client <tbd> reset`
+> **Example**: `java Client localhost test reset`
 
 The server will respond:
 - RESET_SUCCESSFULLY, if no problems occurred
-- ERROR, if the operation wasn't completed
-
-#### Shut Down the Server:
-
-> **Usage** java Client \<tbd> close
->
-> **Example**: `java Client <tbd> close`
-
-The server will respond:
-- CLOSED_SUCCESSFULLY, if no problems occurred
 - ERROR, if the operation wasn't completed

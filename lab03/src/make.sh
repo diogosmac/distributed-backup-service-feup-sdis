@@ -1,5 +1,3 @@
 #!/bin/bash
-javac request/*.java
-javac server/*.java
-javac client/*.java
+javac *.java
 echo 'Compiled all files'
