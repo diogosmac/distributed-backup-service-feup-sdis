@@ -3,31 +3,28 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashMap;
 
-public class Peer implements RemoteInterface {
+class Peer implements PeerActionsInterface {
 
-    private static HashMap<String, String> dnsTable;
-
-    public Peer() {}
+    public Peer() {
+        //Channel setup
+    }
 
     public static void main(String[] args) throws IOException {
 
         if (args.length != 1) {
-            System.out.println("Usage: java Server <remote_object_name>");
+            System.out.println("Usage: WIP");
             return;
         }
         String remoteObjectName = args[0];
 
         try {
-
             Peer obj = new Peer();
-            RemoteInterface serverInterface = (RemoteInterface) UnicastRemoteObject.exportObject(obj, 0);
+            PeerActionsInterface peerInterface = (PeerActionsInterface) UnicastRemoteObject.exportObject(obj, 0);
 
             Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(remoteObjectName, serverInterface);
-            dnsTable = new HashMap<>();
-            System.out.println("Server ready");
+            registry.rebind(remoteObjectName, peerInterface);
+            System.out.println("Peer ready");
 
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
@@ -36,40 +33,22 @@ public class Peer implements RemoteInterface {
     }
 
     @Override
-    public String lookup(String dns_name) throws RemoteException {
-
-        String ret = dnsTable.getOrDefault(dns_name, "NOT_FOUND");
-
-        System.out.println("Lookup " + dns_name + " :: " + ret);
-        return ret;
-
+    public void backup() throws RemoteException {
+        System.out.println("[WIP] Backup");
     }
 
     @Override
-    public String register(String dns_name, String ip_address) throws RemoteException {
-
-        String ret;
-
-        if (dnsTable.containsKey(dns_name)) { ret = "ALREADY_REGISTERED"; }
-        else {
-            dnsTable.put(dns_name, ip_address);
-            ret = Integer.toString(dnsTable.size());
-        }
-
-        System.out.println("Register " + dns_name + " " + ip_address + " :: " + ret);
-        return ret;
-
+    public void restore() throws RemoteException {
+        System.out.println("[WIP] Restore");
     }
 
     @Override
-    public String reset() throws RemoteException {
-
-        dnsTable.clear();
-        String ret = "RESET_SUCCESSFULLY";
-
-        System.out.println("Reset :: " + ret);
-        return ret;
-
+    public void delete() throws RemoteException {
+        System.out.println("[WIP] Delete");
     }
 
+    @Override
+    public void reclaim() throws RemoteException {
+        System.out.println("[WIP] Reclaim");
+    }
 }
