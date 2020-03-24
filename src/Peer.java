@@ -12,19 +12,22 @@ class Peer implements PeerActionsInterface {
 
     public static void main(String[] args) throws IOException {
 
-        if (args.length != 1) {
-            System.out.println("Usage: WIP");
+        if (args.length != 3) {
+            System.out.println("Usage: <protocol version> <peer id> <service access point>");
             return;
         }
-        String remoteObjectName = args[0];
+
+        String version = args[0];
+        int id = Integer.parseInt(args[1]);
+        String accessPoint = args[2];
 
         try {
             Peer obj = new Peer();
             PeerActionsInterface peerInterface = (PeerActionsInterface) UnicastRemoteObject.exportObject(obj, 0);
 
             Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(remoteObjectName, peerInterface);
-            System.out.println("Peer ready");
+            registry.rebind(accessPoint, peerInterface);
+            System.out.println("Peer "+id+" ready. v" + version + " accessPoint: " +  accessPoint);
 
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
