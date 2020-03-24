@@ -5,11 +5,11 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 
-public class Server implements ServerInterface {
+public class Peer implements RemoteInterface {
 
     private static HashMap<String, String> dnsTable;
 
-    public Server() {}
+    public Peer() {}
 
     public static void main(String[] args) throws IOException {
 
@@ -21,8 +21,8 @@ public class Server implements ServerInterface {
 
         try {
 
-            Server obj = new Server();
-            ServerInterface serverInterface = (ServerInterface) UnicastRemoteObject.exportObject(obj, 0);
+            Peer obj = new Peer();
+            RemoteInterface serverInterface = (RemoteInterface) UnicastRemoteObject.exportObject(obj, 0);
 
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(remoteObjectName, serverInterface);
