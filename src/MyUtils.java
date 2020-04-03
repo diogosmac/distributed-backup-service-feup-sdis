@@ -11,7 +11,6 @@ public class MyUtils {
 
     private final static int VERSION = 1;
     private final static int SUBVERSION = 0;
-
     static String getVersion() {
         return VERSION + "." + SUBVERSION;
     }
