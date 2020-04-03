@@ -36,22 +36,27 @@ class Peer implements PeerActionsInterface {
     }
 
     @Override
-    public void backup() throws RemoteException {
+    public void backup(String filePath, int replicationDegree) throws RemoteException {
         System.out.println("[WIP] Backup");
     }
 
     @Override
-    public void restore() throws RemoteException {
+    public void restore(String filePath) throws RemoteException {
         System.out.println("[WIP] Restore");
     }
 
     @Override
-    public void delete() throws RemoteException {
+    public void delete(String filePath) throws RemoteException {
         System.out.println("[WIP] Delete");
     }
 
     @Override
-    public void reclaim() throws RemoteException {
+    public void reclaim(int amountOfSpace) throws RemoteException {
+        System.out.println("[WIP] Reclaim");
+    }
+
+    @Override
+    public void state() throws RemoteException {
         System.out.println("[WIP] Reclaim");
     }
 }

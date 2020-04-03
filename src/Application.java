@@ -1,20 +1,82 @@
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class Application {
 
     public static void main(String[] args) {
-        if(args.length != 2) {
-            System.out.println("Usage: <peer ip> <access point>");
+        if(args.length > 4) {
+            System.out.println("Usage: java App <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
             return;
         }
 
-        String peerIp = args[0];
+        String peerAccessPoint = args[0];
+        String subProtocol = args[1];
 
         try {
-                Registry registry = LocateRegistry.getRegistry(peerIp);
+                Registry registry = LocateRegistry.getRegistry(peerAccessPoint);
                 PeerActionsInterface peer = (PeerActionsInterface) registry.lookup(args[1]);
-                peer.backup();
+
+                String filePath;
+                int replicationDegree;
+                int amountOfSpace;
+
+                switch(subProtocol) {
+                    case "BACKUP":
+                        if (args.length != 4) {
+                            System.out.println("BACKUP Usage for this access point:");
+                            System.out.println("\tjava App " + peerAccessPoint + " BACKUP <file_path> <replication_degree");
+                            return;
+                        }
+                        filePath = args[2];
+                        replicationDegree = Integer.parseInt(args[3]);
+                        peer.backup(filePath, replicationDegree);
+                        break;
+
+                    case "RESTORE":
+                        if (args.length != 3) {
+                            System.out.println("RESTORE Usage for this access point:");
+                            System.out.println("\tjava App " + peerAccessPoint + " RESTORE <file_path>");
+                            return;
+                        }
+                        filePath = args[2];
+                        peer.restore(filePath);
+                        break;
+
+                    case "DELETE":
+                        if (args.length != 3) {
+                            System.out.println("DELETE Usage for this access point:");
+                            System.out.println("\tjava App " + peerAccessPoint + " DELETE <file_path>");
+                            return;
+                        }
+                        filePath = args[2];
+                        peer.delete(filePath);
+                        break;
+
+                    case "RECLAIM":
+                        if (args.length != 3) {
+                            System.out.println("DELETE Usage for this access point:");
+                            System.out.println("\tjava App " + peerAccessPoint + " RECLAIM <amount_of_space>");
+                            return;
+                        }
+                        amountOfSpace = Integer.parseInt(args[2]);
+                        peer.reclaim(amountOfSpace);
+                        break;
+
+                    case "STATE":
+                        if (args.length != 2) {
+                            System.out.println("DELETE Usage for this access point:");
+                            System.out.println("\tjava App " + peerAccessPoint + " STATE");
+                            return;
+                        }
+                        peer.state();
+                        break;
+
+                    default:
+                        System.out.println("Available Sub-Protocols: BACKUP | RESTORE | DELETE | RECLAIM | STATE");
+                        break;
+                }
+
 
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
