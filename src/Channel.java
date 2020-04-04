@@ -12,6 +12,7 @@ public class Channel implements Runnable {
         try {
 
             this.ADDRESS = InetAddress.getByName(inetAddress);
+            System.out.println(this.ADDRESS);
             this.PORT = port;
             this.peer = peer;
 
@@ -42,6 +43,7 @@ public class Channel implements Runnable {
             socket.joinGroup(ADDRESS);
 
             while (true) {
+                System.out.println("Running");
 
                 byte[] buffer = new byte[MyUtils.CHUNK_SIZE];
 

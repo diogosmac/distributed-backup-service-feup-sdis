@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,6 @@ class Peer implements PeerActionsInterface {
 
         this.port = MyUtils.BASE_PORT + this.peerID;
         this.serverSocket = new ServerSocket(this.port);
-
     }
 
     public void executeWithScheduler(MessageReceivingThread thread) {
@@ -82,6 +82,24 @@ class Peer implements PeerActionsInterface {
     @Override
     public void backup(String filePath, int replicationDegree) throws RemoteException {
         System.out.println("[WIP] Backup");
+        System.out.println("File: " + filePath);
+        System.out.println("RD: " + replicationDegree);
+        SavedFile sf = new SavedFile(filePath, replicationDegree); //Stores file bytes and splits it into chunks
+
+        ArrayList<Chunk> file_chunks = sf.getChunks();
+        for (int current_chunk = 0; current_chunk < file_chunks.size(); current_chunk++) {
+
+            //<Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+            String header = this.protocol_version + " PUTCHUNK " + this.peerID + " " + sf.getId() + " " + current_chunk + " " + replicationDegree + " " + MyUtils.CRLF + MyUtils.CRLF;
+
+            byte [] header_bytes = MyUtils.convertToByteArray(header);
+            byte [] chunk_bytes = file_chunks.get(current_chunk).getData();
+            byte [] send_message = MyUtils.concatByteArrays(header_bytes, chunk_bytes);
+
+            System.out.println("Message (Bytes):");
+            System.out.println(send_message);
+        }
+
     }
 
     @Override

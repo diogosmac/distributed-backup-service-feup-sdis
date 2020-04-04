@@ -14,8 +14,8 @@ public class Application {
         String subProtocol = args[1];
 
         try {
-                Registry registry = LocateRegistry.getRegistry(peerAccessPoint);
-                PeerActionsInterface peer = (PeerActionsInterface) registry.lookup(args[1]);
+                Registry registry = LocateRegistry.getRegistry(null);
+                PeerActionsInterface peer = (PeerActionsInterface) registry.lookup(peerAccessPoint);
 
                 String filePath;
                 int replicationDegree;

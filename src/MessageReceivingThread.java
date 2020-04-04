@@ -13,6 +13,8 @@ public class MessageReceivingThread implements Runnable {
     @Override
     public void run() {
 
+        System.out.println("N Bytes read: " + length);
+
         String messageType = new String(message);
         messageType = messageType.substring(0, messageType.indexOf(" "));
 

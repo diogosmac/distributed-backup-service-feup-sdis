@@ -9,6 +9,10 @@ public class MyUtils {
 
     final static int CHUNK_SIZE = 64 * 1000;
 
+    final static char CR = '\r';
+    final static char LF = '\n';
+    final static String CRLF = new StringBuilder(CR).append(LF).toString();
+
     private final static int VERSION = 1;
     private final static int SUBVERSION = 0;
     static String getVersion() {
@@ -36,6 +40,17 @@ public class MyUtils {
             return null;
         }
 
+    }
+
+    public static byte[] convertToByteArray(String text) {
+        return text.getBytes(StandardCharsets.UTF_8);
+    }
+
+    public static byte[] concatByteArrays(byte[] first_arr, byte[] second_arr) {
+        byte[] result = new byte[first_arr.length + second_arr.length];
+        System.arraycopy(first_arr, 0, result, 0, first_arr.length);
+        System.arraycopy(second_arr, 0, result, first_arr.length, second_arr.length);
+        return  result;
     }
 
 
