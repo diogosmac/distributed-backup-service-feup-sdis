@@ -6,7 +6,7 @@ public class Application {
 
     public static void main(String[] args) {
         if(args.length > 4) {
-            System.out.println("Usage: java App <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
+            System.out.println("Usage: java Application <peer_ap> <sub_protocol> <opnd_1> <opnd_2>");
             return;
         }
 
@@ -25,7 +25,7 @@ public class Application {
                     case "BACKUP":
                         if (args.length != 4) {
                             System.out.println("BACKUP Usage for this access point:");
-                            System.out.println("\tjava App " + peerAccessPoint + " BACKUP <file_path> <replication_degree");
+                            System.out.println("\tjava Application " + peerAccessPoint + " BACKUP <file_path> <replication_degree");
                             return;
                         }
                         filePath = args[2];
@@ -36,7 +36,7 @@ public class Application {
                     case "RESTORE":
                         if (args.length != 3) {
                             System.out.println("RESTORE Usage for this access point:");
-                            System.out.println("\tjava App " + peerAccessPoint + " RESTORE <file_path>");
+                            System.out.println("\tjava Application " + peerAccessPoint + " RESTORE <file_path>");
                             return;
                         }
                         filePath = args[2];
@@ -46,7 +46,7 @@ public class Application {
                     case "DELETE":
                         if (args.length != 3) {
                             System.out.println("DELETE Usage for this access point:");
-                            System.out.println("\tjava App " + peerAccessPoint + " DELETE <file_path>");
+                            System.out.println("\tjava Application " + peerAccessPoint + " DELETE <file_path>");
                             return;
                         }
                         filePath = args[2];
@@ -56,7 +56,7 @@ public class Application {
                     case "RECLAIM":
                         if (args.length != 3) {
                             System.out.println("DELETE Usage for this access point:");
-                            System.out.println("\tjava App " + peerAccessPoint + " RECLAIM <amount_of_space>");
+                            System.out.println("\tjava Application " + peerAccessPoint + " RECLAIM <amount_of_space>");
                             return;
                         }
                         amountOfSpace = Integer.parseInt(args[2]);
@@ -66,7 +66,7 @@ public class Application {
                     case "STATE":
                         if (args.length != 2) {
                             System.out.println("DELETE Usage for this access point:");
-                            System.out.println("\tjava App " + peerAccessPoint + " STATE");
+                            System.out.println("\tjava Application " + peerAccessPoint + " STATE");
                             return;
                         }
                         peer.state();

@@ -7,7 +7,7 @@ public class OccurrencesStorage {
     private HashMap<String, List<Integer>> chunk_occurrences;
     
     public OccurrencesStorage() {
-
+        this.chunk_occurrences = new HashMap<>();
     }
 
     public void addFile (String file_id) {

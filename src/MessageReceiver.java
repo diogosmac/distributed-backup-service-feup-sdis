@@ -25,11 +25,13 @@ public class MessageReceiver implements Runnable {
             // TODO: Implement MessageReceivingThread subclasses for each message type
 
             case "PUTCHUNK":
+                System.out.println("PUTCHUNK Message received");
                 int interval = MyUtils.randomNum(0, 400);
                 peer.scheduleThread(new PutChunkReceiver(message, length, peer), interval, TimeUnit.MILLISECONDS);
                 break;
 
             case "STORED":
+                System.out.println("STORED Message received");
                 peer.executeThread(new StoredChunkReceiver(message, length, peer));
                 break;
 
