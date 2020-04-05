@@ -9,9 +9,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-class Peer implements PeerActionsInterface {
+public class Peer implements PeerActionsInterface {
 
-    private String protocol_version;
+    private String protocolVersion;
     private int peerID;
 
     private Channel multicastControlChannel;
@@ -23,28 +23,31 @@ class Peer implements PeerActionsInterface {
     private int port;
     private ServerSocket serverSocket;
 
-    private OccurrencesStorage chunk_occurrences;
-    private ChunkStorage chunk_storage;
+    private OccurrencesStorage chunkOccurrences;
+    private ChunkStorage chunkStorage;
 
-    public Peer(String protocol_version, int peerID,
+    public Peer(String protocolVersion, int peerID,
                 String MCAddress, String MCPort,
                 String MDBAddress, String MDBPort,
                 String MDRAddress, String MDRPort) throws IOException {
 
-        this.protocol_version = protocol_version;
+        this.protocolVersion = protocolVersion;
         this.peerID = peerID;
 
-        this.multicastControlChannel = new Channel(MCAddress, Integer.parseInt(MCPort), this);
-        this.multicastDataBackupChannel = new Channel(MDBAddress, Integer.parseInt(MDBPort), this);
-        this.multicastDataRestoreChannel = new Channel(MDRAddress, Integer.parseInt(MDRPort), this);
+        this.multicastControlChannel = new Channel(MCAddress, Integer.parseInt(MCPort), this,
+                "MC Control Channel is open!");
+        this.multicastDataBackupChannel = new Channel(MDBAddress, Integer.parseInt(MDBPort), this,
+                "MC Data Backup Channel is open!");
+        this.multicastDataRestoreChannel = new Channel(MDRAddress, Integer.parseInt(MDRPort), this,
+                "MC Data Restore Channel is open!");
 
         this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(300);
 
         this.port = MyUtils.BASE_PORT + this.peerID;
         this.serverSocket = new ServerSocket(this.port);
 
-        this.chunk_occurrences = new OccurrencesStorage();
-        this.chunk_storage = new ChunkStorage();
+        this.chunkOccurrences = new OccurrencesStorage();
+        this.chunkStorage = new ChunkStorage();
     }
 
     public void executeThread(Runnable thread) {
@@ -60,9 +63,9 @@ class Peer implements PeerActionsInterface {
         if (args.length != 9) {
             System.out.println(
                     "Usage: java Peer <protocol_version> <peer_id> <service access point> " +
-                                     "<mc_address> <mc_port> " +
-                                     "<mdb_address> <mdb_port> " +
-                                     "<mdr_address> <mdr_port>");
+                            "<mc_address> <mc_port> " +
+                            "<mdb_address> <mdb_port> " +
+                            "<mdr_address> <mdr_port>");
             return;
         }
 
@@ -71,12 +74,15 @@ class Peer implements PeerActionsInterface {
         String accessPoint = args[2];
 
         try {
-            Peer obj = new Peer(version, id, args[3], args[4], args[5], args[6], args[7], args[8]);
-            PeerActionsInterface peerInterface = (PeerActionsInterface) UnicastRemoteObject.exportObject(obj, 0);
+            Peer peer = new Peer(version, id, args[3], args[4], args[5], args[6], args[7], args[8]);
+            PeerActionsInterface peerInterface = (PeerActionsInterface) UnicastRemoteObject.exportObject(peer, 0);
 
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(accessPoint, peerInterface);
-            System.out.println("Peer "+id+" ready. v" + version + " accessPoint: " +  accessPoint);
+            peer.executeThread(peer.multicastControlChannel);
+            peer.executeThread(peer.multicastDataBackupChannel);
+            peer.executeThread(peer.multicastDataRestoreChannel);
+            System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint + "\n");
 
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
@@ -88,24 +94,25 @@ class Peer implements PeerActionsInterface {
     public void backup(String filePath, int replicationDegree) throws RemoteException {
         System.out.println("[WIP] Backup");
         System.out.println("File: " + filePath);
-        System.out.println("RD: " + replicationDegree);
-        SavedFile sf = new SavedFile(filePath, replicationDegree); //Stores file bytes and splits it into chunks
+        System.out.println("RD: " + replicationDegree + "\n");
+        SavedFile sf = new SavedFile(filePath, replicationDegree); // Stores file bytes and splits it into chunks
 
-        ArrayList<Chunk> file_chunks = sf.getChunks();
-        this.chunk_occurrences.addFile(sf.getId());
-        for (int current_chunk = 0; current_chunk < file_chunks.size(); current_chunk++) {
+        ArrayList<Chunk> fileChunks = sf.getChunks();
+        this.chunkOccurrences.addFile(sf.getId());
+        for (int currentChunk = 0; currentChunk < fileChunks.size(); currentChunk++) {
 
-            //<Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
-            String header = this.protocol_version + " PUTCHUNK " + this.peerID + " " + sf.getId() +
-                    " " + current_chunk + " " + replicationDegree + " " + MyUtils.CRLF + MyUtils.CRLF;
+            // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+            String header = this.protocolVersion + " PUTCHUNK " + this.peerID + " " + sf.getId() +
+                    " " + currentChunk + " " + replicationDegree + " " + MyUtils.CRLF + MyUtils.CRLF;
 
-            this.chunk_occurrences.addChunkSlot(sf.getId());
+            this.chunkOccurrences.addChunkSlot(sf.getId());
 
-            byte [] header_bytes = MyUtils.convertToByteArray(header);
-            byte [] chunk_bytes = file_chunks.get(current_chunk).getData();
-            byte [] send_message = MyUtils.concatByteArrays(header_bytes, chunk_bytes);
+            byte[] headerBytes = MyUtils.convertToByteArray(header);
+            byte[] chunkBytes = fileChunks.get(currentChunk).getData();
+            byte[] message = MyUtils.concatByteArrays(headerBytes, chunkBytes);
 
-            this.scheduler.execute(new MessageSender(send_message, this.multicastDataBackupChannel));
+            this.scheduler.execute(new MessageSender(message, this.multicastDataBackupChannel));
+
         }
 
     }
@@ -143,11 +150,11 @@ class Peer implements PeerActionsInterface {
     }
 
     public void storeChunk(Chunk chunk) {
-        this.chunk_storage.addChunk(chunk);
+        this.chunkStorage.addChunk(chunk);
     }
 
-    public void saveChunkOccurrence(String file_id, int chunk_number) {
-        this.chunk_occurrences.incChunkOcc(file_id, chunk_number);
+    public void saveChunkOccurrence(String fileId, int chunkNumber) {
+        this.chunkOccurrences.incChunkOcc(fileId, chunkNumber);
     }
 
     public int getPeerID() {
@@ -155,6 +162,7 @@ class Peer implements PeerActionsInterface {
     }
 
     public String getProtocolVersion() {
-        return this.protocol_version;
+        return this.protocolVersion;
     }
+
 }

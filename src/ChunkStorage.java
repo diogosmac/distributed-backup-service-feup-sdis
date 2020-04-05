@@ -2,21 +2,22 @@ import java.util.HashMap;
 
 public class ChunkStorage {
 
-    // Key: file_id:chunk_number
-    private HashMap<String, Chunk> chunk_storage;
+    // Key:     <file_id>:<chunk_number>
+    // Value:   Chunk
+    private HashMap<String, Chunk> chunkStorage;
 
     public ChunkStorage() {
-
+        this.chunkStorage = new HashMap<>();
     }
 
-    public void addChunk (Chunk chunk) {
+    public void addChunk(Chunk chunk) {
         String key = chunk.getFileID() + ":" + chunk.getNum();
-        this.chunk_storage.put(key, chunk);
+        this.chunkStorage.put(key, chunk);
     }
 
-    public Chunk getChunk (String file_id, int chunk_number) {
-        String key = file_id + ":" + chunk_number;
-        return this.chunk_storage.get(key);
+    public Chunk getChunk(String fileId, int chunkNumber) {
+        String key = fileId + ":" + chunkNumber;
+        return this.chunkStorage.get(key);
     }
 
 }

@@ -6,15 +6,17 @@ public class Channel implements Runnable {
     private int PORT;
     protected InetAddress ADDRESS;
     Peer peer;
+    private String welcomeMessage;
 
-    public Channel(String inetAddress, int port, Peer peer) {
+    public Channel(String inetAddress, int port, Peer peer, String welcomeMessage) {
 
         try {
 
             this.ADDRESS = InetAddress.getByName(inetAddress);
-            System.out.println(this.ADDRESS);
             this.PORT = port;
+            System.out.println(this.ADDRESS + ":" + this.PORT);
             this.peer = peer;
+            this.welcomeMessage = welcomeMessage;
 
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -28,7 +30,11 @@ public class Channel implements Runnable {
 
             DatagramPacket messagePacket = new DatagramPacket(message, message.length, ADDRESS, PORT);
             socket.send(messagePacket);
-            System.out.println("Message sent!");
+            String msg = new String(message);
+            String[] msgParts = msg.split(" ");
+            System.out.println("Message sent              | Type = " + msgParts[1] + ", " +
+                                                           "Sender: " + msgParts[2] + ", " +
+                                                           "Chunk #" + msgParts[4]);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -42,9 +48,9 @@ public class Channel implements Runnable {
 
             MulticastSocket socket = new MulticastSocket(PORT);
             socket.joinGroup(ADDRESS);
+            System.out.println(this.welcomeMessage);
 
             while (true) {
-                System.out.println("Running");
 
                 byte[] buffer = new byte[MyUtils.CHUNK_SIZE];
 

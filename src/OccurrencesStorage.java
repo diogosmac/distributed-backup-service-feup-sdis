@@ -4,28 +4,28 @@ import java.util.List;
 
 public class OccurrencesStorage {
 
-    private HashMap<String, List<Integer>> chunk_occurrences;
+    private HashMap<String, List<Integer>> chunkOccurrences;
     
     public OccurrencesStorage() {
-        this.chunk_occurrences = new HashMap<>();
+        this.chunkOccurrences = new HashMap<>();
     }
 
-    public void addFile (String file_id) {
-        this.chunk_occurrences.put(file_id, new ArrayList<>());
+    public void addFile (String fileId) {
+        this.chunkOccurrences.put(fileId, new ArrayList<>());
     }
 
-    public void addChunkSlot(String file_id) {
-        this.chunk_occurrences.get(file_id).add(0);
+    public void addChunkSlot(String fileId) {
+        this.chunkOccurrences.get(fileId).add(0);
     }
 
-    public void incChunkOcc(String file_id, int chunk_number) {
-        int current_n_occurr = getChunkOccurrences(file_id, chunk_number);
-        current_n_occurr++;
-        this.chunk_occurrences.get(file_id).set(chunk_number, current_n_occurr);
+    public void incChunkOcc(String fileId, int chunkNumber) {
+        int occurrenceCount = getChunkOccurrences(fileId, chunkNumber);
+        occurrenceCount++;
+        this.chunkOccurrences.get(fileId).set(chunkNumber, occurrenceCount);
     }
 
-    public int getChunkOccurrences(String file_id, int chunk_number) {
-        return this.chunk_occurrences.get(file_id).get(chunk_number);
+    public int getChunkOccurrences(String fileId, int chunkNumber) {
+        return this.chunkOccurrences.get(fileId).get(chunkNumber);
     }
 
 }

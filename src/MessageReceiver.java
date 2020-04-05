@@ -15,17 +15,20 @@ public class MessageReceiver implements Runnable {
     @Override
     public void run() {
 
-        System.out.println("N Bytes read: " + length);
+//        System.out.println("N Bytes read: " + length);
 
-        String messageType = new String(message);
-        messageType = messageType.substring(0, messageType.indexOf(" "));
+        String messageStr = new String(message);
+        String[] args = messageStr.split(" ");
+        String messageType = args[1];
 
         switch (messageType) {
 
-            // TODO: Implement MessageReceivingThread subclasses for each message type
+            // TODO: Implement MessageReceiver subclasses for each message type
 
             case "PUTCHUNK":
-                System.out.println("PUTCHUNK Message received");
+                System.out.println("PUTCHUNK Message received | Type: " + args[1] + ", " +
+                                                               "Sender: " + args[2] + ", " +
+                                                               "Chunk #" + args[4]);
                 int interval = MyUtils.randomNum(0, 400);
                 peer.scheduleThread(new PutChunkReceiver(message, length, peer), interval, TimeUnit.MILLISECONDS);
                 break;
@@ -56,6 +59,7 @@ public class MessageReceiver implements Runnable {
 
 
             default:
+                System.out.println("Received unrecognized message: " + messageStr);
                 break;
 
         }
