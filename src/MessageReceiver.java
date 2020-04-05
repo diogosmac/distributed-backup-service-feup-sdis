@@ -1,10 +1,12 @@
-public class MessageReceivingThread implements Runnable {
+import java.util.concurrent.TimeUnit;
+
+public class MessageReceiver implements Runnable {
 
     private byte[] message;
     private int length;
     private Peer peer;
 
-    public MessageReceivingThread(byte[] message, int length, Peer peer) {
+    public MessageReceiver(byte[] message, int length, Peer peer) {
         this.message = message;
         this.length = length;
         this.peer = peer;
@@ -24,11 +26,11 @@ public class MessageReceivingThread implements Runnable {
 
             case "PUTCHUNK":
                 int interval = MyUtils.randomNum(0, 400);
-//                peer.scheduleWithScheduler(new ReceivePutChunkThread(message, length, peer), interval, TimeUnit.MILLISECONDS);
+                peer.scheduleThread(new PutChunkReceiver(message, length, peer), interval, TimeUnit.MILLISECONDS);
                 break;
 
             case "STORED":
-//                peer.executeWithScheduler(new ReceiveStoredThread(message, length, peer));
+                peer.executeThread(new StoredChunkReceiver(message, length, peer));
                 break;
 
 
@@ -57,4 +59,5 @@ public class MessageReceivingThread implements Runnable {
         }
 
     }
+
 }

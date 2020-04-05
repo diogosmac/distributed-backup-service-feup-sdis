@@ -7,17 +7,13 @@ public class Chunk {
     private int currReplDegree = 0;
     private int size;
 
-    public Chunk(int num, byte[] data, int size) {
+    public Chunk(String fileID, int num, byte[] data, int size, int replicationDegree) {
         this.num = num;
         this.data = data;
         this.size = size;
-    }
-
-    public Chunk(int num, String fileID, int replicationDegree, int size) {
-        this.num = num;
         this.fileID = fileID;
         this.replicationDegree = replicationDegree;
-        this.size = size;
+        this.currReplDegree = 1;
     }
 
     public int getNum() {

@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.rmi.RemoteException;
@@ -24,6 +23,9 @@ class Peer implements PeerActionsInterface {
     private int port;
     private ServerSocket serverSocket;
 
+    private OccurrencesStorage chunk_occurrences;
+    private ChunkStorage chunk_storage;
+
     public Peer(String protocol_version, int peerID,
                 String MCAddress, String MCPort,
                 String MDBAddress, String MDBPort,
@@ -40,13 +42,16 @@ class Peer implements PeerActionsInterface {
 
         this.port = MyUtils.BASE_PORT + this.peerID;
         this.serverSocket = new ServerSocket(this.port);
+
+        this.chunk_occurrences = new OccurrencesStorage();
+        this.chunk_storage = new ChunkStorage();
     }
 
-    public void executeWithScheduler(MessageReceivingThread thread) {
+    public void executeThread(Runnable thread) {
         scheduler.execute(thread);
     }
 
-    public void scheduleWithScheduler(MessageReceivingThread thread, int interval, TimeUnit timeUnit) {
+    public void scheduleThread(Runnable thread, int interval, TimeUnit timeUnit) {
         scheduler.schedule(thread, interval, timeUnit);
     }
 
@@ -87,17 +92,20 @@ class Peer implements PeerActionsInterface {
         SavedFile sf = new SavedFile(filePath, replicationDegree); //Stores file bytes and splits it into chunks
 
         ArrayList<Chunk> file_chunks = sf.getChunks();
+        this.chunk_occurrences.addFile(sf.getId());
         for (int current_chunk = 0; current_chunk < file_chunks.size(); current_chunk++) {
 
             //<Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
-            String header = this.protocol_version + " PUTCHUNK " + this.peerID + " " + sf.getId() + " " + current_chunk + " " + replicationDegree + " " + MyUtils.CRLF + MyUtils.CRLF;
+            String header = this.protocol_version + " PUTCHUNK " + this.peerID + " " + sf.getId() +
+                    " " + current_chunk + " " + replicationDegree + " " + MyUtils.CRLF + MyUtils.CRLF;
+
+            this.chunk_occurrences.addChunkSlot(sf.getId());
 
             byte [] header_bytes = MyUtils.convertToByteArray(header);
             byte [] chunk_bytes = file_chunks.get(current_chunk).getData();
             byte [] send_message = MyUtils.concatByteArrays(header_bytes, chunk_bytes);
 
-            System.out.println("Message (Bytes):");
-            System.out.println(send_message);
+            this.scheduler.execute(new MessageSender(send_message, this.multicastDataBackupChannel));
         }
 
     }
@@ -132,5 +140,21 @@ class Peer implements PeerActionsInterface {
 
     public Channel getMulticastDataRestoreChannel() {
         return multicastDataRestoreChannel;
+    }
+
+    public void storeChunk(Chunk chunk) {
+        this.chunk_storage.addChunk(chunk);
+    }
+
+    public void saveChunkOccurrence(String file_id, int chunk_number) {
+        this.chunk_occurrences.incChunkOcc(file_id, chunk_number);
+    }
+
+    public int getPeerID() {
+        return this.peerID;
+    }
+
+    public String getProtocolVersion() {
+        return this.protocol_version;
     }
 }
