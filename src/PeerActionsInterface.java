@@ -3,14 +3,14 @@ import java.rmi.RemoteException;
 
 public interface PeerActionsInterface extends Remote {
 
-    void backup(String filePath, int replicationDegree) throws RemoteException;
+    void backup(String filePath, int replicationDegree) throws Exception;
 
-    void restore(String filePath) throws RemoteException;
+    void restore(String filePath) throws Exception;
 
-    void delete(String filePath) throws RemoteException;
+    void delete(String filePath) throws Exception;
 
-    void reclaim(int amountOfSpace) throws RemoteException;
+    void reclaim(int amountOfSpace) throws Exception;
 
-    void state() throws RemoteException;
+    void state() throws Exception;
 
 }

@@ -1,31 +1,28 @@
 public class PutChunkReceiver implements Runnable {
 
     private byte[] message;
-    private int length;
     private Peer peer;
 
-    public PutChunkReceiver(byte[] message, int length, Peer peer) {
+    public PutChunkReceiver(byte[] message, Peer peer) {
         this.message = message;
-        this.length = length;
         this.peer = peer;
     }
 
     public Chunk buildChunk() {
         String message = new String(this.message);
         String[] args = message.split(" ");
-//        String version = args[0];
-        int senderId = Integer.parseInt(args[2]);
-        if (this.peer.getPeerID() != senderId) {
-            String fileId = args[3];
-            int chunkNumber = Integer.parseInt(args[4]);
-            int repDegree = Integer.parseInt(args[5]);
+        String fileId = args[3];
+        int chunkNumber = Integer.parseInt(args[4]);
+        int repDegree = Integer.parseInt(args[5]);
+        byte[] bodyBytes = null;
+        int numBytes = 0;
+        if (!this.peer.hasChunk(fileId, chunkNumber)) {
+            String body = args[6].substring(4);         // Excludes both <CRLF>
+            bodyBytes = body.getBytes();
+            numBytes = bodyBytes.length;
+        }
+        return new Chunk(fileId, chunkNumber, bodyBytes, numBytes, repDegree);
 
-            // Excludes both <CRLF>
-            String body = args[6].substring(4);
-            byte[] bodyBytes = body.getBytes();
-            return new Chunk(fileId, chunkNumber, bodyBytes, bodyBytes.length, repDegree);
-        } else
-            return null;
     }
 
     public String buildStoredMessage(String fileId, int chunkNumber) {
@@ -38,13 +35,11 @@ public class PutChunkReceiver implements Runnable {
     @Override
     public void run() {
         Chunk receivedChunk = buildChunk();
-        if (receivedChunk != null) {
+        if (receivedChunk.getData() != null) {
             this.peer.storeChunk(receivedChunk);
-            String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());
-            peer.executeThread(new MessageSender(storedMessage.getBytes(), peer.getMulticastControlChannel()));
         }
-        else
-            System.out.println("\tSkipping: My own message");
-            System.out.flush();
+        String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());
+        peer.executeThread(new MessageSender(storedMessage.getBytes(), peer.getMulticastControlChannel()));
     }
+
 }

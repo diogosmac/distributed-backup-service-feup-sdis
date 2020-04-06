@@ -32,9 +32,8 @@ public class Channel implements Runnable {
             socket.send(messagePacket);
             String msg = new String(message);
             String[] msgParts = msg.split(" ");
-            System.out.println("Message sent              | Type = " + msgParts[1] + ", " +
-                                                           "Sender: " + msgParts[2] + ", " +
-                                                           "Chunk #" + msgParts[4]);
+            System.out.println("\tMessage sent              | Type: " + msgParts[1] + ", " +
+                                                             "Sender: " + msgParts[2]);
             System.out.flush();
 
         } catch (IOException e) {
@@ -58,15 +57,7 @@ public class Channel implements Runnable {
                 DatagramPacket messagePacket = new DatagramPacket(buffer, buffer.length);
                 socket.receive(messagePacket);
 
-                int length = 0;
-                for (int i = buffer.length - 1; i > 0; i--) {
-                    if (buffer[i] != 0) {
-                        length = i + 1;
-                        break;
-                    }
-                }
-
-                peer.executeThread(new MessageReceiver(buffer, length, peer));
+                peer.executeThread(new MessageReceiver(buffer, peer));
 
             }
 

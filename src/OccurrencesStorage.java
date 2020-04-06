@@ -1,13 +1,13 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OccurrencesStorage {
 
-    private HashMap<String, List<Integer>> chunkOccurrences;
+    private ConcurrentHashMap<String, List<Integer>> chunkOccurrences;
     
     public OccurrencesStorage() {
-        this.chunkOccurrences = new HashMap<>();
+        this.chunkOccurrences = new ConcurrentHashMap<>();
     }
 
     public void addFile (String fileId) {
@@ -24,8 +24,16 @@ public class OccurrencesStorage {
         this.chunkOccurrences.get(fileId).set(chunkNumber, occurrenceCount);
     }
 
+    public List<Integer> getFileOccurrences(String fileId) {
+        return this.chunkOccurrences.get(fileId);
+    }
+
     public int getChunkOccurrences(String fileId, int chunkNumber) {
-        return this.chunkOccurrences.get(fileId).get(chunkNumber);
+        return this.getFileOccurrences(fileId).get(chunkNumber);
+    }
+
+    public void deleteOccurrences(String fileId) {
+        this.chunkOccurrences.remove(fileId);
     }
 
 }

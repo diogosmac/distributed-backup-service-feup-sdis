@@ -13,6 +13,8 @@ public class MyUtils {
     public final static char LF = '\n';
     public final static String CRLF = new StringBuilder(CR).append(LF).toString();
 
+    public final static int CHUNK_SEND_MAX_TRIES = 5;
+
     public static String sha256(String str) {
 
         try {

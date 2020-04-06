@@ -3,12 +3,10 @@ import java.util.concurrent.TimeUnit;
 public class MessageReceiver implements Runnable {
 
     private byte[] message;
-    private int length;
     private Peer peer;
 
-    public MessageReceiver(byte[] message, int length, Peer peer) {
+    public MessageReceiver(byte[] message, Peer peer) {
         this.message = message;
-        this.length = length;
         this.peer = peer;
     }
 
@@ -16,6 +14,8 @@ public class MessageReceiver implements Runnable {
     public void run() {
         String messageStr = new String(message);
         String[] args = messageStr.split(" ");
+        int senderId = Integer.parseInt(args[2]);
+
         String messageType = args[1];
 
         switch (messageType) {
@@ -23,42 +23,55 @@ public class MessageReceiver implements Runnable {
             // TODO: Implement MessageReceiver subclasses for each message type
 
             case "PUTCHUNK":
-                System.out.println("PUTCHUNK Message received | Type: " + args[1] + ", " +
-                                                               "Sender: " + args[2] + ", " +
-                                                               "Chunk #" + args[4]);
+                if (senderId == peer.getPeerID()) return;
+                System.out.println("\tPUTCHUNK Message received | Type: " + args[1] + ", " +
+                                                                 "Sender: " + args[2] + ", " +
+                                                                 "Chunk #" + args[4]);
                 System.out.flush();
                 int interval = MyUtils.randomNum(0, 400);
-                peer.scheduleThread(new PutChunkReceiver(message, length, peer), interval, TimeUnit.MILLISECONDS);
+                peer.scheduleThread(new PutChunkReceiver(message, peer), interval, TimeUnit.MILLISECONDS);
                 break;
 
             case "STORED":
-                System.out.println("STORED Message received");
-                System.out.flush();
-                peer.executeThread(new StoredChunkReceiver(message, length, peer));
+                if (senderId == peer.getPeerID()) return;
+                if (peer.getState() == Peer.State.BACKUP) {
+                    System.out.println("\tSTORED Message received   | Type: " + args[1] + ", " +
+                                                                     "Sender: " + args[2] + ", " +
+                                                                     "Chunk #" + args[4]);
+                    System.out.flush();
+                    peer.executeThread(new StoredChunkReceiver(message, peer));
+                }
                 break;
 
 
             case "GETCHUNK":
-//                peer.executeWithScheduler(new ReceiveGetChunkThread(message, peer));
+                System.out.println("\tGETCHUNK Message received | Type: " + args[1] + ", " +
+                                                                 "Sender: " + args[2] + ", " +
+                                                                 "Chunk #" + args[4]);
+                System.out.flush();
+//                peer.executeThread(new GetChunkReceiver(message, peer));
                 break;
 
             case "CHUNK":
-//                peer.executeWithScheduler(new ReceiveChunkThread(message, length, peer));
+                System.out.println("\tCHUNK Message received    | Type: " + args[1] + ", " +
+                                                                 "Sender: " + args[2] + ", " +
+                                                                 "Chunk #" + args[4]);
+                System.out.flush();
+//                peer.executeThread(new ChunkReceiver(message, length, peer));
                 break;
 
 
             case "DELETE":
-//                peer.executeWithScheduler(new ReceiveDeleteThread(message, peer));
-                break;
-
-
-            case "REMOVED":
-//                peer.executeWithScheduler(new ReceiveRemovedThread(message, peer));
+                System.out.println("\tDELETE Message received   | Type: " + args[1] + ", " +
+                                                                 "Sender: " + args[2] + ", " +
+                                                                 "File ID: " + args[3]);
+                System.out.flush();
+                peer.executeThread(new DeleteReceiver(message, peer));
                 break;
 
 
             default:
-                System.out.println("Received unrecognized message: " + messageStr);
+                System.out.println("\tUnknown Message received  | " + messageStr);
                 System.out.flush();
                 break;
 

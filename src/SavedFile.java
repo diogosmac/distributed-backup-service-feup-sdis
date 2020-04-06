@@ -17,6 +17,11 @@ public class SavedFile implements java.io.Serializable {
     private int replicationDegree;
     private ArrayList<Chunk> chunks;
 
+    public SavedFile(String filePath) {
+        this.file = new File(filePath);
+        this.encryptFileID(filePath);
+    }
+
     public SavedFile(String filePath, int replicationDegree) {
         this.file = new File(filePath);
         this.replicationDegree = replicationDegree;
