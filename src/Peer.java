@@ -87,7 +87,6 @@ public class Peer implements PeerActionsInterface {
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
         }
-
     }
 
     @Override

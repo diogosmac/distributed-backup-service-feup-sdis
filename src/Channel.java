@@ -35,6 +35,7 @@ public class Channel implements Runnable {
             System.out.println("Message sent              | Type = " + msgParts[1] + ", " +
                                                            "Sender: " + msgParts[2] + ", " +
                                                            "Chunk #" + msgParts[4]);
+            System.out.flush();
 
         } catch (IOException e) {
             e.printStackTrace();
