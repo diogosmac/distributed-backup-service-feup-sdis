@@ -22,6 +22,7 @@ public class OccurrencesStorage {
         int occurrenceCount = getChunkOccurrences(fileId, chunkNumber);
         occurrenceCount++;
         this.chunkOccurrences.get(fileId).set(chunkNumber, occurrenceCount);
+        System.out.println(this.chunkOccurrences.get(fileId));
     }
 
     public int getChunkOccurrences(String fileId, int chunkNumber) {

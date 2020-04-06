@@ -14,13 +14,14 @@ public class PutChunkReceiver implements Runnable {
         String message = new String(this.message);
         String[] args = message.split(" ");
 //        String version = args[0];
-        int senderId = Integer.parseInt(args[1]);
+        int senderId = Integer.parseInt(args[2]);
         if (this.peer.getPeerID() != senderId) {
             String fileId = args[2];
-            int chunkNumber = Integer.parseInt(args[3]);
-            int repDegree = Integer.parseInt(args[4]);
+            int chunkNumber = Integer.parseInt(args[4]);
+            int repDegree = Integer.parseInt(args[5]);
+
             // Excludes both <CRLF>
-            String body = args[5].substring(4);
+            String body = args[6].substring(4);
             byte[] bodyBytes = body.getBytes();
             return new Chunk(fileId, chunkNumber, bodyBytes, bodyBytes.length, repDegree);
         } else
@@ -41,6 +42,9 @@ public class PutChunkReceiver implements Runnable {
             this.peer.storeChunk(receivedChunk);
             String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());
             peer.executeThread(new MessageSender(storedMessage.getBytes(), peer.getMulticastControlChannel()));
+            System.out.println("Message Sender called");
         }
+        else
+            System.out.println("\t I just read my own message!");
     }
 }

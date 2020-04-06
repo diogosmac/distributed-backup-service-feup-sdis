@@ -1,13 +1,13 @@
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChunkStorage {
 
     // Key:     <file_id>:<chunk_number>
     // Value:   Chunk
-    private HashMap<String, Chunk> chunkStorage;
+    private ConcurrentHashMap<String, Chunk> chunkStorage;
 
     public ChunkStorage() {
-        this.chunkStorage = new HashMap<>();
+        this.chunkStorage = new ConcurrentHashMap<>();
     }
 
     public void addChunk(Chunk chunk) {
