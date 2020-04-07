@@ -178,8 +178,15 @@ public class Peer implements PeerActionsInterface {
 
 
                 this.executeThread(new MessageSender(restoreMessageStr.getBytes(), this.multicastControlChannel));
-                Thread.sleep(1000); // NOT IN THE PROTOCOL
             }
+        }
+
+        Thread.sleep(500); // Probably isn't necessary
+
+        if(this.fileRestorer.restoreFile()) {
+            System.out.println("File :" + filePath + " successfully restored");
+        } else {
+            System.out.println("Failed to restore file: " + filePath);
         }
 
         this.state = State.IDLE;
@@ -242,6 +249,10 @@ public class Peer implements PeerActionsInterface {
 
     public boolean hasChunk(String fileId, int chunkNum) {
         return this.chunkStorage.hasChunk(fileId, chunkNum);
+    }
+
+    public Chunk getChunk(String fileId, int chunkNum) {
+        return this.chunkStorage.getChunk(fileId, chunkNum);
     }
 
     public void saveChunkOccurrence(String fileId, int chunkNumber) {

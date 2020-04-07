@@ -21,12 +21,17 @@ public class FileRestorer {
         return this.fileBytes.get(chunkNumber);
     }
 
-    public void restoreFile() {
+    public boolean restoreFile() {
 
         byte [] fileData = this.fileBytes.get(0);
 
         for(int currentChunk = 1; currentChunk < this.fileBytes.size(); currentChunk++) {
-            fileData = MyUtils.concatByteArrays(fileData, this.fileBytes.get(currentChunk));
+            byte [] currentChunkData = this.fileBytes.get(currentChunk);
+
+            if(currentChunkData == null)
+                return false;
+            else
+                fileData = MyUtils.concatByteArrays(fileData, currentChunkData);
         }
 
         try {
@@ -35,6 +40,8 @@ public class FileRestorer {
         } catch (Exception e) {
             System.out.println("Error while writing file");
         }
+
+        return true;
     }
 
 }
