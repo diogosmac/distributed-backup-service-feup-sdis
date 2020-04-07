@@ -33,7 +33,8 @@ public class Channel implements Runnable {
             String msg = new String(message);
             String[] msgParts = msg.split(" ");
             System.out.println("\tMessage sent              | Type: " + msgParts[1] + ", " +
-                                                             "Sender: " + msgParts[2]);
+                                                             "Sender: " + msgParts[2] + ", " +
+                                                             "Number bytes: " + message.length);
             System.out.flush();
 
         } catch (IOException e) {

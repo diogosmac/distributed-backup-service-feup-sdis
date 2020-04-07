@@ -25,8 +25,10 @@ public class GetChunkReceiver implements Runnable {
                     Integer.toString(this.peer.getPeerID()), wantedChunk.getFileID(), Integer.toString(wantedChunk.getNum()),
                     MyUtils.CRLF + MyUtils.CRLF);
 
+
             byte[] header = headerStr.getBytes();
             byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
+            System.out.println("[CHUNK MESSAGE] Data size = " + wantedChunk.getData().length + " | Header size = " + header.length);
 
             int msToWait = MyUtils.randomNum(0, 400);
 

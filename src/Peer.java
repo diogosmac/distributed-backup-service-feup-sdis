@@ -197,9 +197,6 @@ public class Peer implements PeerActionsInterface {
 
             }
 
-            System.out.println(MyUtils.CHUNK_SIZE);
-            System.out.println(this.fileRestorer.getChunk(currentChunk).length);
-
         } while (this.fileRestorer.getChunk(currentChunk++).length == MyUtils.CHUNK_SIZE);
 
         if (this.fileRestorer.restoreFile()) {
