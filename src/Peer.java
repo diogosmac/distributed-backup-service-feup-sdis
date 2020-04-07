@@ -4,6 +4,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,10 @@ public class Peer implements PeerActionsInterface {
     private OccurrencesStorage chunkOccurrences;
     private ChunkStorage chunkStorage;
 
+    // key = fileId:chunkNumber
+    // value = time of read
+    private ConcurrentHashMap<String, Long> receivedChunks;
+
     private FileRestorer fileRestorer;
 
     private State state;
@@ -60,9 +65,9 @@ public class Peer implements PeerActionsInterface {
 
         this.chunkOccurrences = new OccurrencesStorage();
         this.chunkStorage = new ChunkStorage();
+        this.receivedChunks = new ConcurrentHashMap<>();
 
         this.state = State.IDLE;
-
     }
 
     public void executeThread(Runnable thread) {
@@ -164,8 +169,10 @@ public class Peer implements PeerActionsInterface {
         SavedFile sf =  new SavedFile(filePath);
 
 //        TODO: Get filename from file path
-        this.fileRestorer = new FileRestorer(filePath);
+        String fileName = filePath;
+        this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this) + fileName);
         ArrayList<Chunk> chunks = sf.getChunks();
+
         for (int currentChunk = 0; currentChunk < chunks.size(); currentChunk++) {
             this.fileRestorer.addSlot();
 
@@ -273,6 +280,25 @@ public class Peer implements PeerActionsInterface {
 
     public State getState() {
         return this.state;
+    }
+
+    public void saveRestoredChunk(int chunkNumber, byte[] data) {
+        this.fileRestorer.saveData(chunkNumber, data);
+    }
+
+    public void saveReceivedChunkTime(String fileId, int chunkNumber) {
+        String key = fileId + ":" + chunkNumber;
+        this.receivedChunks.put(key, System.currentTimeMillis());
+    }
+
+    public boolean recentlyReceived(String fileId, int chunkNumber) {
+        String key = fileId + ":" + chunkNumber;
+        if (this.receivedChunks.containsKey(key)) {
+            long value = this.receivedChunks.get(key);
+            return (System.currentTimeMillis() - value) < 400;
+        }
+
+        return false;
     }
 
 }

@@ -49,7 +49,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Sender: " + args[2] + ", " +
                                                                  "Chunk #" + args[4]);
                 System.out.flush();
-//                peer.executeThread(new GetChunkReceiver(message, peer));
+                peer.executeThread(new GetChunkReceiver(message, peer));
                 break;
 
             case "CHUNK":
@@ -57,7 +57,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Sender: " + args[2] + ", " +
                                                                  "Chunk #" + args[4]);
                 System.out.flush();
-//                peer.executeThread(new ChunkReceiver(message, length, peer));
+                peer.executeThread(new ChunkReceiver(message, peer));
                 break;
 
 

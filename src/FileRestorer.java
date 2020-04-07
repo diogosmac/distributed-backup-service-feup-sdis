@@ -1,15 +1,14 @@
-import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileRestorer {
 
-    String fileName;
+    String path;
     private List<byte []> fileBytes;
 
-    public FileRestorer (String fileName) {
-        this.fileName = fileName;
+    public FileRestorer (String path) {
+        this.path = path;
         this.fileBytes = new ArrayList<>();
     }
 
@@ -19,6 +18,10 @@ public class FileRestorer {
 
     public byte[] getChunk(int chunkNumber) {
         return this.fileBytes.get(chunkNumber);
+    }
+
+    public void saveData(int chunkNumber, byte[] data) {
+        this.fileBytes.set(chunkNumber, data);
     }
 
     public boolean restoreFile() {
@@ -35,7 +38,7 @@ public class FileRestorer {
         }
 
         try {
-            FileOutputStream fos = new FileOutputStream(MyUtils.DEFAULT_RESTORE_PATH + this.fileName);
+            FileOutputStream fos = new FileOutputStream(this.path);
             fos.write(fileData);
         } catch (Exception e) {
             System.out.println("Error while writing file");

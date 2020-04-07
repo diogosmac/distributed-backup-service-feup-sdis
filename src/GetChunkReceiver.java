@@ -28,14 +28,15 @@ public class GetChunkReceiver implements Runnable {
             byte[] header = headerStr.getBytes();
             byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
 
-            int msToWait = MyUtils.randomNum(0, 400); // TODO: Check if it isnt being done twice
+            int msToWait = MyUtils.randomNum(0, 400);
 
             try {Thread.sleep(msToWait);}
             catch (Exception e) {
-                System.out.println("It was not possible to sleep");
+                System.out.println("I can't sleep yet, there are monsters nearby");
             }
 
-            this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
+            if(!this.peer.recentlyReceived(fileId, chunkNumber))
+                this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
         }
     }
 }
