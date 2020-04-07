@@ -34,6 +34,8 @@ public class Peer implements PeerActionsInterface {
     private OccurrencesStorage chunkOccurrences;
     private ChunkStorage chunkStorage;
 
+    private FileRestorer fileRestorer;
+
     private State state;
 
     public Peer(String protocolVersion, int peerID,
@@ -157,6 +159,29 @@ public class Peer implements PeerActionsInterface {
     public void restore(String filePath) throws Exception {
         this.state = State.RESTORE;
         System.out.println("[WIP] Restore");
+        System.out.println("\nRestore > File: " + filePath);
+
+        SavedFile sf =  new SavedFile(filePath);
+
+//        TODO: Get filename from file path
+        this.fileRestorer = new FileRestorer(filePath);
+        ArrayList<Chunk> chunks = sf.getChunks();
+        for (int currentChunk = 0; currentChunk < chunks.size(); currentChunk++) {
+            this.fileRestorer.addSlot();
+
+            while (this.fileRestorer.getChunk(currentChunk) == null) {
+
+                //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+                String restoreMessageStr = String.join(" ",
+                        this.protocolVersion, "GETCHUNK", Integer.toString(this.peerID),
+                        sf.getId(), Integer.toString(currentChunk), MyUtils.CRLF+MyUtils.CRLF);
+
+
+                this.executeThread(new MessageSender(restoreMessageStr.getBytes(), this.multicastControlChannel));
+                Thread.sleep(1000); // NOT IN THE PROTOCOL
+            }
+        }
+
         this.state = State.IDLE;
     }
 

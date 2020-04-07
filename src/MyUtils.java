@@ -15,6 +15,8 @@ public class MyUtils {
 
     public final static int CHUNK_SEND_MAX_TRIES = 5;
 
+    public final static String DEFAULT_RESTORE_PATH = "./restored_files/";
+
     public static String sha256(String str) {
 
         try {
