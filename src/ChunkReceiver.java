@@ -10,20 +10,22 @@ public class ChunkReceiver implements Runnable {
 
     @Override
     public void run() {
-        //  <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
+        // <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
         String messageStr = new String(message);
         String[] args = messageStr.split(" ");
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
 
-        if(this.peer.getState() == Peer.State.RESTORE) {
-            String bodyStr = args[5].substring(4);
-            byte[] body = bodyStr.getBytes();
+        if (this.peer.notRecentlyReceived(fileId, chunkNumber))
+            if (this.peer.isDoingOperation(Peer.Operation.RESTORE)) {
+                String bodyStr = args[5].substring(4);
+                byte[] body = bodyStr.getBytes();
 
-            this.peer.saveRestoredChunk(chunkNumber, body);
-        }
-        else {
-            this.peer.saveReceivedChunkTime(fileId, chunkNumber);
-        }
+                this.peer.saveRestoredChunk(chunkNumber, body);
+            }
+
+        this.peer.saveReceivedChunkTime(fileId, chunkNumber);
+
     }
+
 }

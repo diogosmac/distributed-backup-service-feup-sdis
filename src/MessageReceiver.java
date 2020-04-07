@@ -25,8 +25,8 @@ public class MessageReceiver implements Runnable {
             case "PUTCHUNK":
                 if (senderId == peer.getPeerID()) return;
                 System.out.println("\tPUTCHUNK Message received | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "Chunk #" + args[4]);
+                        "Sender: " + args[2] + ", " +
+                        "Chunk #" + args[4]);
                 System.out.flush();
                 int interval = MyUtils.randomNum(0, 400);
                 peer.scheduleThread(new PutChunkReceiver(message, peer), interval, TimeUnit.MILLISECONDS);
@@ -34,10 +34,10 @@ public class MessageReceiver implements Runnable {
 
             case "STORED":
                 if (senderId == peer.getPeerID()) return;
-                if (peer.getState() == Peer.State.BACKUP) {
+                if (peer.isDoingOperation(Peer.Operation.BACKUP)) {
                     System.out.println("\tSTORED Message received   | Type: " + args[1] + ", " +
-                                                                     "Sender: " + args[2] + ", " +
-                                                                     "Chunk #" + args[4]);
+                            "Sender: " + args[2] + ", " +
+                            "Chunk #" + args[4]);
                     System.out.flush();
                     peer.executeThread(new StoredChunkReceiver(message, peer));
                 }
@@ -45,17 +45,19 @@ public class MessageReceiver implements Runnable {
 
 
             case "GETCHUNK":
+                if (senderId == peer.getPeerID()) return;
                 System.out.println("\tGETCHUNK Message received | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "Chunk #" + args[4]);
+                        "Sender: " + args[2] + ", " +
+                        "Chunk #" + args[4]);
                 System.out.flush();
                 peer.executeThread(new GetChunkReceiver(message, peer));
                 break;
 
             case "CHUNK":
+                if (senderId == peer.getPeerID()) return;
                 System.out.println("\tCHUNK Message received    | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "Chunk #" + args[4]);
+                        "Sender: " + args[2] + ", " +
+                        "Chunk #" + args[4]);
                 System.out.flush();
                 peer.executeThread(new ChunkReceiver(message, peer));
                 break;
@@ -63,8 +65,8 @@ public class MessageReceiver implements Runnable {
 
             case "DELETE":
                 System.out.println("\tDELETE Message received   | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "File ID: " + args[3]);
+                        "Sender: " + args[2] + ", " +
+                        "File ID: " + args[3]);
                 System.out.flush();
                 peer.executeThread(new DeleteReceiver(message, peer));
                 break;

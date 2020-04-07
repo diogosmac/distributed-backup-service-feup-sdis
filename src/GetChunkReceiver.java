@@ -17,25 +17,26 @@ public class GetChunkReceiver implements Runnable {
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
 
-        if(this.peer.hasChunk(fileId, chunkNumber)) {
+        if (this.peer.hasChunk(fileId, chunkNumber)) {
             Chunk wantedChunk = this.peer.getChunk(fileId, chunkNumber);
 
             //  <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
             String headerStr = String.join(" ", this.peer.getProtocolVersion(), "CHUNK",
-                    Integer.toString(this.peer.getPeerID()),  wantedChunk.getFileID(), Integer.toString(wantedChunk.getNum()),
-                    MyUtils.CRLF+MyUtils.CRLF);
+                    Integer.toString(this.peer.getPeerID()), wantedChunk.getFileID(), Integer.toString(wantedChunk.getNum()),
+                    MyUtils.CRLF + MyUtils.CRLF);
 
             byte[] header = headerStr.getBytes();
             byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
 
             int msToWait = MyUtils.randomNum(0, 400);
 
-            try {Thread.sleep(msToWait);}
-            catch (Exception e) {
+            try {
+                Thread.sleep(msToWait);
+            } catch (Exception e) {
                 System.out.println("I can't sleep yet, there are monsters nearby");
             }
 
-            if(!this.peer.recentlyReceived(fileId, chunkNumber))
+            if (this.peer.notRecentlyReceived(fileId, chunkNumber))
                 this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
         }
     }

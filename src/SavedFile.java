@@ -19,14 +19,14 @@ public class SavedFile implements java.io.Serializable {
 
     public SavedFile(String filePath) {
         this.file = new File(filePath);
-        this.encryptFileID(filePath);
+        this.id = MyUtils.encryptFileID(filePath);
     }
 
     public SavedFile(String filePath, int replicationDegree) {
         this.file = new File(filePath);
         this.replicationDegree = replicationDegree;
         this.chunks = new ArrayList<>();
-        this.encryptFileID(filePath);
+        this.id = MyUtils.encryptFileID(filePath);
         this.splitIntoChunks();
     }
 
@@ -46,23 +46,6 @@ public class SavedFile implements java.io.Serializable {
         return chunks;
     }
 
-    public void encryptFileID(String fileName) {
-
-        try {
-
-            Path file = Paths.get(fileName);
-            BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
-            String lastModified = attributes.lastModifiedTime().toString();
-            String owner = Files.getOwner(file).getName();
-
-            this.id = MyUtils.sha256(fileName + "-" + lastModified + "-" + owner);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
     private void splitIntoChunks() {
 
         int chunkCounter = 0;
@@ -72,7 +55,7 @@ public class SavedFile implements java.io.Serializable {
              BufferedInputStream bis = new BufferedInputStream(fis)) {
 
             int numBytes;
-            while ((numBytes = bis.read(buffer)) > 0) {
+            while ((numBytes = bis.read(buffer, 0, MyUtils.CHUNK_SIZE)) > 0) {
                 byte[] body = Arrays.copyOf(buffer, numBytes);
 
                 chunkCounter++;

@@ -4,6 +4,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -11,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Peer implements PeerActionsInterface {
 
-    public enum State {
+    public enum Operation {
         IDLE,
         BACKUP,
         RESTORE,
@@ -41,7 +42,7 @@ public class Peer implements PeerActionsInterface {
 
     private FileRestorer fileRestorer;
 
-    private State state;
+    private List<Operation> operations;
 
     public Peer(String protocolVersion, int peerID,
                 String MCAddress, String MCPort,
@@ -67,7 +68,7 @@ public class Peer implements PeerActionsInterface {
         this.chunkStorage = new ChunkStorage();
         this.receivedChunks = new ConcurrentHashMap<>();
 
-        this.state = State.IDLE;
+        this.operations = new ArrayList<>();
     }
 
     public void executeThread(Runnable thread) {
@@ -112,7 +113,7 @@ public class Peer implements PeerActionsInterface {
     @Override
     public void backup(String filePath, int replicationDegree) throws Exception {
 
-        this.state = State.BACKUP;
+        this.operations.add(Operation.BACKUP);
 
         System.out.print("\nBackup > File: " + filePath + ", RD: " + replicationDegree + "\n");
         SavedFile sf = new SavedFile(filePath, replicationDegree); // Stores file bytes and splits it into chunks
@@ -132,7 +133,7 @@ public class Peer implements PeerActionsInterface {
             byte[] chunkBytes = fileChunks.get(currentChunk).getData();
             byte[] putChunkMessage = MyUtils.concatByteArrays(headerBytes, chunkBytes);
 
-            for (int i = 0; i < MyUtils.CHUNK_SEND_MAX_TRIES; i++) {
+            for (int i = 0; i < MyUtils.MAX_TRIES; i++) {
 
                 this.scheduler.execute(new MessageSender(putChunkMessage, this.multicastDataBackupChannel));
 
@@ -146,7 +147,7 @@ public class Peer implements PeerActionsInterface {
                         "Current number of occurrences: " + this.chunkOccurrences.getChunkOccurrences(sf.getId(),
                                                                                                       currentChunk));
 
-                if (i == 4)
+                if (i == MyUtils.MAX_TRIES - 1)
                     System.out.println("BACKUP " + filePath + " : " +
                             "Couldn't reach desired replication degree for chunk #" + currentChunk);
 
@@ -154,54 +155,67 @@ public class Peer implements PeerActionsInterface {
 
         }
 
-        System.out.println("BACKUP " + filePath + " : Operation completed");
+        System.out.println(String.join(" ", "BACKUP", filePath, Integer.toString(replicationDegree),
+                                        ":", "Operation completed"));
 
-        this.state = State.IDLE;
+        this.operations.remove(Operation.BACKUP);
 
     }
 
     @Override
     public void restore(String filePath) throws Exception {
-        this.state = State.RESTORE;
+        this.operations.add(Operation.RESTORE);
         System.out.println("[WIP] Restore");
         System.out.println("\nRestore > File: " + filePath);
 
-        SavedFile sf =  new SavedFile(filePath);
-
-//        TODO: Get filename from file path
-        String fileName = filePath;
+        String fileName = MyUtils.fileNameFromPath(filePath);
+        String fileId = MyUtils.encryptFileID(filePath);
         this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this) + fileName);
-        ArrayList<Chunk> chunks = sf.getChunks();
-
-        for (int currentChunk = 0; currentChunk < chunks.size(); currentChunk++) {
+        int currentChunk = 0;
+        do {
             this.fileRestorer.addSlot();
-
-            while (this.fileRestorer.getChunk(currentChunk) == null) {
-
-                //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-                String restoreMessageStr = String.join(" ",
-                        this.protocolVersion, "GETCHUNK", Integer.toString(this.peerID),
-                        sf.getId(), Integer.toString(currentChunk), MyUtils.CRLF+MyUtils.CRLF);
+            //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+            String restoreMessageStr = String.join(" ",
+                    this.protocolVersion, "GETCHUNK", Integer.toString(this.peerID),
+                    fileId, Integer.toString(currentChunk), MyUtils.CRLF+MyUtils.CRLF);
 
 
+            for (int i = 0; i < MyUtils.MAX_TRIES; i++) {
                 this.executeThread(new MessageSender(restoreMessageStr.getBytes(), this.multicastControlChannel));
+                // Starts by waiting one second, and doubles the waiting time with each iteration
+                Thread.sleep((long) (1000 * Math.pow(2, i)));
+                if (fileRestorer.getChunk(currentChunk) != null) {
+                    break;
+                }
+
+                if (i == MyUtils.MAX_TRIES - 1) {
+                    System.out.println("RESTORE " + filePath + " : Operation failed");
+                    System.out.println("Couldn't get data from peers for chunk #" + currentChunk);
+                    this.operations.remove(Operation.RESTORE);
+                    return;
+                }
+
             }
-        }
 
-        Thread.sleep(500); // Probably isn't necessary
+            System.out.println(MyUtils.CHUNK_SIZE);
+            System.out.println(this.fileRestorer.getChunk(currentChunk).length);
 
-        if(this.fileRestorer.restoreFile()) {
-            System.out.println("File :" + filePath + " successfully restored");
+        } while (this.fileRestorer.getChunk(currentChunk++).length == MyUtils.CHUNK_SIZE);
+
+        if (this.fileRestorer.restoreFile()) {
+            System.out.println("File " + fileName + " successfully restored!");
         } else {
-            System.out.println("Failed to restore file: " + filePath);
+            System.out.println("Failed to restore file " + fileName);
         }
 
-        this.state = State.IDLE;
+        System.out.println(String.join(" ", "RESTORE", filePath, ":", "Operation completed"));
+
+        this.operations.remove(Operation.RESTORE);
     }
 
     @Override
     public void delete(String filePath) throws Exception {
-        this.state = State.DELETE;
+        this.operations.remove(Operation.DELETE);
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
@@ -215,22 +229,23 @@ public class Peer implements PeerActionsInterface {
         this.chunkOccurrences.deleteOccurrences(sf.getId());
         System.out.flush();
         System.out.println("DELETE " + filePath + " : Operation completed");
+        System.out.println(String.join(" ", "DELETE", filePath, ":", "Operation completed"));
         System.out.flush();
-        this.state = State.IDLE;
+        this.operations.remove(Operation.DELETE);
     }
 
     @Override
     public void reclaim(int amountOfSpace) throws Exception {
-        this.state = State.RECLAIM;
+        this.operations.add(Operation.RECLAIM);
         System.out.println("[WIP] Reclaim");
-        this.state = State.IDLE;
+        this.operations.remove(Operation.RECLAIM);
     }
 
     @Override
     public void state() throws Exception {
-        this.state = State.STATE;
+        this.operations.add(Operation.STATE);
         System.out.println("[WIP] State");
-        this.state = State.IDLE;
+        this.operations.remove(Operation.STATE);
     }
 
 
@@ -278,8 +293,8 @@ public class Peer implements PeerActionsInterface {
         return this.protocolVersion;
     }
 
-    public State getState() {
-        return this.state;
+    public boolean isDoingOperation(Operation op) {
+        return this.operations.contains(op);
     }
 
     public void saveRestoredChunk(int chunkNumber, byte[] data) {
@@ -287,18 +302,18 @@ public class Peer implements PeerActionsInterface {
     }
 
     public void saveReceivedChunkTime(String fileId, int chunkNumber) {
-        String key = fileId + ":" + chunkNumber;
+        String key = String.join(":", fileId, Integer.toString(chunkNumber));
         this.receivedChunks.put(key, System.currentTimeMillis());
     }
 
-    public boolean recentlyReceived(String fileId, int chunkNumber) {
-        String key = fileId + ":" + chunkNumber;
+    public boolean notRecentlyReceived(String fileId, int chunkNumber) {
+        String key = String.join(":", fileId, Integer.toString(chunkNumber));
         if (this.receivedChunks.containsKey(key)) {
             long value = this.receivedChunks.get(key);
-            return (System.currentTimeMillis() - value) < 400;
+            return (System.currentTimeMillis() - value) >= 400;
         }
 
-        return false;
+        return true;
     }
 
 }

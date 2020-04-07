@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,22 +27,26 @@ public class FileRestorer {
 
     public boolean restoreFile() {
 
-        byte [] fileData = this.fileBytes.get(0);
+        byte[] fileData = this.fileBytes.get(0);
 
-        for(int currentChunk = 1; currentChunk < this.fileBytes.size(); currentChunk++) {
-            byte [] currentChunkData = this.fileBytes.get(currentChunk);
+        for (int currentChunk = 1; currentChunk < this.fileBytes.size(); currentChunk++) {
+            byte[] currentChunkData = this.fileBytes.get(currentChunk);
 
-            if(currentChunkData == null)
+            if (currentChunkData == null)
                 return false;
             else
                 fileData = MyUtils.concatByteArrays(fileData, currentChunkData);
         }
 
         try {
-            FileOutputStream fos = new FileOutputStream(this.path);
+            File file = new File(this.path);
+            if (file.getParentFile().mkdirs()) {
+                System.out.println("Created missing ./restored directory.");
+            }
+            FileOutputStream fos = new FileOutputStream(file, false);
             fos.write(fileData);
         } catch (Exception e) {
-            System.out.println("Error while writing file");
+            System.out.println("Error while writing file!");
         }
 
         return true;

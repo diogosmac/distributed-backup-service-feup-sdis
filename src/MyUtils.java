@@ -1,4 +1,9 @@
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
@@ -13,13 +18,14 @@ public class MyUtils {
     public final static char LF = '\n';
     public final static String CRLF = new StringBuilder(CR).append(LF).toString();
 
-    public final static int CHUNK_SEND_MAX_TRIES = 5;
+    public final static int MAX_TRIES = 5;
 
     public final static String DEFAULT_RESTORE_PATH = "/restored_files/";
 
     public static String getRestorePath(Peer peer) {
         return "./peer" + peer.getPeerID() + DEFAULT_RESTORE_PATH;
     }
+
 
     public static String sha256(String str) {
 
@@ -43,6 +49,24 @@ public class MyUtils {
 
     }
 
+    public static String encryptFileID(String fileName) {
+
+        try {
+
+            Path file = Paths.get(fileName);
+            BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            String lastModified = attributes.lastModifiedTime().toString();
+            String owner = Files.getOwner(file).getName();
+
+            return MyUtils.sha256(fileName + "-" + lastModified + "-" + owner);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
     public static byte[] convertToByteArray(String text) {
         return text.getBytes(StandardCharsets.UTF_8);
     }
@@ -60,6 +84,10 @@ public class MyUtils {
         Random r = new Random();
         return r.nextInt(highest + 1 - lowest) + lowest;
 
+    }
+
+    public static String fileNameFromPath(String filePath) {
+        return filePath.substring(filePath.lastIndexOf('/') + 1);
     }
 
 }
