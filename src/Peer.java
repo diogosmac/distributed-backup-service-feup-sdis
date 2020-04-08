@@ -117,7 +117,8 @@ public class Peer implements PeerActionsInterface {
         SavedFile sf = new SavedFile(filePath, replicationDegree); // Stores file bytes and splits it into chunks
 
         ArrayList<Chunk> fileChunks = sf.getChunks();
-        this.chunkOccurrences.addFile(sf.getId());
+        String fileName = MyUtils.fileNameFromPath(filePath);
+        this.chunkOccurrences.addFile(sf.getId(), fileName);
         for (int currentChunk = 0; currentChunk < fileChunks.size(); currentChunk++) {
 
             // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
