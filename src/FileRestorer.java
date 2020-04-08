@@ -17,7 +17,7 @@ public class FileRestorer {
         this.fileBytes.add(null);
     }
 
-    public byte[] getChunk(int chunkNumber) {
+    public byte[] getChunkData(int chunkNumber) {
         return this.fileBytes.get(chunkNumber);
     }
 
@@ -41,12 +41,13 @@ public class FileRestorer {
         try {
             File file = new File(this.path);
             if (file.getParentFile().mkdirs()) {
-                System.out.println("Created missing ./restored directory.");
+                System.out.println("\tCreated missing ./restored directory.");
             }
             FileOutputStream fos = new FileOutputStream(file, false);
             fos.write(fileData);
+            fos.close();
         } catch (Exception e) {
-            System.out.println("Error while writing file!");
+            System.out.println("\tError while writing file!");
         }
 
         return true;

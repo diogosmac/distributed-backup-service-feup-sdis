@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -13,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 public class Peer implements PeerActionsInterface {
 
     public enum Operation {
-        IDLE,
         BACKUP,
         RESTORE,
         DELETE,
@@ -30,8 +28,8 @@ public class Peer implements PeerActionsInterface {
 
     private ScheduledThreadPoolExecutor scheduler;
 
-    private int port;
-    private ServerSocket serverSocket;
+//    private int port;
+//    private ServerSocket serverSocket;
 
     private OccurrencesStorage chunkOccurrences;
     private ChunkStorage chunkStorage;
@@ -61,11 +59,11 @@ public class Peer implements PeerActionsInterface {
 
         this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(300);
 
-        this.port = MyUtils.BASE_PORT + this.peerID;
-        this.serverSocket = new ServerSocket(this.port);
+//        this.port = MyUtils.BASE_PORT + this.peerID;
+//        this.serverSocket = new ServerSocket(this.port);
 
         this.chunkOccurrences = new OccurrencesStorage();
-        this.chunkStorage = new ChunkStorage();
+        this.chunkStorage = new ChunkStorage(this);
         this.receivedChunks = new ConcurrentHashMap<>();
 
         this.operations = new ArrayList<>();
@@ -103,7 +101,7 @@ public class Peer implements PeerActionsInterface {
             peer.executeThread(peer.multicastControlChannel);
             peer.executeThread(peer.multicastDataBackupChannel);
             peer.executeThread(peer.multicastDataRestoreChannel);
-            System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint + "\n");
+            System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
 
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
@@ -143,7 +141,7 @@ public class Peer implements PeerActionsInterface {
                 if (this.chunkOccurrences.getChunkOccurrences(sf.getId(), currentChunk) >= sf.getReplicationDegree())
                     break;
 
-                System.out.println("Desired number of occurrences: " + sf.getReplicationDegree() + ", " +
+                System.out.println("\t\tDesired number of occurrences: " + sf.getReplicationDegree() + ", " +
                         "Current number of occurrences: " + this.chunkOccurrences.getChunkOccurrences(sf.getId(),
                                                                                                       currentChunk));
 
@@ -165,7 +163,7 @@ public class Peer implements PeerActionsInterface {
     @Override
     public void restore(String filePath) throws Exception {
         this.operations.add(Operation.RESTORE);
-        System.out.println("[WIP] Restore");
+        System.out.println("\n[WIP] Restore");
         System.out.println("\nRestore > File: " + filePath);
 
         String fileName = MyUtils.fileNameFromPath(filePath);
@@ -181,28 +179,31 @@ public class Peer implements PeerActionsInterface {
 
 
             for (int i = 0; i < MyUtils.MAX_TRIES; i++) {
-                this.executeThread(new MessageSender(restoreMessageStr.getBytes(), this.multicastControlChannel));
+                this.executeThread(new MessageSender(
+                        restoreMessageStr.getBytes(),
+                        this.multicastControlChannel));
+
                 // Starts by waiting one second, and doubles the waiting time with each iteration
                 Thread.sleep((long) (1000 * Math.pow(2, i)));
-                if (fileRestorer.getChunk(currentChunk) != null) {
+                if (fileRestorer.getChunkData(currentChunk) != null) {
                     break;
                 }
 
                 if (i == MyUtils.MAX_TRIES - 1) {
                     System.out.println("RESTORE " + filePath + " : Operation failed");
                     System.out.println("Couldn't get data from peers for chunk #" + currentChunk);
-                    this.operations.remove(Operation.RESTORE);
-                    return;
+//                    this.operations.remove(Operation.RESTORE);
+//                    return;
                 }
 
             }
 
-        } while (this.fileRestorer.getChunk(currentChunk++).length == MyUtils.CHUNK_SIZE);
+        } while (this.fileRestorer.getChunkData(currentChunk++).length == MyUtils.CHUNK_SIZE);
 
         if (this.fileRestorer.restoreFile()) {
-            System.out.println("File " + fileName + " successfully restored!");
+            System.out.println("\tFile " + fileName + " successfully restored!");
         } else {
-            System.out.println("Failed to restore file " + fileName);
+            System.out.println("\tFailed to restore file " + fileName);
         }
 
         System.out.println(String.join(" ", "RESTORE", filePath, ":", "Operation completed"));

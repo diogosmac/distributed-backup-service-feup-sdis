@@ -34,7 +34,7 @@ public class Channel implements Runnable {
             String[] msgParts = msg.split(" ");
             System.out.println("\tMessage sent              | Type: " + msgParts[1] + ", " +
                                                              "Sender: " + msgParts[2] + ", " +
-                                                             "Number bytes: " + message.length);
+                                                             "Number bytes (with header): " + message.length);
             System.out.flush();
 
         } catch (IOException e) {
@@ -53,12 +53,21 @@ public class Channel implements Runnable {
 
             while (true) {
 
-                byte[] buffer = new byte[MyUtils.CHUNK_SIZE];
+                byte[] buffer = new byte[MyUtils.MESSAGE_SIZE];
 
                 DatagramPacket messagePacket = new DatagramPacket(buffer, buffer.length);
                 socket.receive(messagePacket);
 
-                peer.executeThread(new MessageReceiver(buffer, peer));
+                // removes the trailing 0's (empty bytes) on the end of the message
+                int length = 0;
+                for (int i = buffer.length - 1; i >= 0; i--) {
+                    if (buffer[i] != 0) {
+                        length = i + 1;
+                        break;
+                    }
+                }
+
+                peer.executeThread(new MessageReceiver(buffer, length, peer));
 
             }
 
