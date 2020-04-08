@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -74,10 +75,6 @@ public class MyUtils {
 
     }
 
-    public static byte[] convertToByteArray(String text) {
-        return text.getBytes();
-    }
-
     public static byte[] concatByteArrays(byte[] firstArr, byte[] secondArr) {
         byte[] result = new byte[firstArr.length + secondArr.length];
         System.arraycopy(firstArr, 0, result, 0, firstArr.length);
@@ -95,6 +92,22 @@ public class MyUtils {
 
     public static String fileNameFromPath(String filePath) {
         return filePath.substring(filePath.lastIndexOf('/') + 1);
+    }
+
+    public static byte[] trimMessage(byte[] message, int length) {
+        byte[] result = new byte[length];
+        System.arraycopy(message, 0, result, 0, length);
+        return result;
+    }
+
+    public static String convertByteArrayToString(byte [] array) {
+        // ISO_8859_1 is 1 to 1 conversion
+        return new String(array, StandardCharsets.ISO_8859_1);
+    }
+
+    public static byte[] convertStringToByteArray(String text) {
+        // ISO_8859_1 is 1 to 1 conversion
+        return text.getBytes(StandardCharsets.ISO_8859_1);
     }
 
 }

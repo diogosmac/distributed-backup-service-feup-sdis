@@ -1,5 +1,3 @@
-import java.util.concurrent.TimeUnit;
-
 public class MessageReceiver implements Runnable {
 
     private byte[] message;
@@ -7,7 +5,7 @@ public class MessageReceiver implements Runnable {
     private Peer peer;
 
     public MessageReceiver(byte[] message, int length, Peer peer) {
-        this.message = message;
+        this.message = MyUtils.trimMessage(message, length);
         this.length = length;
         this.peer = peer;
     }
@@ -32,7 +30,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Chunk #" + args[4] + ", " +
                                                                  "Number bytes: " + length);
                 System.out.flush();
-                peer.executeThread(new PutChunkReceiver(message, length, peer));
+                peer.executeThread(new PutChunkReceiver(message, peer));
                 break;
 
             case "STORED":
@@ -55,7 +53,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Chunk #" + args[4] + ", " +
                                                                  "Number bytes: " + length);
                 System.out.flush();
-                peer.executeThread(new GetChunkReceiver(message, length, peer));
+                peer.executeThread(new GetChunkReceiver(message, peer));
                 break;
 
             case "CHUNK":
@@ -65,7 +63,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Chunk #" + args[4] + ", " +
                                                                  "Number bytes: " + length);
                 System.out.flush();
-                peer.executeThread(new ChunkReceiver(message, length, peer));
+                peer.executeThread(new ChunkReceiver(message, peer));
                 break;
 
 

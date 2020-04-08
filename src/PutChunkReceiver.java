@@ -4,18 +4,15 @@ import java.util.concurrent.TimeUnit;
 public class PutChunkReceiver implements Runnable {
 
     private byte[] message;
-    private int length;
     private Peer peer;
 
-    public PutChunkReceiver(byte[] message, int length, Peer peer) {
-        this.message = new byte[length];
-        System.arraycopy(message, 0, this.message, 0, length);
-        this.length = length;
+    public PutChunkReceiver(byte[] message, Peer peer) {
+        this.message = message;
         this.peer = peer;
     }
 
     public Chunk buildChunk() {
-        String message = new String(this.message, StandardCharsets.ISO_8859_1);
+        String message = MyUtils.convertByteArrayToString(this.message);
 //        System.out.println(" ==> Full message length: " + message.length());
         String[] args = message.split(" ");
         String fileId = args[3];
@@ -26,7 +23,7 @@ public class PutChunkReceiver implements Runnable {
         if (!this.peer.hasChunk(fileId, chunkNumber)) {
             String body = message.substring(message.indexOf(MyUtils.CRLF + MyUtils.CRLF) + 2); // Skips both <CRLF>
 //            System.out.println(" ==> Body length: " + body.length());
-            bodyBytes = body.getBytes(StandardCharsets.ISO_8859_1);
+            bodyBytes = MyUtils.convertStringToByteArray(body);
 //            System.out.println(" ==> Body bytes length: " + bodyBytes.length);
             numBytes = bodyBytes.length;
         }

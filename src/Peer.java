@@ -127,7 +127,7 @@ public class Peer implements PeerActionsInterface {
 
             this.chunkOccurrences.addChunkSlot(sf.getId());
 
-            byte[] headerBytes = MyUtils.convertToByteArray(header);
+            byte[] headerBytes = header.getBytes();
             byte[] chunkBytes = fileChunks.get(currentChunk).getData();
             byte[] putChunkMessage = MyUtils.concatByteArrays(headerBytes, chunkBytes);
 
@@ -221,7 +221,7 @@ public class Peer implements PeerActionsInterface {
         String header = String.join(" ",
                 this.protocolVersion, "DELETE", Integer.toString(this.peerID),
                 sf.getId(), MyUtils.CRLF + MyUtils.CRLF);
-        byte[] deleteMessage = MyUtils.convertToByteArray(header);
+        byte[] deleteMessage = header.getBytes();
         this.scheduler.execute(new MessageSender(deleteMessage, this.multicastControlChannel));
 
         this.chunkOccurrences.deleteOccurrences(sf.getId());
