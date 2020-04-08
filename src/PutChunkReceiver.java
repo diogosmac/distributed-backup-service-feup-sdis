@@ -39,7 +39,17 @@ public class PutChunkReceiver implements Runnable {
     public void run() {
         Chunk receivedChunk = buildChunk();
         if (receivedChunk.getData() != null) {
-            this.peer.storeChunk(receivedChunk);
+            int status = this.peer.storeChunk(receivedChunk);
+            switch (status) {
+                case 1:
+                    System.out.println("Not enough space to store received chunk");
+                    return;
+                case 2:
+                    System.out.println("Exception occurred while storing the received chunk");
+                    return;
+                default:
+                    break;
+            }
         }
 
         String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());

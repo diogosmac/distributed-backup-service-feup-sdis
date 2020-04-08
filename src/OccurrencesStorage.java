@@ -52,7 +52,6 @@ public class OccurrencesStorage {
 
     public void incChunkOcc(String fileId, int chunkNumber) {
         this.getFileOccurrences(fileId).incChunkOccurrence(chunkNumber);
-        System.out.println("\t\t"+this.chunkOccurrences.get(fileId).getListOccurrences());
     }
 
     public OccurrenceInfo getFileOccurrences(String fileId) {

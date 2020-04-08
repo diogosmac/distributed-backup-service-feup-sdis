@@ -256,8 +256,8 @@ public class Peer implements PeerActionsInterface {
         return this.multicastDataRestoreChannel;
     }
 
-    public void storeChunk(Chunk chunk) {
-        this.chunkStorage.addChunk(chunk);
+    public int storeChunk(Chunk chunk) {
+        return this.chunkStorage.addChunk(chunk);
     }
 
     public void deleteFile(String fileId) {
