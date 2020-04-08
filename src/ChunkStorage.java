@@ -31,10 +31,10 @@ public class ChunkStorage {
                 String fileId = fileName.substring(0, fileName.lastIndexOf("_"));
                 if (!this.chunkStorage.containsKey(fileId))
                     this.chunkStorage.put(fileId, new ArrayList<>());
-//                int chunkNumber = Integer.parseInt(fileName.substring(
-//                        fileName.lastIndexOf("_") + 1,
-//                        fileName.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
-                this.chunkStorage.get(fileId).add(file.getName());
+                int chunkNumber = Integer.parseInt(fileName.substring(
+                        fileName.lastIndexOf("_") + 1,
+                        fileName.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+                this.chunkStorage.get(fileId).add(chunkNumber, file.getName());
                 i++;
             }
         }
@@ -60,7 +60,7 @@ public class ChunkStorage {
             fos.write(chunk.getData());
             fos.close();
             System.out.println("\t\tStored chunk #" + chunk.getNum() + ": " + chunk.getSize() + " bytes");
-            this.chunkStorage.get(fileId).add(fileName);
+            this.chunkStorage.get(fileId).add(chunk.getNum(), fileName);
         } catch (Exception e) {
             e.printStackTrace();
         }
