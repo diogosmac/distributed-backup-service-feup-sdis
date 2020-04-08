@@ -1,3 +1,5 @@
+import java.nio.charset.StandardCharsets;
+
 public class StoredChunkReceiver implements Runnable {
 
     private byte[] message;
@@ -12,7 +14,6 @@ public class StoredChunkReceiver implements Runnable {
     public void run() {
         String message = new String(this.message);
         String[] args = message.split(" ");
-//        String version = args[0];
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
         this.peer.saveChunkOccurrence(fileId, chunkNumber);

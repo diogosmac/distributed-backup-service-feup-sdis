@@ -25,7 +25,7 @@ public class Application {
                         if (args.length != 4) {
                             System.out.println("BACKUP Usage for this access point:");
                             System.out.println("\tjava Application " + peerAccessPoint + " " +
-                                    "BACKUP <file_path> <replication_degree");
+                                    "BACKUP <file_path> <replication_degree>");
                             return;
                         }
                         filePath = args[2];

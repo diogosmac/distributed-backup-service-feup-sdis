@@ -1,3 +1,5 @@
+import java.nio.charset.StandardCharsets;
+
 public class DeleteReceiver implements Runnable {
 
     private String fileId;

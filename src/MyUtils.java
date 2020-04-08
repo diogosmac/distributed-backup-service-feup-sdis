@@ -13,6 +13,8 @@ public class MyUtils {
     public final static int BASE_PORT = 1904;
 
     public final static int CHUNK_SIZE = 64 * 1000;
+    // allows for 1000 bytes of header (exaggeration for safety)
+    public final static int MESSAGE_SIZE = CHUNK_SIZE + 1000;
 
     public final static char CR = '\r';
     public final static char LF = '\n';
@@ -20,19 +22,25 @@ public class MyUtils {
 
     public final static int MAX_TRIES = 5;
 
-    public final static String DEFAULT_RESTORE_PATH = "/restored_files/";
+    public final static String DEFAULT_BACKUP_PATH = "/backup/";
+    public final static String DEFAULT_RESTORE_PATH = "/restored/";
+
+    public final static String CHUNK_FILE_EXTENSION = ".chk";
 
     public static String getRestorePath(Peer peer) {
         return "./peer" + peer.getPeerID() + DEFAULT_RESTORE_PATH;
     }
 
+    public static String getBackupPath(Peer peer) {
+        return "./peer" + peer.getPeerID() + DEFAULT_BACKUP_PATH;
+    }
 
     public static String sha256(String str) {
 
         try {
 
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            byte[] encrypted = messageDigest.digest(str.getBytes(StandardCharsets.UTF_8));
+            byte[] encrypted = messageDigest.digest(str.getBytes());
 
             StringBuilder stringBuilder = new StringBuilder();
             for (byte crypt : encrypted) {
@@ -68,7 +76,7 @@ public class MyUtils {
     }
 
     public static byte[] convertToByteArray(String text) {
-        return text.getBytes(StandardCharsets.UTF_8);
+        return text.getBytes();
     }
 
     public static byte[] concatByteArrays(byte[] firstArr, byte[] secondArr) {

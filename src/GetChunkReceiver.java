@@ -1,10 +1,14 @@
+import java.nio.charset.StandardCharsets;
+
 public class GetChunkReceiver implements Runnable {
 
     private byte[] message;
+    private int length;
     private Peer peer;
 
-    public GetChunkReceiver(byte[] message, Peer peer) {
+    public GetChunkReceiver(byte[] message, int length, Peer peer) {
         this.message = message;
+        this.length = length;
         this.peer = peer;
     }
 
@@ -22,13 +26,12 @@ public class GetChunkReceiver implements Runnable {
 
             //  <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
             String headerStr = String.join(" ", this.peer.getProtocolVersion(), "CHUNK",
-                    Integer.toString(this.peer.getPeerID()), wantedChunk.getFileID(), Integer.toString(wantedChunk.getNum()),
-                    MyUtils.CRLF + MyUtils.CRLF);
+                    Integer.toString(this.peer.getPeerID()), wantedChunk.getFileID(),
+                    Integer.toString(wantedChunk.getNum()), MyUtils.CRLF + MyUtils.CRLF);
 
 
             byte[] header = headerStr.getBytes();
             byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
-            System.out.println("[CHUNK MESSAGE] Data size = " + wantedChunk.getData().length + " | Header size = " + header.length);
 
             int msToWait = MyUtils.randomNum(0, 400);
 

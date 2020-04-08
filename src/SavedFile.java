@@ -65,7 +65,7 @@ public class SavedFile implements java.io.Serializable {
             }
 
             if (this.file.length() % MyUtils.CHUNK_SIZE == 0) {
-                this.chunks.add(new Chunk(this.id, chunkCounter, null, 0, getReplicationDegree()));
+                this.chunks.add(new Chunk(this.id, chunkCounter, new byte[0], 0, getReplicationDegree()));
             }
 
         } catch (IOException e) {
