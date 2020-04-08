@@ -213,7 +213,7 @@ public class Peer implements PeerActionsInterface {
 
     @Override
     public void delete(String filePath) throws Exception {
-        this.operations.remove(Operation.DELETE);
+        this.operations.add(Operation.DELETE);
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
@@ -224,9 +224,6 @@ public class Peer implements PeerActionsInterface {
         byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
         this.scheduler.execute(new MessageSender(deleteMessage, this.multicastControlChannel));
 
-        this.chunkOccurrences.deleteOccurrences(sf.getId());
-        System.out.flush();
-        System.out.println("DELETE " + filePath + " : Operation completed");
         System.out.println(String.join(" ", "DELETE", filePath, ":", "Operation completed"));
         System.out.flush();
         this.operations.remove(Operation.DELETE);

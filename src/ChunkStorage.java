@@ -82,6 +82,22 @@ public class ChunkStorage {
     }
 
     public void deleteFile(String fileId) {
+        List<String> chunkPaths = this.chunkStorage.get(fileId);
+        int numberDeletesFailed = 0;
+
+        for (String fileName : chunkPaths) {
+
+            String path = MyUtils.getBackupPath(this.peer);
+            File file = new File(path+fileName);
+
+            if (!file.delete()) {
+                numberDeletesFailed++;
+            }
+        }
+
+        if (numberDeletesFailed > 0)
+            System.out.println("Failed to delete " + numberDeletesFailed + " chunks.");
+
         this.chunkStorage.remove(fileId);
     }
 
