@@ -1,3 +1,4 @@
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 public class MessageReceiver implements Runnable {
@@ -56,7 +57,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Chunk #" + args[4] + ", " +
                                                                  "Number bytes: " + length);
                 System.out.flush();
-                peer.executeThread(new GetChunkReceiver(message, peer));
+                peer.executeThread(new GetChunkReceiver(message, length, peer));
                 break;
 
             case "CHUNK":

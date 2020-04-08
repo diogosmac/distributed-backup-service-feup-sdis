@@ -1,10 +1,14 @@
+import java.nio.charset.StandardCharsets;
+
 public class GetChunkReceiver implements Runnable {
 
     private byte[] message;
+    private int length;
     private Peer peer;
 
-    public GetChunkReceiver(byte[] message, Peer peer) {
+    public GetChunkReceiver(byte[] message, int length, Peer peer) {
         this.message = message;
+        this.length = length;
         this.peer = peer;
     }
 

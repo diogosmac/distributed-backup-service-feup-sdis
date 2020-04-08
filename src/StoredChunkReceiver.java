@@ -1,3 +1,5 @@
+import java.nio.charset.StandardCharsets;
+
 public class StoredChunkReceiver implements Runnable {
 
     private byte[] message;
