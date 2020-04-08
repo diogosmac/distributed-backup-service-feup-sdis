@@ -21,7 +21,7 @@ public class ChunkReceiver implements Runnable {
                 String bodyStr = messageStr.substring(messageStr.indexOf(MyUtils.CRLF + MyUtils.CRLF) + 2);
                 byte[] body = MyUtils.convertStringToByteArray(bodyStr);
 
-                this.peer.saveRestoredChunk(chunkNumber, body);
+                this.peer.saveRestoredChunk(fileId, chunkNumber, body);
             }
 
         this.peer.saveReceivedChunkTime(fileId, chunkNumber);

@@ -65,6 +65,7 @@ public class Peer implements PeerActionsInterface {
         this.chunkOccurrences = new OccurrencesStorage();
         this.chunkStorage = new ChunkStorage(this);
         this.receivedChunks = new ConcurrentHashMap<>();
+        this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this));
 
         this.operations = new ArrayList<>();
     }
@@ -168,10 +169,11 @@ public class Peer implements PeerActionsInterface {
 
         String fileName = MyUtils.fileNameFromPath(filePath);
         String fileId = MyUtils.encryptFileID(filePath);
-        this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this) + fileName);
+
+        this.fileRestorer.addFile(fileId);
         int currentChunk = 0;
         do {
-            this.fileRestorer.addSlot();
+            this.fileRestorer.addSlot(fileId);
             //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
             String restoreMessageStr = String.join(" ",
                     this.protocolVersion, "GETCHUNK", Integer.toString(this.peerID),
@@ -185,7 +187,7 @@ public class Peer implements PeerActionsInterface {
 
                 // Starts by waiting one second, and doubles the waiting time with each iteration
                 Thread.sleep((long) (1000 * Math.pow(2, i)));
-                if (fileRestorer.getChunkData(currentChunk) != null) {
+                if (fileRestorer.getChunkData(fileId, currentChunk) != null) {
                     break;
                 }
 
@@ -198,9 +200,9 @@ public class Peer implements PeerActionsInterface {
 
             }
 
-        } while (this.fileRestorer.getChunkData(currentChunk++).length == MyUtils.CHUNK_SIZE);
+        } while (this.fileRestorer.getChunkData(fileId, currentChunk++).length == MyUtils.CHUNK_SIZE);
 
-        if (this.fileRestorer.restoreFile()) {
+        if (this.fileRestorer.restoreFile(fileId, fileName)) {
             System.out.println("\tFile " + fileName + " successfully restored!");
         } else {
             System.out.println("\tFailed to restore file " + fileName);
@@ -292,8 +294,8 @@ public class Peer implements PeerActionsInterface {
         return this.operations.contains(op);
     }
 
-    public void saveRestoredChunk(int chunkNumber, byte[] data) {
-        this.fileRestorer.saveData(chunkNumber, data);
+    public void saveRestoredChunk(String fileId, int chunkNumber, byte[] data) {
+        this.fileRestorer.saveData(fileId, chunkNumber, data);
     }
 
     public void saveReceivedChunkTime(String fileId, int chunkNumber) {

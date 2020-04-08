@@ -2,49 +2,57 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FileRestorer {
 
     String path;
-    private List<byte []> fileBytes;
+    private ConcurrentHashMap<String, List<byte []>> fileData;
 
     public FileRestorer (String path) {
         this.path = path;
-        this.fileBytes = new ArrayList<>();
+        this.fileData = new ConcurrentHashMap<>();
     }
 
-    public void addSlot() {
-        this.fileBytes.add(null);
+    public void addFile(String fileId) {
+        this.fileData.put(fileId, new ArrayList<>());
     }
 
-    public byte[] getChunkData(int chunkNumber) {
-        return this.fileBytes.get(chunkNumber);
+    public void addSlot(String fileId) {
+        this.fileData.get(fileId).add(null);
     }
 
-    public void saveData(int chunkNumber, byte[] data) {
-        this.fileBytes.set(chunkNumber, data);
+    public byte[] getChunkData(String fileId, int chunkNumber) {
+        return this.fileData.get(fileId).get(chunkNumber);
     }
 
-    public boolean restoreFile() {
+    public void saveData(String fileId, int chunkNumber, byte[] data) {
+        this.fileData.get(fileId).set(chunkNumber, data);
+    }
 
-        byte[] fileData = this.fileBytes.get(0);
+    public boolean restoreFile(String fileId, String fileName) {
 
-        for (int currentChunk = 1; currentChunk < this.fileBytes.size(); currentChunk++) {
-            byte[] currentChunkData = this.fileBytes.get(currentChunk);
+        List <byte[]> fileDataLocal = this.fileData.get(fileId);
+        byte [] concatData = fileDataLocal.get(0);
+
+        for (int currentChunk = 1; currentChunk < fileDataLocal.size(); currentChunk++) {
+            byte[] currentChunkData = fileDataLocal.get(currentChunk);
 
             if (currentChunkData == null)
                 return false;
             else
-                fileData = MyUtils.concatByteArrays(fileData, currentChunkData);
+                concatData = MyUtils.concatByteArrays(concatData, currentChunkData);
         }
 
         try {
-            File file = new File(this.path);
+            File file = new File(this.path+fileName);
+
             if (file.getParentFile().mkdirs()) {
                 System.out.println("\tCreated missing ./restored directory.");
             }
+
             FileOutputStream fos = new FileOutputStream(file, false);
-            fos.write(fileData);
+            fos.write(concatData);
             fos.close();
         } catch (Exception e) {
             System.out.println("\tError while writing file!");
