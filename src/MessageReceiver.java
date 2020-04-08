@@ -32,8 +32,7 @@ public class MessageReceiver implements Runnable {
                                                                  "Chunk #" + args[4] + ", " +
                                                                  "Number bytes: " + length);
                 System.out.flush();
-                int interval = MyUtils.randomNum(0, 400);
-                peer.scheduleThread(new PutChunkReceiver(message, length, peer), interval, TimeUnit.MILLISECONDS);
+                peer.executeThread(new PutChunkReceiver(message, length, peer));
                 break;
 
             case "STORED":
