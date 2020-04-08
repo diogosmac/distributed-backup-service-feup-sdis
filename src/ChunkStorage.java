@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,14 +8,41 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ChunkStorage {
 
-    // Key:     <file_id>:<chunk_number>
+    // Key:     <file_id>
     // Value:   Paths of the chunks that make up the file
     private ConcurrentHashMap<String, List<String>> chunkStorage;
     private Peer peer;
+    private String dirPath;
 
     public ChunkStorage(Peer peer) {
         this.chunkStorage = new ConcurrentHashMap<>();
         this.peer = peer;
+        this.dirPath = MyUtils.getBackupPath(peer);
+        this.loadChunks();
+    }
+
+    private void loadChunks() {
+        int i = 0;
+        File dir = new File(dirPath);
+        File[] dirListing = dir.listFiles();
+        if (dirListing != null) {
+            for (File file : dirListing) {
+                String fileName = file.getName();
+                String fileId = fileName.substring(0, fileName.lastIndexOf("_"));
+                if (!this.chunkStorage.containsKey(fileId))
+                    this.chunkStorage.put(fileId, new ArrayList<>());
+//                int chunkNumber = Integer.parseInt(fileName.substring(
+//                        fileName.lastIndexOf("_") + 1,
+//                        fileName.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+                this.chunkStorage.get(fileId).add(file.getName());
+                i++;
+            }
+        }
+
+        if (i != 0)
+            System.out.println("\n\tFound " + i + " files in memory!\n");
+        else System.out.println();
+
     }
 
     public void addChunk(Chunk chunk) {
@@ -22,9 +50,9 @@ public class ChunkStorage {
         if (!this.chunkStorage.containsKey(fileId)) {
             this.chunkStorage.put(fileId, new ArrayList<>());
         }
-        String filePath = chunk.getFileID() + "_" + chunk.getNum() + MyUtils.CHUNK_FILE_EXTENSION;
+        String fileName = chunk.getFileID() + "_" + chunk.getNum() + MyUtils.CHUNK_FILE_EXTENSION;
         try {
-            File file = new File(MyUtils.getBackupPath(peer) + filePath);
+            File file = new File(dirPath + fileName);
             if (file.getParentFile().mkdirs()) {
                 System.out.println("\tCreated missing ./backup directory.");
             }
@@ -32,7 +60,7 @@ public class ChunkStorage {
             fos.write(chunk.getData());
             fos.close();
             System.out.println("\t\tStored chunk #" + chunk.getNum() + ": " + chunk.getSize() + " bytes");
-            this.chunkStorage.get(fileId).add(filePath);
+            this.chunkStorage.get(fileId).add(fileName);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -56,7 +84,7 @@ public class ChunkStorage {
         if (filePath == null)
             return null;
 
-        File file = new File(MyUtils.getBackupPath(peer) + filePath);
+        File file = new File(dirPath + filePath);
         try {
             FileInputStream fis = new FileInputStream(file);
             byte[] buffer = new byte[MyUtils.CHUNK_SIZE];

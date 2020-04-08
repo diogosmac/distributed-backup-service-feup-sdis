@@ -1,4 +1,3 @@
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 public class PutChunkReceiver implements Runnable {
@@ -22,9 +21,7 @@ public class PutChunkReceiver implements Runnable {
         int numBytes = 0;
         if (!this.peer.hasChunk(fileId, chunkNumber)) {
             String body = message.substring(message.indexOf(MyUtils.CRLF + MyUtils.CRLF) + 2); // Skips both <CRLF>
-//            System.out.println(" ==> Body length: " + body.length());
             bodyBytes = MyUtils.convertStringToByteArray(body);
-//            System.out.println(" ==> Body bytes length: " + bodyBytes.length);
             numBytes = bodyBytes.length;
         }
 
@@ -43,13 +40,13 @@ public class PutChunkReceiver implements Runnable {
         Chunk receivedChunk = buildChunk();
         if (receivedChunk.getData() != null) {
             this.peer.storeChunk(receivedChunk);
-
-            String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());
-            int interval = MyUtils.randomNum(0, 400);
-            peer.scheduleThread(new MessageSender(
-                    MyUtils.convertStringToByteArray(storedMessage),
-                    peer.getMulticastControlChannel()), interval, TimeUnit.MILLISECONDS);
         }
+
+        String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());
+        int interval = MyUtils.randomNum(0, 400);
+        peer.scheduleThread(new MessageSender(
+                MyUtils.convertStringToByteArray(storedMessage),
+                peer.getMulticastControlChannel()), interval, TimeUnit.MILLISECONDS);
     }
 
 }

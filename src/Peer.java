@@ -163,7 +163,6 @@ public class Peer implements PeerActionsInterface {
     @Override
     public void restore(String filePath) throws Exception {
         this.operations.add(Operation.RESTORE);
-        System.out.println("\n[WIP] Restore");
         System.out.println("\nRestore > File: " + filePath);
 
         String fileName = MyUtils.fileNameFromPath(filePath);
@@ -192,8 +191,8 @@ public class Peer implements PeerActionsInterface {
                 if (i == MyUtils.MAX_TRIES - 1) {
                     System.out.println("RESTORE " + filePath + " : Operation failed");
                     System.out.println("Couldn't get data from peers for chunk #" + currentChunk);
-//                    this.operations.remove(Operation.RESTORE);
-//                    return;
+                    this.operations.remove(Operation.RESTORE);
+                    return;
                 }
 
             }
