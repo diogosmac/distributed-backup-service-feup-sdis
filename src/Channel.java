@@ -30,7 +30,7 @@ public class Channel implements Runnable {
 
             DatagramPacket messagePacket = new DatagramPacket(message, message.length, ADDRESS, PORT);
             socket.send(messagePacket);
-            String msg = new String(message);
+            String msg = MyUtils.convertByteArrayToString(message);
             String[] msgParts = msg.split(" ");
             System.out.println("\tMessage sent              | Type: " + msgParts[1] + ", " +
                                                              "Sender: " + msgParts[2] + ", " +

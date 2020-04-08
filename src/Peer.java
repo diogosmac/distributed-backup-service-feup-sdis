@@ -127,7 +127,7 @@ public class Peer implements PeerActionsInterface {
 
             this.chunkOccurrences.addChunkSlot(sf.getId());
 
-            byte[] headerBytes = header.getBytes();
+            byte[] headerBytes = MyUtils.convertStringToByteArray(header);
             byte[] chunkBytes = fileChunks.get(currentChunk).getData();
             byte[] putChunkMessage = MyUtils.concatByteArrays(headerBytes, chunkBytes);
 
@@ -180,7 +180,7 @@ public class Peer implements PeerActionsInterface {
 
             for (int i = 0; i < MyUtils.MAX_TRIES; i++) {
                 this.executeThread(new MessageSender(
-                        restoreMessageStr.getBytes(),
+                        MyUtils.convertStringToByteArray(restoreMessageStr),
                         this.multicastControlChannel));
 
                 // Starts by waiting one second, and doubles the waiting time with each iteration
@@ -221,7 +221,7 @@ public class Peer implements PeerActionsInterface {
         String header = String.join(" ",
                 this.protocolVersion, "DELETE", Integer.toString(this.peerID),
                 sf.getId(), MyUtils.CRLF + MyUtils.CRLF);
-        byte[] deleteMessage = header.getBytes();
+        byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
         this.scheduler.execute(new MessageSender(deleteMessage, this.multicastControlChannel));
 
         this.chunkOccurrences.deleteOccurrences(sf.getId());

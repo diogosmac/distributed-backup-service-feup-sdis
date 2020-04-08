@@ -47,7 +47,7 @@ public class PutChunkReceiver implements Runnable {
             String storedMessage = buildStoredMessage(receivedChunk.getFileID(), receivedChunk.getNum());
             int interval = MyUtils.randomNum(0, 400);
             peer.scheduleThread(new MessageSender(
-                    storedMessage.getBytes(),
+                    MyUtils.convertStringToByteArray(storedMessage),
                     peer.getMulticastControlChannel()), interval, TimeUnit.MILLISECONDS);
         }
     }

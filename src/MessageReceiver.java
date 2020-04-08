@@ -13,7 +13,7 @@ public class MessageReceiver implements Runnable {
     @Override
     public void run() {
 
-        String messageStr = new String(message);
+        String messageStr = MyUtils.convertByteArrayToString(message);
         String[] args = messageStr.split(" ");
         int senderId = Integer.parseInt(args[2]);
 

@@ -4,7 +4,7 @@ public class DeleteReceiver implements Runnable {
     private Peer peer;
 
     public DeleteReceiver(byte[] message, Peer peer) {
-        String messageStr = new String(message);
+        String messageStr = MyUtils.convertByteArrayToString(message);
         String[] args = messageStr.split(" ");
         this.fileId = args[3];
         this.peer = peer;

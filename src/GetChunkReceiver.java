@@ -11,7 +11,7 @@ public class GetChunkReceiver implements Runnable {
     @Override
     public void run() {
         //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-        String receivedMessage = new String(this.message);
+        String receivedMessage = MyUtils.convertByteArrayToString(this.message);
         String[] args = receivedMessage.split(" ");
 
         String fileId = args[3];
@@ -26,7 +26,7 @@ public class GetChunkReceiver implements Runnable {
                     Integer.toString(wantedChunk.getNum()), MyUtils.CRLF + MyUtils.CRLF);
 
 
-            byte[] header = headerStr.getBytes();
+            byte[] header = MyUtils.convertStringToByteArray(headerStr);
             byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
 
             int msToWait = MyUtils.randomNum(0, 400);
