@@ -77,6 +77,15 @@ public class MessageReceiver implements Runnable {
                 break;
 
 
+            case "REMOVED":
+                System.out.println("\tREMOVED Message received  | Type: " + args[1] + ", " +
+                                                                 "Sender: " + args[2] + ", " +
+                                                                 "File ID: " + args[3] + ", " +
+                                                                 "Chunk #" + args[4]);
+                System.out.flush();
+                peer.executeThread(new RemovedReceiver(message, peer));
+                break;
+
             default:
                 System.out.println("\tUnknown Message received  | " + messageStr);
                 System.out.flush();

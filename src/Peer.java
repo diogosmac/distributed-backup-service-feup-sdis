@@ -78,7 +78,13 @@ public class Peer implements PeerActionsInterface {
         scheduler.schedule(thread, interval, timeUnit);
     }
 
-    public static void main(String[] args) throws IOException {
+    public int getPeerID() { return this.peerID; }
+
+    public String getProtocolVersion() { return this.protocolVersion; }
+
+    public boolean isDoingOperation(Operation op) { return this.operations.contains(op); }
+
+    public static void main(String[] args) {
 
         if (args.length != 9) {
             System.out.println(
@@ -105,7 +111,7 @@ public class Peer implements PeerActionsInterface {
             System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
 
         } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
+            System.err.println("Peer exception : " + e.toString());
         }
     }
 
@@ -119,7 +125,7 @@ public class Peer implements PeerActionsInterface {
 
         ArrayList<Chunk> fileChunks = sf.getChunks();
         String fileName = MyUtils.fileNameFromPath(filePath);
-        this.chunkOccurrences.addFile(sf.getId(), fileName);
+        this.chunkOccurrences.addFile(sf.getId(), fileName, replicationDegree);
         for (int currentChunk = 0; currentChunk < fileChunks.size(); currentChunk++) {
 
             // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
@@ -233,8 +239,11 @@ public class Peer implements PeerActionsInterface {
 
     @Override
     public void reclaim(int amountOfSpace) throws Exception {
-        this.operations.add(Operation.RECLAIM);
         System.out.println("[WIP] Reclaim");
+        this.operations.add(Operation.RECLAIM);
+        System.out.println("\nReclaim > Amount of Space: " + amountOfSpace);
+        int freed = this.chunkStorage.reclaimSpace(amountOfSpace);
+        System.out.println("\tFreed " + freed * 0.001 + " KB of disk space");
         this.operations.remove(Operation.RECLAIM);
     }
 
@@ -245,53 +254,40 @@ public class Peer implements PeerActionsInterface {
         this.operations.remove(Operation.STATE);
     }
 
+    public Channel getMulticastControlChannel() { return this.multicastControlChannel; }
+    public Channel getMulticastDataBackupChannel() { return this.multicastDataBackupChannel; }
+    public Channel getMulticastDataRestoreChannel() { return this.multicastDataRestoreChannel; }
 
-    public Channel getMulticastControlChannel() {
-        return this.multicastControlChannel;
-    }
-
-    public Channel getMulticastDataBackupChannel() {
-        return this.multicastDataBackupChannel;
-    }
-
-    public Channel getMulticastDataRestoreChannel() {
-        return this.multicastDataRestoreChannel;
-    }
-
-    public int storeChunk(Chunk chunk) {
-        return this.chunkStorage.addChunk(chunk);
-    }
+    public int storeChunk(Chunk chunk) { return this.chunkStorage.addChunk(chunk); }
 
     public void deleteFile(String fileId) {
         this.chunkStorage.deleteFile(fileId);
     }
 
-    public boolean hasChunk(String fileId, int chunkNum) {
-        return this.chunkStorage.hasChunk(fileId, chunkNum);
-    }
+    public boolean hasChunk(String fileId, int chunkNum) { return this.chunkStorage.hasChunk(fileId, chunkNum); }
 
-    public Chunk getChunk(String fileId, int chunkNum) {
-        return this.chunkStorage.getChunk(fileId, chunkNum);
-    }
+    public Chunk getChunk(String fileId, int chunkNum) { return this.chunkStorage.getChunk(fileId, chunkNum); }
 
     public void saveChunkOccurrence(String fileId, int chunkNumber) {
         this.chunkOccurrences.incChunkOcc(fileId, chunkNumber);
     }
 
-    public void deleteOccurrences(String fileId) {
-        this.chunkOccurrences.deleteOccurrences(fileId);
+    public void saveChunkDeletion(String fileId, int chunkNumber) {
+        this.chunkOccurrences.decChunkOcc(fileId, chunkNumber);
     }
 
-    public int getPeerID() {
-        return this.peerID;
+    public void deleteOccurrences(String fileId) { this.chunkOccurrences.deleteOccurrences(fileId); }
+
+    public boolean checkChunkReplicationDegree(String fileId, int chunkNumber) {
+        return this.chunkOccurrences.checkChunkReplicationDegree(fileId, chunkNumber);
     }
 
-    public String getProtocolVersion() {
-        return this.protocolVersion;
+    public String getFileName(String fileId) {
+        return this.chunkOccurrences.getFileName(fileId);
     }
 
-    public boolean isDoingOperation(Operation op) {
-        return this.operations.contains(op);
+    public int getReplicationDegree(String fileId) {
+        return this.chunkOccurrences.getReplicationDegree(fileId);
     }
 
     public void saveRestoredChunk(String fileId, int chunkNumber, byte[] data) {

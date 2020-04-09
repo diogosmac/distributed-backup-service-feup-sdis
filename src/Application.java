@@ -84,7 +84,7 @@ public class Application {
 
 
         } catch (Exception e) {
-            System.err.println("Client exception!");
+            System.err.println("Client exception : " + e.toString());
             e.printStackTrace();
         }
 

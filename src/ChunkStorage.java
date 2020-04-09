@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class ChunkStorage {
 
@@ -79,7 +80,6 @@ public class ChunkStorage {
     }
 
     public Chunk getChunk(String fileId, int chunkNumber) {
-
         if (!this.chunkStorage.containsKey(fileId))
             return null;
 
@@ -113,7 +113,7 @@ public class ChunkStorage {
     public boolean hasChunk(String fileId, int chunkNumber) {
         if (this.chunkStorage.containsKey(fileId))
             for (String path : this.chunkStorage.get(fileId)) {
-                if (path == "")
+                if (path.equals(""))
                     continue;
 
                 String fileChunkNum = path.substring(
@@ -146,6 +146,40 @@ public class ChunkStorage {
             System.out.println("Failed to delete " + numberDeletesFailed + " chunks.");
 
         this.chunkStorage.remove(fileId);
+    }
+
+    private String buildRemovedMessage(String fileId, int chunkNumber) {
+        // <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+        return String.join(" ", peer.getProtocolVersion(), "REMOVED",
+                Integer.toString(peer.getPeerID()), fileId, Integer.toString(chunkNumber), MyUtils.CRLF + MyUtils.CRLF);
+    }
+
+    public int reclaimSpace(int amountOfSpace) {
+
+        int spaceInBytes = amountOfSpace * 1000;
+
+        int freedSpace = 0;
+        for (List<String> chunks : chunkStorage.values()) {
+            for (String path : chunks) {
+                File file = new File(MyUtils.getBackupPath(this.peer) + path);
+                long fileSize = file.length();
+                String fileId = path.substring(0, path.lastIndexOf("_"));
+                int chunkNumber = Integer.parseInt(path.substring(
+                        path.lastIndexOf("_") + 1,
+                        path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+                String removedMessage = buildRemovedMessage(fileId, chunkNumber);
+                if (file.delete()) {
+                    this.availableMemory += fileSize;
+                    freedSpace += fileSize;
+                    peer.executeThread(new MessageSender(
+                            MyUtils.convertStringToByteArray(removedMessage),
+                            peer.getMulticastControlChannel()));
+                    if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory <= spaceInBytes)
+                        return freedSpace;
+                }
+            }
+        }
+        return freedSpace;
     }
 
 }

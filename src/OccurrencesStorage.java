@@ -4,12 +4,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OccurrencesStorage {
 
-    private class OccurrenceInfo {
+    private static class OccurrenceInfo {
+
         private String fileName;
+        private int replicationDegree;
         private List<Integer> occurrences;
 
-        public OccurrenceInfo(String fileName) {
+        public OccurrenceInfo(String fileName, int replicationDegree) {
             this.fileName = fileName;
+            this.replicationDegree = replicationDegree;
             this.occurrences = new ArrayList<>();
         }
 
@@ -21,18 +24,16 @@ public class OccurrencesStorage {
             return this.occurrences.get(chunkNumber);
         }
 
-        public void incChunkOccurrence(int chunkNumber) {
-            int occurrences = getChunkOccurrences(chunkNumber) + 1;
+        public void updateChunkOccurrence(int chunkNumber, int delta) {
+            int occurrences = getChunkOccurrences(chunkNumber) + delta;
             this.occurrences.set(chunkNumber, occurrences);
         }
 
-        public String getFileName() {
-            return this.getFileName();
-        }
+        public String getFileName() { return this.fileName; }
 
-        public List<Integer> getListOccurrences() {
-            return this.occurrences;
-        }
+        public int getReplicationDegree() { return this.replicationDegree; }
+
+        public List<Integer> getListOccurrences() { return this.occurrences; }
 
     }
 
@@ -42,8 +43,8 @@ public class OccurrencesStorage {
         this.chunkOccurrences = new ConcurrentHashMap<>();
     }
 
-    public void addFile (String fileId, String fileName) {
-        this.chunkOccurrences.put(fileId, new OccurrenceInfo(fileName));
+    public void addFile (String fileId, String fileName, int replicationDegree) {
+        this.chunkOccurrences.put(fileId, new OccurrenceInfo(fileName, replicationDegree));
     }
 
     public void addChunkSlot(String fileId) {
@@ -51,7 +52,15 @@ public class OccurrencesStorage {
     }
 
     public void incChunkOcc(String fileId, int chunkNumber) {
-        this.getFileOccurrences(fileId).incChunkOccurrence(chunkNumber);
+        this.getFileOccurrences(fileId).updateChunkOccurrence(chunkNumber, 1);
+    }
+
+    public void decChunkOcc(String fileId, int chunkNumber) {
+        this.getFileOccurrences(fileId).updateChunkOccurrence(chunkNumber, -1);
+    }
+
+    public boolean checkChunkReplicationDegree(String fileId, int chunkNumber) {
+        return this.getFileOccurrences(fileId).replicationDegree > this.getChunkOccurrences(fileId, chunkNumber);
     }
 
     public OccurrenceInfo getFileOccurrences(String fileId) {
@@ -62,12 +71,10 @@ public class OccurrencesStorage {
         return this.getFileOccurrences(fileId).getChunkOccurrences(chunkNumber);
     }
 
-    public void deleteOccurrences(String fileId) {
-        this.chunkOccurrences.remove(fileId);
-    }
+    public void deleteOccurrences(String fileId) { this.chunkOccurrences.remove(fileId); }
 
-    public String getFileName(String fileID) {
-        return this.chunkOccurrences.get(fileID).getFileName();
-    }
+    public String getFileName(String fileID) { return this.chunkOccurrences.get(fileID).getFileName(); }
+
+    public int getReplicationDegree(String fileId) { return this.chunkOccurrences.get(fileId).getReplicationDegree(); }
 
 }
