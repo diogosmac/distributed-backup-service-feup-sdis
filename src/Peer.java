@@ -1,3 +1,5 @@
+import com.sun.jdi.event.StepEvent;
+
 import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -248,10 +250,14 @@ public class Peer implements PeerActionsInterface {
     }
 
     @Override
-    public void state() throws Exception {
-        this.operations.add(Operation.STATE);
+    public String state() throws Exception {
         System.out.println("[WIP] State");
+        this.operations.add(Operation.STATE);
+        String peerMemoryInfo = this.chunkStorage.getMemoryInfo();
+        String backupFilesInfo = this.chunkOccurrences.getOccurencesInfo();
+        String storedChunksInfo = this.chunkStorage.getChunkInfo();
         this.operations.remove(Operation.STATE);
+        return peerMemoryInfo + backupFilesInfo + storedChunksInfo;
     }
 
     public Channel getMulticastControlChannel() { return this.multicastControlChannel; }

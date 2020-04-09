@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OccurrencesStorage {
@@ -76,5 +77,35 @@ public class OccurrencesStorage {
     public String getFileName(String fileID) { return this.chunkOccurrences.get(fileID).getFileName(); }
 
     public int getReplicationDegree(String fileId) { return this.chunkOccurrences.get(fileId).getReplicationDegree(); }
+
+    public String getOccurencesInfo() {
+//        For each file whose backup it has initiated:
+//        The file pathname
+//        The backup service id of the file
+//        The desired replication degree
+//        For each chunk of the file:
+//        Its id
+//        Its perceived replication degree
+
+        String sectionHeader = "Backed up files Section ============\n\n";
+        String infoBody = "";
+
+        for (Map.Entry<String, OccurrenceInfo> entry : this.chunkOccurrences.entrySet()) {
+            String fileId = entry.getKey();
+            OccurrenceInfo oi = entry.getValue();
+            String fileName = oi.fileName;
+            List<Integer> occurrences = oi.occurrences;
+
+            infoBody += String.join("\n\t", "\tFile name: " + fileName, "File id: " + fileId,
+                    "Desired replication degree: " + getReplicationDegree(fileId));
+
+            for (int i = 0; i < occurrences.size(); i++) {
+                infoBody += String.join("\t\t\n", "\t\tChunk #" + i,
+                        "Perceived replication degree: " + occurrences.get(i));
+                infoBody += "\n\n";
+            }
+        }
+        return sectionHeader + infoBody;
+    }
 
 }

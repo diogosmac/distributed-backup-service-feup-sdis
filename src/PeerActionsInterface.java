@@ -10,6 +10,6 @@ public interface PeerActionsInterface extends Remote {
 
     void reclaim(int amountOfSpace) throws Exception;
 
-    void state() throws Exception;
+    String state() throws Exception;
 
 }

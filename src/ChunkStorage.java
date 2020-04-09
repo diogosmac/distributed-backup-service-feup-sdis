@@ -182,4 +182,41 @@ public class ChunkStorage {
         return freedSpace;
     }
 
+    public String getMemoryInfo() {
+        String sectionHeader = "Peer Storage Section ==============\n\n";
+
+        long max = MyUtils.PEER_MAX_MEMORY_USE;
+        long used = max - this.availableMemory;
+        int usePerc = (int) (used * 100 / max);
+        int freePerc = (int) (this.availableMemory * 100 / max);
+
+        String info = String.join("\n\t", "\tPeer id: " + this.peer.getPeerID(),
+                "Storage Capacity: " + max + "KB", "Used space: " + used + "KB (aprox. " + usePerc + "%)",
+                "Free space: " + this.availableMemory + "KB (aprox. " + freePerc + "%)");
+
+        return sectionHeader + info + "\n\n";
+    }
+
+    public String getChunkInfo() {
+        String sectionHeader = "Stored Chunks Section ==============\n\n";
+        String infoBody = "";
+
+        for (List<String> chunks : chunkStorage.values()) {
+            for (String path : chunks) {
+                File file = new File(MyUtils.getBackupPath(this.peer) + path);
+                long fileSize = file.length();
+                String fileId = path.substring(0, path.lastIndexOf("_"));
+                int chunkNumber = Integer.parseInt(path.substring(
+                        path.lastIndexOf("_") + 1,
+                        path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+
+                String chunkInfo = String.join("\n\t", "\tChunk #" + chunkNumber + " of file with id: " + fileId,
+                        "Chunk size: " + fileSize, "Perceived replication degree: -1");
+//                TODO: RD
+
+                infoBody += chunkInfo + "\n\n";
+            }
+        }
+        return sectionHeader + infoBody;
+    }
 }
