@@ -38,6 +38,10 @@ public class Peer implements PeerActionsInterface {
     // value = time of read
     private ConcurrentHashMap<String, Long> receivedChunks;
 
+    // key = fileId:chunkNumber
+    // value = time of read
+    private ConcurrentHashMap<String, Long> putChunkMessagesReclaim;
+
     private FileRestorer fileRestorer;
 
     private List<Operation> operations;
@@ -65,6 +69,7 @@ public class Peer implements PeerActionsInterface {
         this.chunkOccurrences = new OccurrencesStorage();
         this.chunkStorage = new ChunkStorage(this);
         this.receivedChunks = new ConcurrentHashMap<>();
+        this.putChunkMessagesReclaim = new ConcurrentHashMap<>();
         this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this));
 
         this.operations = new ArrayList<>();
@@ -303,6 +308,21 @@ public class Peer implements PeerActionsInterface {
         String key = String.join(":", fileId, Integer.toString(chunkNumber));
         if (this.receivedChunks.containsKey(key)) {
             long value = this.receivedChunks.get(key);
+            return (System.currentTimeMillis() - value) >= 400;
+        }
+
+        return true;
+    }
+
+    public void logPutChunkMessage(String fileId, int chunkNumber) {
+        String key = String.join(":", fileId, Integer.toString(chunkNumber));
+        this.putChunkMessagesReclaim.put(key, System.currentTimeMillis());
+    }
+
+    public boolean noRecentPutChunkMessage(String fileId, int chunkNumber) {
+        String key = String.join(":", fileId, Integer.toString(chunkNumber));
+        if (this.putChunkMessagesReclaim.containsKey(key)) {
+            long value = this.putChunkMessagesReclaim.get(key);
             return (System.currentTimeMillis() - value) >= 400;
         }
 

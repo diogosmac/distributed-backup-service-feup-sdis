@@ -11,11 +11,16 @@ public class PutChunkReceiver implements Runnable {
     }
 
     public Chunk buildChunk() {
+
         String message = MyUtils.convertByteArrayToString(this.message);
-//        System.out.println(" ==> Full message length: " + message.length());
         String[] args = message.split(" ");
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
+
+        if (this.peer.isDoingOperation(Peer.Operation.RECLAIM)) {
+            this.peer.logPutChunkMessage(fileId, chunkNumber);
+        }
+
         int repDegree = Integer.parseInt(args[5]);
         byte[] bodyBytes = null;
         int numBytes = 0;

@@ -60,7 +60,7 @@ public class OccurrencesStorage {
     }
 
     public boolean checkChunkReplicationDegree(String fileId, int chunkNumber) {
-        return this.getFileOccurrences(fileId).replicationDegree > this.getChunkOccurrences(fileId, chunkNumber);
+        return this.getFileOccurrences(fileId).replicationDegree <= this.getChunkOccurrences(fileId, chunkNumber);
     }
 
     public OccurrenceInfo getFileOccurrences(String fileId) {

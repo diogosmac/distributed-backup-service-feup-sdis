@@ -19,7 +19,10 @@ public class RemovedReceiver implements Runnable {
             int interval = MyUtils.randomNum(0, 400);
             try {
                 Thread.sleep(interval);
-                peer.backup(peer.getFileName(fileId), peer.getReplicationDegree(fileId));
+
+                if (this.peer.noRecentPutChunkMessage(fileId, chunkNumber))
+                    peer.backup(peer.getFileName(fileId), peer.getReplicationDegree(fileId));
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

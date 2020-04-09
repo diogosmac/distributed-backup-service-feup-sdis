@@ -169,6 +169,7 @@ public class ChunkStorage {
                         path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
                 String removedMessage = buildRemovedMessage(fileId, chunkNumber);
                 if (file.delete()) {
+                    this.chunkStorage.remove(fileId);
                     this.availableMemory += fileSize;
                     freedSpace += fileSize;
                     peer.executeThread(new MessageSender(
