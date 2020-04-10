@@ -235,7 +235,6 @@ public class Peer implements PeerActionsInterface {
 
     @Override
     public void reclaim(int amountOfSpace) throws Exception {
-        System.out.println("[WIP] Reclaim");
         this.operations.add(Operation.RECLAIM);
         System.out.println("\nReclaim > Amount of Space: " + amountOfSpace);
         int freed = this.chunkStorage.reclaimSpace(amountOfSpace);

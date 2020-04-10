@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -159,9 +160,11 @@ public class ChunkStorage {
 
         int freedSpace = 0;
 
-        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory > spaceInBytes)
-            for (List<String> chunks : chunkStorage.values()) {
-                for (String path : chunks) {
+        List<List<String>> chunksOfFiles = new ArrayList<>(chunkStorage.values());
+        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory > spaceInBytes) {
+            for (List<String> chunks : chunksOfFiles) {
+                for (int j = 0; j < chunks.size(); j++) {
+                    String path = chunks.get(j);
                     File file = new File(MyUtils.getBackupPath(this.peer) + path);
                     long fileSize = file.length();
                     String fileId = path.substring(0, path.lastIndexOf("_"));
@@ -179,10 +182,15 @@ public class ChunkStorage {
 
                         if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory <= spaceInBytes)
                             return freedSpace;
+
+                        j--;
                     }
                 }
             }
+        }
+
         return freedSpace;
+
     }
 
 }
