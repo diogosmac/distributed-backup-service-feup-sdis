@@ -55,15 +55,14 @@ public class OccurrencesStorage {
     }
 
     private String statusFilePath;
-//    private ConcurrentHashMap<String, OccurrenceInfo> chunkOccurrences;
-    public ConcurrentHashMap<String, OccurrenceInfo> chunkOccurrences;
+    private ConcurrentHashMap<String, OccurrenceInfo> chunkOccurrences;
 
     public OccurrencesStorage(Peer peer) {
         this.statusFilePath = MyUtils.getStatusPath(peer);
         this.chunkOccurrences = loadFromFile();
     }
 
-    public void exportToFile() {
+    private void exportToFile() {
         File file = new File(this.statusFilePath);
         if (file.getParentFile().mkdirs()) {
             String baseDir = this.statusFilePath.substring(0, this.statusFilePath.lastIndexOf('/'));
@@ -89,7 +88,7 @@ public class OccurrencesStorage {
         } catch (Exception e) { System.out.println("Exception while writing to file: " + e.toString()); }
     }
 
-    public ConcurrentHashMap<String, OccurrenceInfo> loadFromFile() {
+    private ConcurrentHashMap<String, OccurrenceInfo> loadFromFile() {
         ConcurrentHashMap<String, OccurrenceInfo> infoMap = new ConcurrentHashMap<>();
         File file = new File(this.statusFilePath);
         if (file.exists()) {
@@ -153,7 +152,13 @@ public class OccurrencesStorage {
         return this.getFileOccurrences(fileId).getOccurrenceCount(chunkNumber);
     }
 
-    public void deleteOccurrences(String fileId) { this.chunkOccurrences.remove(fileId); }
+    public void deleteOccurrences(String fileId) {
+        System.out.println("\n\n\n\nB4 DELETE");
+        this.chunkOccurrences.remove(fileId);
+        System.out.println("\n\n\n\nAFTER DELETE");
+        exportToFile();
+        System.out.println("\nExport done!\n");
+    }
 
     public String getFileName(String fileID) { return this.chunkOccurrences.get(fileID).getFileName(); }
 

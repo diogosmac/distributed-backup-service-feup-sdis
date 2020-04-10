@@ -157,27 +157,30 @@ public class ChunkStorage {
         int spaceInBytes = amountOfSpace * 1000;
 
         int freedSpace = 0;
-        for (List<String> chunks : chunkStorage.values()) {
-            for (String path : chunks) {
-                File file = new File(MyUtils.getBackupPath(this.peer) + path);
-                long fileSize = file.length();
-                String fileId = path.substring(0, path.lastIndexOf("_"));
-                int chunkNumber = Integer.parseInt(path.substring(
-                        path.lastIndexOf("_") + 1,
-                        path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
-                String removedMessage = buildRemovedMessage(fileId, chunkNumber);
-                if (file.delete()) {
-                    this.chunkStorage.remove(fileId);
-                    this.availableMemory += fileSize;
-                    freedSpace += fileSize;
-                    peer.executeThread(new MessageSender(
-                            MyUtils.convertStringToByteArray(removedMessage),
-                            peer.getMulticastControlChannel()));
-                    if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory <= spaceInBytes)
-                        return freedSpace;
+
+        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory > spaceInBytes)
+            for (List<String> chunks : chunkStorage.values()) {
+                for (String path : chunks) {
+                    File file = new File(MyUtils.getBackupPath(this.peer) + path);
+                    long fileSize = file.length();
+                    String fileId = path.substring(0, path.lastIndexOf("_"));
+                    int chunkNumber = Integer.parseInt(path.substring(
+                            path.lastIndexOf("_") + 1,
+                            path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+                    String removedMessage = buildRemovedMessage(fileId, chunkNumber);
+                    if (file.delete()) {
+                        this.chunkStorage.get(fileId).remove(path);
+                        this.availableMemory += fileSize;
+                        freedSpace += fileSize;
+                        peer.executeThread(new MessageSender(
+                                MyUtils.convertStringToByteArray(removedMessage),
+                                peer.getMulticastControlChannel()));
+
+                        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory <= spaceInBytes)
+                            return freedSpace;
+                    }
                 }
             }
-        }
         return freedSpace;
     }
 

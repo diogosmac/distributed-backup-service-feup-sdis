@@ -12,8 +12,8 @@ public class DeleteReceiver implements Runnable {
 
     @Override
     public void run() {
-        peer.deleteFile(fileId);
         peer.deleteOccurrences(fileId);
+        peer.deleteFile(fileId);
     }
 
 }
