@@ -54,9 +54,7 @@ public class FileRestorer {
             FileOutputStream fos = new FileOutputStream(file, false);
             fos.write(concatData);
             fos.close();
-        } catch (Exception e) {
-            System.out.println("\tError while writing file!");
-        }
+        } catch (Exception e) { System.out.println("\tError while writing file!"); }
 
         return true;
     }

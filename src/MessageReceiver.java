@@ -21,10 +21,8 @@ public class MessageReceiver implements Runnable {
 
         switch (messageType) {
 
-            // TODO: Implement MessageReceiver subclasses for each message type
-
             case "PUTCHUNK":
-                if (senderId == peer.getPeerID()) break;
+                if (senderId == peer.getPeerId()) break;
                 System.out.println("\tPUTCHUNK Message received | Type: " + args[1] + ", " +
                                                                  "Sender: " + args[2] + ", " +
                                                                  "Chunk #" + args[4] + ", " +
@@ -34,7 +32,7 @@ public class MessageReceiver implements Runnable {
                 break;
 
             case "STORED":
-                if (senderId == peer.getPeerID()) break;
+                if (senderId == peer.getPeerId()) break;
                 if (peer.isDoingOperation(Peer.Operation.BACKUP)) {
                     System.out.println("\tSTORED Message received   | Type: " + args[1] + ", " +
                                                                      "Sender: " + args[2] + ", " +
@@ -47,7 +45,7 @@ public class MessageReceiver implements Runnable {
 
 
             case "GETCHUNK":
-                if (senderId == peer.getPeerID()) break;
+                if (senderId == peer.getPeerId()) break;
                 System.out.println("\tGETCHUNK Message received | Type: " + args[1] + ", " +
                                                                  "Sender: " + args[2] + ", " +
                                                                  "Chunk #" + args[4] + ", " +
@@ -57,7 +55,7 @@ public class MessageReceiver implements Runnable {
                 break;
 
             case "CHUNK":
-                if (senderId == peer.getPeerID()) break;
+                if (senderId == peer.getPeerId()) break;
                 System.out.println("\tCHUNK Message received    | Type: " + args[1] + ", " +
                                                                  "Sender: " + args[2] + ", " +
                                                                  "Chunk #" + args[4] + ", " +

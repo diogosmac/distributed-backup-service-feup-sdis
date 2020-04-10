@@ -36,7 +36,7 @@ public class PutChunkReceiver implements Runnable {
     public String buildStoredMessage(String fileId, int chunkNumber) {
         // <Version> STORED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
         return String.join(" ", peer.getProtocolVersion(), "STORED",
-                Integer.toString(peer.getPeerID()), fileId, Integer.toString(chunkNumber),
+                Integer.toString(peer.getPeerId()), fileId, Integer.toString(chunkNumber),
                 MyUtils.CRLF + MyUtils.CRLF);
     }
 
@@ -46,6 +46,10 @@ public class PutChunkReceiver implements Runnable {
         if (receivedChunk.getData() != null) {
             int status = this.peer.storeChunk(receivedChunk);
             switch (status) {
+                case 0:
+                    this.peer.saveChunkOccurrence(
+                            receivedChunk.getFileID(), receivedChunk.getNum(), this.peer.getPeerId());
+                    break;
                 case 1:
                     System.out.println("Not enough space to store received chunk");
                     return;

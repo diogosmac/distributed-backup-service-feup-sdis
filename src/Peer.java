@@ -20,7 +20,7 @@ public class Peer implements PeerActionsInterface {
     }
 
     private String protocolVersion;
-    private int peerID;
+    private int peerId;
 
     private Channel multicastControlChannel;
     private Channel multicastDataBackupChannel;
@@ -46,13 +46,13 @@ public class Peer implements PeerActionsInterface {
 
     private List<Operation> operations;
 
-    public Peer(String protocolVersion, int peerID,
+    public Peer(String protocolVersion, int peerId,
                 String MCAddress, String MCPort,
                 String MDBAddress, String MDBPort,
                 String MDRAddress, String MDRPort) throws IOException {
 
         this.protocolVersion = protocolVersion;
-        this.peerID = peerID;
+        this.peerId = peerId;
 
         this.multicastControlChannel = new Channel(MCAddress, Integer.parseInt(MCPort), this,
                 "MC Control Channel is open!");
@@ -63,10 +63,10 @@ public class Peer implements PeerActionsInterface {
 
         this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(300);
 
-//        this.port = MyUtils.BASE_PORT + this.peerID;
+//        this.port = MyUtils.BASE_PORT + this.peerId;
 //        this.serverSocket = new ServerSocket(this.port);
 
-        this.chunkOccurrences = new OccurrencesStorage();
+        this.chunkOccurrences = new OccurrencesStorage(this);
         this.chunkStorage = new ChunkStorage(this);
         this.receivedChunks = new ConcurrentHashMap<>();
         this.putChunkMessagesReclaim = new ConcurrentHashMap<>();
@@ -83,7 +83,7 @@ public class Peer implements PeerActionsInterface {
         scheduler.schedule(thread, interval, timeUnit);
     }
 
-    public int getPeerID() { return this.peerID; }
+    public int getPeerId() { return this.peerId; }
 
     public String getProtocolVersion() { return this.protocolVersion; }
 
@@ -115,9 +115,7 @@ public class Peer implements PeerActionsInterface {
             peer.executeThread(peer.multicastDataRestoreChannel);
             System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
 
-        } catch (Exception e) {
-            System.err.println("Peer exception : " + e.toString());
-        }
+        } catch (Exception e) { System.err.println("Peer exception : " + e.toString()); }
     }
 
     @Override
@@ -133,10 +131,7 @@ public class Peer implements PeerActionsInterface {
         this.chunkOccurrences.addFile(sf.getId(), fileName, replicationDegree);
         for (int currentChunk = 0; currentChunk < fileChunks.size(); currentChunk++) {
 
-            // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
-            String header = String.join(" ",
-                    this.protocolVersion, "PUTCHUNK", Integer.toString(this.peerID), sf.getId(),
-                    Integer.toString(currentChunk), Integer.toString(replicationDegree), MyUtils.CRLF + MyUtils.CRLF);
+            String header = buildPutchunkHeader(sf.getId(), currentChunk, replicationDegree);
 
             this.chunkOccurrences.addChunkSlot(sf.getId());
 
@@ -185,11 +180,8 @@ public class Peer implements PeerActionsInterface {
         int currentChunk = 0;
         do {
             this.fileRestorer.addSlot(fileId);
-            //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-            String restoreMessageStr = String.join(" ",
-                    this.protocolVersion, "GETCHUNK", Integer.toString(this.peerID),
-                    fileId, Integer.toString(currentChunk), MyUtils.CRLF+MyUtils.CRLF);
 
+            String restoreMessageStr = buildGetchunkHeader(fileId, currentChunk);
 
             for (int i = 0; i < MyUtils.MAX_TRIES; i++) {
                 this.executeThread(new MessageSender(
@@ -231,9 +223,7 @@ public class Peer implements PeerActionsInterface {
         SavedFile sf = new SavedFile(filePath);
 
         // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
-        String header = String.join(" ",
-                this.protocolVersion, "DELETE", Integer.toString(this.peerID),
-                sf.getId(), MyUtils.CRLF + MyUtils.CRLF);
+        String header = buildDeleteHeader(sf.getId());
         byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
         this.scheduler.execute(new MessageSender(deleteMessage, this.multicastControlChannel));
 
@@ -263,6 +253,24 @@ public class Peer implements PeerActionsInterface {
     public Channel getMulticastDataBackupChannel() { return this.multicastDataBackupChannel; }
     public Channel getMulticastDataRestoreChannel() { return this.multicastDataRestoreChannel; }
 
+    public String buildPutchunkHeader(String fileId, int currentChunk, int replicationDegree) {
+        // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+        return String.join(" ", this.protocolVersion, "PUTCHUNK", Integer.toString(this.peerId),
+                fileId, Integer.toString(currentChunk), Integer.toString(replicationDegree), MyUtils.CRLF + MyUtils.CRLF);
+    }
+
+    public String buildGetchunkHeader(String fileId, int currentChunk) {
+        //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+        return String.join(" ", this.protocolVersion, "GETCHUNK", Integer.toString(this.peerId),
+                fileId, Integer.toString(currentChunk), MyUtils.CRLF+MyUtils.CRLF);
+    }
+
+    public String buildDeleteHeader(String fileId) {
+        // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
+        return String.join(" ", this.protocolVersion, "DELETE", Integer.toString(this.peerId),
+                fileId, MyUtils.CRLF + MyUtils.CRLF);
+    }
+
     public int storeChunk(Chunk chunk) { return this.chunkStorage.addChunk(chunk); }
 
     public void deleteFile(String fileId) {
@@ -273,12 +281,12 @@ public class Peer implements PeerActionsInterface {
 
     public Chunk getChunk(String fileId, int chunkNum) { return this.chunkStorage.getChunk(fileId, chunkNum); }
 
-    public void saveChunkOccurrence(String fileId, int chunkNumber) {
-        this.chunkOccurrences.incChunkOcc(fileId, chunkNumber);
+    public void saveChunkOccurrence(String fileId, int chunkNumber, int peerId) {
+        this.chunkOccurrences.addChunkOcc(fileId, chunkNumber, peerId);
     }
 
-    public void saveChunkDeletion(String fileId, int chunkNumber) {
-        this.chunkOccurrences.decChunkOcc(fileId, chunkNumber);
+    public void saveChunkDeletion(String fileId, int chunkNumber, int peerId) {
+        this.chunkOccurrences.remChunkOcc(fileId, chunkNumber, peerId);
     }
 
     public void deleteOccurrences(String fileId) { this.chunkOccurrences.deleteOccurrences(fileId); }

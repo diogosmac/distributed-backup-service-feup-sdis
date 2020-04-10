@@ -1,11 +1,9 @@
-import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class ChunkStorage {
 
@@ -151,7 +149,7 @@ public class ChunkStorage {
     private String buildRemovedMessage(String fileId, int chunkNumber) {
         // <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
         return String.join(" ", peer.getProtocolVersion(), "REMOVED",
-                Integer.toString(peer.getPeerID()), fileId, Integer.toString(chunkNumber), MyUtils.CRLF + MyUtils.CRLF);
+                Integer.toString(peer.getPeerId()), fileId, Integer.toString(chunkNumber), MyUtils.CRLF + MyUtils.CRLF);
     }
 
     public int reclaimSpace(int amountOfSpace) {
