@@ -1,9 +1,9 @@
 public class RemovedReceiver implements Runnable {
 
-    private int senderId;
-    private String fileId;
-    private int chunkNumber;
-    private Peer peer;
+    private final int senderId;
+    private final String fileId;
+    private final int chunkNumber;
+    private final Peer peer;
 
     public RemovedReceiver(byte[] message, Peer peer) {
         String messageStr = MyUtils.convertByteArrayToString(message);
@@ -16,19 +16,20 @@ public class RemovedReceiver implements Runnable {
 
     @Override
     public void run() {
-        peer.saveChunkDeletion(fileId, chunkNumber, senderId);
-        if (!peer.checkChunkReplicationDegree(fileId, chunkNumber)) {
-            if (peer.hasChunk(fileId, chunkNumber)){
+        peer.getChunkOccurrences().saveChunkDeletion(fileId, chunkNumber, senderId);
+        if (!peer.getChunkOccurrences().checkChunkReplicationDegree(fileId, chunkNumber)) {
+            if (peer.getChunkStorage().hasChunk(fileId, chunkNumber)){
                 int interval = MyUtils.randomNum(0, 400);
                 try {
 
                     Thread.sleep(interval);
                     if (this.peer.noRecentPutChunkMessage(fileId, chunkNumber)) {
 
-                        String header = peer.buildPutchunkHeader(fileId, chunkNumber, peer.getReplicationDegree(fileId));
+                        String header = peer.buildPutchunkHeader(
+                                fileId, chunkNumber, peer.getChunkOccurrences().getReplicationDegree(fileId));
 
                         byte[] headerBytes = MyUtils.convertStringToByteArray(header);
-                        byte[] chunkBytes = peer.getChunk(fileId, chunkNumber).getData();
+                        byte[] chunkBytes = peer.getChunkStorage().getChunk(fileId, chunkNumber).getData();
                         byte[] putChunkMessage = MyUtils.concatByteArrays(headerBytes, chunkBytes);
 
                         this.peer.executeThread(new MessageSender(putChunkMessage,

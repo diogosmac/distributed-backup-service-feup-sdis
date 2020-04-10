@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FileRestorer {
 
     String path;
-    private ConcurrentHashMap<String, List<byte []>> fileData;
+    private final ConcurrentHashMap<String, List<byte []>> fileData;
 
     public FileRestorer (String path) {
         this.path = path;
@@ -26,7 +26,7 @@ public class FileRestorer {
         return this.fileData.get(fileId).get(chunkNumber);
     }
 
-    public void saveData(String fileId, int chunkNumber, byte[] data) {
+    public void saveRestoredChunk(String fileId, int chunkNumber, byte[] data) {
         this.fileData.get(fileId).set(chunkNumber, data);
     }
 

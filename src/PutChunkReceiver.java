@@ -2,8 +2,8 @@ import java.util.concurrent.TimeUnit;
 
 public class PutChunkReceiver implements Runnable {
 
-    private byte[] message;
-    private Peer peer;
+    private final byte[] message;
+    private final Peer peer;
 
     public PutChunkReceiver(byte[] message, Peer peer) {
         this.message = message;
@@ -24,7 +24,7 @@ public class PutChunkReceiver implements Runnable {
         int repDegree = Integer.parseInt(args[5]);
         byte[] bodyBytes = null;
         int numBytes = 0;
-        if (!this.peer.hasChunk(fileId, chunkNumber)) {
+        if (!this.peer.getChunkStorage().hasChunk(fileId, chunkNumber)) {
             String body = message.substring(message.indexOf(MyUtils.CRLF + MyUtils.CRLF) + 2); // Skips both <CRLF>
             bodyBytes = MyUtils.convertStringToByteArray(body);
             numBytes = bodyBytes.length;
@@ -44,10 +44,11 @@ public class PutChunkReceiver implements Runnable {
     public void run() {
         Chunk receivedChunk = buildChunk();
         if (receivedChunk.getData() != null) {
-            int status = this.peer.storeChunk(receivedChunk);
+            this.peer.getChunkOccurrences().addFile(receivedChunk.getFileID(), receivedChunk.getReplicationDegree());
+            int status = this.peer.getChunkStorage().addChunk(receivedChunk);
             switch (status) {
                 case 0:
-                    this.peer.saveChunkOccurrence(
+                    this.peer.getChunkOccurrences().saveChunkOccurrence(
                             receivedChunk.getFileID(), receivedChunk.getNum(), this.peer.getPeerId());
                     break;
                 case 1:

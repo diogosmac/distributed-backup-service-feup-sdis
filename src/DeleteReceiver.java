@@ -1,7 +1,7 @@
 public class DeleteReceiver implements Runnable {
 
-    private String fileId;
-    private Peer peer;
+    private final String fileId;
+    private final Peer peer;
 
     public DeleteReceiver(byte[] message, Peer peer) {
         String messageStr = MyUtils.convertByteArrayToString(message);
@@ -12,8 +12,8 @@ public class DeleteReceiver implements Runnable {
 
     @Override
     public void run() {
-        peer.deleteOccurrences(fileId);
-        peer.deleteFile(fileId);
+        peer.getChunkOccurrences().deleteOccurrences(fileId);
+        peer.getChunkStorage().deleteFile(fileId);
     }
 
 }

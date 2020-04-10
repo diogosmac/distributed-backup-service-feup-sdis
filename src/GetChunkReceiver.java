@@ -1,7 +1,7 @@
 public class GetChunkReceiver implements Runnable {
 
-    private byte[] message;
-    private Peer peer;
+    private final byte[] message;
+    private final Peer peer;
 
     public GetChunkReceiver(byte[] message, Peer peer) {
         this.message = message;
@@ -24,9 +24,9 @@ public class GetChunkReceiver implements Runnable {
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
 
-        if (this.peer.hasChunk(fileId, chunkNumber)) {
+        if (this.peer.getChunkStorage().hasChunk(fileId, chunkNumber)) {
 
-            Chunk wantedChunk = this.peer.getChunk(fileId, chunkNumber);
+            Chunk wantedChunk = this.peer.getChunkStorage().getChunk(fileId, chunkNumber);
             String headerStr = buildChunkHeader(wantedChunk.getFileID(), wantedChunk.getNum());
 
             byte[] header = MyUtils.convertStringToByteArray(headerStr);

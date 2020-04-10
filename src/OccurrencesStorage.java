@@ -8,7 +8,10 @@ public class OccurrencesStorage {
 
         private String fileName;
         private int replicationDegree;
-        private List<List<Integer>> occurrences;
+
+        // The INNER lists correspond to the IDs of the peers that have STORED each chunk
+        // The OUTER list corresponds to the various chunks that compose a file
+        private final List<List<Integer>> occurrences;
 
         public OccurrenceInfo(String fileName, int replicationDegree) {
             this.fileName = fileName;
@@ -43,8 +46,10 @@ public class OccurrencesStorage {
         }
 
         public String getFileName() { return this.fileName; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
 
         public int getReplicationDegree() { return this.replicationDegree; }
+        public void setReplicationDegree(int replicationDegree) { this.replicationDegree = replicationDegree; }
 
         public int getNumChunks() { return this.occurrences.size(); }
 
@@ -54,8 +59,8 @@ public class OccurrencesStorage {
 
     }
 
-    private String statusFilePath;
-    private ConcurrentHashMap<String, OccurrenceInfo> chunkOccurrences;
+    private final String statusFilePath;
+    private final ConcurrentHashMap<String, OccurrenceInfo> chunkOccurrences;
 
     public OccurrencesStorage(Peer peer) {
         this.statusFilePath = MyUtils.getStatusPath(peer);
@@ -119,23 +124,38 @@ public class OccurrencesStorage {
         return infoMap;
     }
 
+    public void addFile (String fileId, int replicationDegree) {
+        addFile(fileId, "", replicationDegree);
+    }
+
     public void addFile (String fileId, String fileName, int replicationDegree) {
         if (!this.chunkOccurrences.containsKey(fileId)) {
             this.chunkOccurrences.put(fileId, new OccurrenceInfo(fileName, replicationDegree));
-            exportToFile();
         }
+        else {
+            if (!fileName.equals(""))
+                getFileOccurrences(fileId).setFileName(fileName);
+            getFileOccurrences(fileId).setReplicationDegree(replicationDegree);
+        }
+        exportToFile();
+
     }
 
-    public void addChunkSlot(String fileId) {
-        this.chunkOccurrences.get(fileId).addChunkSlot();
+    public boolean hasChunkSlot(String fileId, int chunkNumber) {
+        return getFileOccurrences(fileId).getNumChunks() > chunkNumber;
     }
 
-    public void addChunkOcc(String fileId, int chunkNumber, int peerId) {
+    public void addChunkSlot(String fileId, int chunkNumber) {
+        while (!hasChunkSlot(fileId, chunkNumber))
+            getFileOccurrences(fileId).addChunkSlot();
+    }
+
+    public void saveChunkOccurrence(String fileId, int chunkNumber, int peerId) {
         if (this.getFileOccurrences(fileId).addChunkOccurrence(chunkNumber, peerId))
             exportToFile();
     }
 
-    public void remChunkOcc(String fileId, int chunkNumber, int peerId) {
+    public void saveChunkDeletion(String fileId, int chunkNumber, int peerId) {
         if (this.getFileOccurrences(fileId).removeChunkOccurrence(chunkNumber, peerId))
             exportToFile();
     }

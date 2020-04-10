@@ -9,9 +9,9 @@ public class ChunkStorage {
 
     // Key:     <file_id>
     // Value:   Paths of the chunks that make up the file
-    private ConcurrentHashMap<String, List<String>> chunkStorage;
-    private Peer peer;
-    private String dirPath;
+    private final ConcurrentHashMap<String, List<String>> chunkStorage;
+    private final Peer peer;
+    private final String dirPath;
     private long availableMemory;
 
     public ChunkStorage(Peer peer) {
@@ -109,7 +109,7 @@ public class ChunkStorage {
     }
 
     public boolean hasChunk(String fileId, int chunkNumber) {
-        if (this.chunkStorage.containsKey(fileId))
+        if (this.chunkStorage.containsKey(fileId)) {
             for (String path : this.chunkStorage.get(fileId)) {
                 if (path.equals(""))
                     continue;
@@ -120,6 +120,7 @@ public class ChunkStorage {
                 if (Integer.parseInt(fileChunkNum) == chunkNumber)
                     return true;
             }
+        }
         return false;
     }
 

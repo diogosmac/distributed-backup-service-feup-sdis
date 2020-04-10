@@ -1,11 +1,11 @@
 public class Chunk {
 
-    private int num;
-    private byte[] data;
-    private String fileID;
-    private int replicationDegree;
+    private final int num;
+    private final byte[] data;
+    private final String fileID;
+    private final int replicationDegree;
     private int currReplDegree = 0;
-    private int size;
+    private final int size;
 
     public Chunk(String fileID, int num, byte[] data, int size, int replicationDegree) {
         this.num = num;

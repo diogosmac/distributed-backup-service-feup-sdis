@@ -2,18 +2,14 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 
 public class SavedFile implements java.io.Serializable {
 
-    private String id;
-    private File file;
+    private final String id;
+    private final File file;
     private int replicationDegree;
     private ArrayList<Chunk> chunks;
 

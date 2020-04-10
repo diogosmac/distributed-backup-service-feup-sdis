@@ -1,8 +1,8 @@
 public class MessageReceiver implements Runnable {
 
-    private byte[] message;
-    private int length;
-    private Peer peer;
+    private final byte[] message;
+    private final int length;
+    private final Peer peer;
 
     public MessageReceiver(byte[] message, int length, Peer peer) {
         this.message = MyUtils.trimMessage(message, length);
@@ -33,14 +33,12 @@ public class MessageReceiver implements Runnable {
 
             case "STORED":
                 if (senderId == peer.getPeerId()) break;
-                if (peer.isDoingOperation(Peer.Operation.BACKUP)) {
-                    System.out.println("\tSTORED Message received   | Type: " + args[1] + ", " +
-                                                                     "Sender: " + args[2] + ", " +
-                                                                     "Chunk #" + args[4] + ", " +
-                                                                     "Number bytes: " + length);
-                    System.out.flush();
-                    peer.executeThread(new StoredChunkReceiver(message, peer));
-                }
+                System.out.println("\tSTORED Message received   | Type: " + args[1] + ", " +
+                        "Sender: " + args[2] + ", " +
+                        "Chunk #" + args[4] + ", " +
+                        "Number bytes: " + length);
+                System.out.flush();
+                peer.executeThread(new StoredChunkReceiver(message, peer));
                 break;
 
 

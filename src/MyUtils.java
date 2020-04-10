@@ -98,7 +98,7 @@ public class MyUtils {
         return result;
     }
 
-    public static String convertByteArrayToString(byte [] array) {
+    public static String convertByteArrayToString(byte[] array) {
         // ISO_8859_1 is 1 to 1 conversion
         return new String(array, StandardCharsets.ISO_8859_1);
     }

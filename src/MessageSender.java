@@ -1,7 +1,7 @@
 public class MessageSender implements Runnable {
 
-    private byte[] message;
-    private Channel channel;
+    private final byte[] message;
+    private final Channel channel;
 
     public MessageSender(byte[] message, Channel channel) {
         this.message = message;
