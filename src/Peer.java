@@ -1,6 +1,4 @@
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -75,6 +73,11 @@ public class Peer implements PeerActionsInterface {
         this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this));
 
         this.operations = new ArrayList<>();
+
+        if (this.clearDeleteBacklog())
+            System.out.println("Delete backlog successfully cleaned!");
+        else
+            System.out.println("Error cleaning delete backlog");
     }
 
     public void executeThread(Runnable thread) {
@@ -327,7 +330,8 @@ public class Peer implements PeerActionsInterface {
                     System.out.println("File path = " + currentFile.getPath());
 
                     try {
-                        File deleteRequestFile = new File(currentFile.getPath() + "/deleteRequests.rq");
+                        File deleteRequestFile = new File(currentFile.getPath() +
+                                                                    MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
                         deleteRequestFile.createNewFile(); // if file already exists will do nothing
                         FileOutputStream oFile = new FileOutputStream(deleteRequestFile, true);
 
@@ -337,5 +341,30 @@ public class Peer implements PeerActionsInterface {
                 }
             }
         }
+    }
+
+    public boolean clearDeleteBacklog() {
+        File deleteBacklog = new File(MyUtils.getPeerPath(this) + MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
+        if (deleteBacklog.exists()) {
+            try {
+                FileInputStream iFile = new FileInputStream(deleteBacklog);
+                BufferedReader br = new BufferedReader(new InputStreamReader(iFile));
+
+                String fileId;
+                while ((fileId = br.readLine()) != null) {
+                    this.getChunkOccurrences().deleteOccurrences(fileId);
+                    this.getChunkStorage().deleteFile(fileId);
+                }
+
+                if (!deleteBacklog.delete())
+                    return false;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        return true;
     }
 }

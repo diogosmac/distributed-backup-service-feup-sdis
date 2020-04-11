@@ -26,6 +26,7 @@ public class MyUtils {
     public final static String DEFAULT_BACKUP_PATH = "/backup/";
     public final static String DEFAULT_RESTORE_PATH = "/restored/";
     public final static String DEFAULT_STATUS_PATH = "/status.sdis";
+    public final static String DEFAULT_DELETE_BACKLOG_PATH = "/deleteRequests.rq";
 
     public final static String CHUNK_FILE_EXTENSION = ".chk";
 
