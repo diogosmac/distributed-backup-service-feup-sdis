@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -223,6 +225,8 @@ public class Peer implements PeerActionsInterface {
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
+        registerDeleteRequest(sf.getId());
+        System.out.println("Write to file finished");
         // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
         String header = buildDeleteHeader(sf.getId());
         byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
@@ -310,4 +314,28 @@ public class Peer implements PeerActionsInterface {
         return true;
     }
 
+    private void registerDeleteRequest(String fileId) {
+        String peerPathPattern = "peer"; // Used to search for all peer folders
+        File [] rootDir = new File(".").listFiles(); // All files on the root directory
+
+        if (rootDir != null )
+        for (File currentFile :  rootDir) {
+            if (currentFile.isDirectory()) {
+                String fileName = currentFile.getName();
+                System.out.println("FileName = " + fileName);
+                if (fileName.substring(0, fileName.length() - 1).equals(peerPathPattern)) {
+                    System.out.println("File path = " + currentFile.getPath());
+
+                    try {
+                        File deleteRequestFile = new File(currentFile.getPath() + "/deleteRequests.rq");
+                        deleteRequestFile.createNewFile(); // if file already exists will do nothing
+                        FileOutputStream oFile = new FileOutputStream(deleteRequestFile, true);
+
+                        oFile.write(MyUtils.convertStringToByteArray(fileId + "\n"));
+                    } catch (IOException e) { e.printStackTrace(); }
+
+                }
+            }
+        }
+    }
 }

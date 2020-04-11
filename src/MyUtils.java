@@ -29,9 +29,10 @@ public class MyUtils {
 
     public final static String CHUNK_FILE_EXTENSION = ".chk";
 
-    public static String getRestorePath(Peer peer) { return "./peer" + peer.getPeerId() + DEFAULT_RESTORE_PATH; }
-    public static String getBackupPath(Peer peer) { return "./peer" + peer.getPeerId() + DEFAULT_BACKUP_PATH; }
-    public static String getStatusPath(Peer peer) { return "./peer" + peer.getPeerId() + DEFAULT_STATUS_PATH; }
+    public static String getPeerPath(Peer peer) { return "./peer" + peer.getPeerId(); }
+    public static String getRestorePath(Peer peer) { return getPeerPath(peer) + DEFAULT_RESTORE_PATH; }
+    public static String getBackupPath(Peer peer) { return getPeerPath(peer) + DEFAULT_BACKUP_PATH; }
+    public static String getStatusPath(Peer peer) { return getPeerPath(peer) + DEFAULT_STATUS_PATH; }
 
     public static String sha256(String str) {
 
