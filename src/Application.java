@@ -73,7 +73,8 @@ public class Application {
                                     "STATE");
                             return;
                         }
-                        peer.state();
+                        String response = peer.state();
+                        System.out.println(response);
                         break;
 
                     default:

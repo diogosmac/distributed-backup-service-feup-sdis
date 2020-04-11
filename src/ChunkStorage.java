@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -193,4 +192,59 @@ public class ChunkStorage {
 
     }
 
+    public String getMemoryInfo() {
+
+        String sectionHeader = "-- Peer Storage Section --\n|\n";
+        String sectionFooter = "\n|\n--------------------------";
+
+        long max = MyUtils.PEER_MAX_MEMORY_USE;
+        long used = max - this.availableMemory;
+        int usePercentage = (int) (used * 100 / max);
+        int freePercentage = (int) (this.availableMemory * 100 / max);
+
+        String info = String.join("\n|\t",
+                "|\tPeer ID: " + this.peer.getPeerId(),
+                "Storage Capacity: " + max * 0.001 + " KB",
+                "Used space: " + used * 0.001 + " KB\t(approx. " + usePercentage + "%)",
+                "Free space: " + this.availableMemory * 0.001 + " KB\t(approx. " + freePercentage + "%)");
+
+        return sectionHeader + info + sectionFooter + "\n\n";
+
+    }
+
+    public String getChunkInfo() {
+
+        String sectionHeader = "-- Stored Chunks Section --\n";
+        String sectionFooter = "|\n---------------------------";
+        StringBuilder infoBody = new StringBuilder();
+
+        for (List<String> chunks : chunkStorage.values()) {
+
+            for (String path : chunks) {
+
+                infoBody.append("|\n");
+
+                File file = new File(MyUtils.getBackupPath(this.peer) + path);
+                long fileSize = file.length();
+                String fileId = path.substring(0, path.lastIndexOf("_"));
+                int chunkNumber = Integer.parseInt(path.substring(
+                        path.lastIndexOf("_") + 1,
+                        path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+
+                int replicationDegree = this.peer.getChunkOccurrences().getChunkOccurrences(fileId, chunkNumber);
+
+                String chunkInfo = String.join("\n|\t",
+                        "|\tChunk #" + chunkNumber + " of file with id: " + fileId,
+                        "Chunk size: " + fileSize * 0.001 + " KB",
+                        "Perceived replication degree: " + replicationDegree);
+
+                infoBody.append(chunkInfo).append('\n');
+
+            }
+
+        }
+
+        return sectionHeader + infoBody + sectionFooter + "\n\n";
+
+    }
 }

@@ -1,5 +1,8 @@
 import java.io.*;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OccurrencesStorage {
@@ -22,7 +25,11 @@ public class OccurrencesStorage {
 
         public void addChunkSlot() { this.occurrences.add(new ArrayList<>()); }
 
-        public void loadChunk(List<Integer> peers) { this.occurrences.add(peers); }
+        public void loadChunk(List<Integer> peers, int chunkNumber) {
+            for (int peer : peers) {
+                addChunkOccurrence(chunkNumber, peer);
+            }
+        }
 
         public boolean removeChunkOccurrence(int chunkNumber, int peerId) {
             List<Integer> chunkOccurrences = this.occurrences.get(chunkNumber);
@@ -107,16 +114,18 @@ public class OccurrencesStorage {
                         int rd = Integer.parseInt(line.substring(line.indexOf("rd: ") + 4));
                         OccurrenceInfo info = new OccurrenceInfo(fileName, rd);
                         while (!(line = br.readLine()).equals("")) {
+                            int chunkNumber = Integer.parseInt(line.substring(0, line.indexOf(" - ")));
                             List<Integer> peers = new ArrayList<>();
                             String peersStr = line.substring(line.indexOf(" - ") + 3).strip();
                             if (peersStr.length() > 0)
                                 for (String peer : peersStr.split(" "))
                                     peers.add(Integer.parseInt(peer));
-                            info.loadChunk(peers);
+                            info.loadChunk(peers, chunkNumber);
                         }
                         infoMap.put(fileId, info);
                     }
                 }
+                br.close();
             } catch (Exception e) {
                 System.out.println("Exception while reading from file: " + e.toString());
             }
@@ -173,15 +182,41 @@ public class OccurrencesStorage {
     }
 
     public void deleteOccurrences(String fileId) {
-        System.out.println("\n\n\n\nB4 DELETE");
         this.chunkOccurrences.remove(fileId);
-        System.out.println("\n\n\n\nAFTER DELETE");
         exportToFile();
-        System.out.println("\nExport done!\n");
     }
 
-    public String getFileName(String fileID) { return this.chunkOccurrences.get(fileID).getFileName(); }
-
     public int getReplicationDegree(String fileId) { return this.chunkOccurrences.get(fileId).getReplicationDegree(); }
+
+    public String getOccurrencesInfo() {
+
+        String sectionHeader = "-- Backed up files Section --\n";
+        String sectionFooter = "|\n-----------------------------";
+        StringBuilder infoBody = new StringBuilder();
+
+        for (Map.Entry<String, OccurrenceInfo> entry : this.chunkOccurrences.entrySet()) {
+
+            OccurrenceInfo oi = entry.getValue();
+            String fileName = oi.getFileName();
+            if (fileName.equals(""))
+                continue;
+            String fileId = entry.getKey();
+            int replicationDegree = oi.getReplicationDegree();
+
+            infoBody.append("|\n");
+            infoBody.append("|\tFile Name: ").append(fileName).append("\n");
+            infoBody.append("|\tFile ID (for the Backup Service): ").append(fileId).append("\n");
+            infoBody.append("|\tDesired Replication Degree: ").append(replicationDegree).append("\n");
+
+            for (int chunk = 0; chunk < oi.getNumChunks(); chunk++) {
+                infoBody.append("|\t\tChunk #").append(chunk).append(
+                        " - Perceived Replication Degree: ").append(oi.getOccurrenceCount(chunk)).append('\n');
+            }
+
+        }
+
+        return sectionHeader + infoBody + sectionFooter + "\n\n";
+
+    }
 
 }

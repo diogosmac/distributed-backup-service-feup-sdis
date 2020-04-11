@@ -243,10 +243,14 @@ public class Peer implements PeerActionsInterface {
     }
 
     @Override
-    public void state() throws Exception {
+    public String state() throws Exception {
         this.operations.add(Operation.STATE);
-        System.out.println("[WIP] State");
+        String header = "\nSTATE: Peer " + this.getPeerId() + "\n\n";
+        String peerMemoryInfo = this.chunkStorage.getMemoryInfo();
+        String backupFilesInfo = this.chunkOccurrences.getOccurrencesInfo();
+        String storedChunksInfo = this.chunkStorage.getChunkInfo();
         this.operations.remove(Operation.STATE);
+        return header + peerMemoryInfo + backupFilesInfo + storedChunksInfo;
     }
 
     public Channel getMulticastControlChannel() { return this.multicastControlChannel; }
