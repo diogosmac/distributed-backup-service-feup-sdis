@@ -228,8 +228,10 @@ public class Peer implements PeerActionsInterface {
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
-        registerDeleteRequest(sf.getId());
-        System.out.println("Write to file finished");
+        if (this.protocolVersion.equals("1.1")) {
+            registerDeleteRequest(sf.getId());
+            System.out.println("Write to file finished");
+        }
         // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
         String header = buildDeleteHeader(sf.getId());
         byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
@@ -330,9 +332,10 @@ public class Peer implements PeerActionsInterface {
                     System.out.println("File path = " + currentFile.getPath());
 
                     try {
-                        File deleteRequestFile = new File(currentFile.getPath() +
-                                                                    MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
-                        deleteRequestFile.createNewFile(); // if file already exists will do nothing
+                        String filePath = currentFile.getPath() + MyUtils.DEFAULT_DELETE_BACKLOG_PATH;
+                        File deleteRequestFile = new File(filePath);
+                        if (deleteRequestFile.createNewFile()) // if file already exists will do nothing
+                            System.out.println("\tCreated file " + filePath);
                         FileOutputStream oFile = new FileOutputStream(deleteRequestFile, true);
 
                         oFile.write(MyUtils.convertStringToByteArray(fileId + "\n"));
