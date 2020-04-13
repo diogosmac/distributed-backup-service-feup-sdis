@@ -46,6 +46,9 @@ public class Peer implements PeerActionsInterface {
 
     private final List<Operation> operations;
 
+    // elements are the IDs of the files to be deleted
+    private final List<String> scheduledDeletes;
+
     public Peer(String protocolVersion, int peerId,
                 String MCAddress, String MCPort,
                 String MDBAddress, String MDBPort,
@@ -74,10 +77,12 @@ public class Peer implements PeerActionsInterface {
 
         this.operations = new ArrayList<>();
 
-        if (this.clearDeleteBacklog())
-            System.out.println("Delete backlog successfully cleaned!");
-        else
-            System.out.println("Error cleaning delete backlog");
+        this.scheduledDeletes = new ArrayList<>();
+
+//        if (this.clearDeleteBacklog())
+//            System.out.println("Delete backlog successfully cleaned!");
+//        else
+//            System.out.println("Error cleaning delete backlog");
     }
 
     public void executeThread(Runnable thread) {
@@ -120,6 +125,12 @@ public class Peer implements PeerActionsInterface {
             peer.executeThread(peer.multicastDataRestoreChannel);
             System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
 
+            if (peer.getProtocolVersion().equals("2.0")) {
+                String helloWorld = peer.buildHelloWorldHeader();
+                byte[] message = MyUtils.convertStringToByteArray(helloWorld);
+                peer.executeThread(new MessageSender(message, peer.multicastControlChannel));
+            }
+
         } catch (Exception e) { System.err.println("Peer exception : " + e.toString()); }
     }
 
@@ -132,6 +143,10 @@ public class Peer implements PeerActionsInterface {
         SavedFile sf = new SavedFile(filePath, replicationDegree); // Stores file bytes and splits it into chunks
 
         String fileId = sf.getId();
+
+        if (getProtocolVersion().equals("2.0"))
+            this.scheduledDeletes.remove(fileId);
+
         ArrayList<Chunk> fileChunks = sf.getChunks();
         String fileName = MyUtils.fileNameFromPath(filePath);
         this.chunkOccurrences.addFile(fileId, fileName, replicationDegree);
@@ -228,12 +243,18 @@ public class Peer implements PeerActionsInterface {
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
-        if (this.protocolVersion.equals("1.1")) {
-            registerDeleteRequest(sf.getId());
-            System.out.println("Write to file finished");
-        }
+//        if (this.protocolVersion.equals("1.1")) {
+//            registerDeleteRequest(sf.getId());
+//            System.out.println("Write to file finished");
+//        }
+
+        String fileId = sf.getId();
+
+        if (this.chunkOccurrences.hasFile(fileId))
+            this.scheduledDeletes.add(fileId);
+
         // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
-        String header = buildDeleteHeader(sf.getId());
+        String header = buildDeleteHeader(fileId);
         byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
         this.scheduler.execute(new MessageSender(deleteMessage, this.multicastControlChannel));
 
@@ -265,6 +286,12 @@ public class Peer implements PeerActionsInterface {
     public Channel getMulticastControlChannel() { return this.multicastControlChannel; }
     public Channel getMulticastDataBackupChannel() { return this.multicastDataBackupChannel; }
     public Channel getMulticastDataRestoreChannel() { return this.multicastDataRestoreChannel; }
+
+    public String buildHelloWorldHeader() {
+        // <Version> HELLOWORLD <SenderId> <CRLF><CRLF>
+        return String.join(" ", this.protocolVersion, "HELLOWORLD", Integer.toString(this.peerId),
+                MyUtils.CRLF + MyUtils.CRLF);
+    }
 
     public String buildPutchunkHeader(String fileId, int currentChunk, int replicationDegree) {
         // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
@@ -319,55 +346,62 @@ public class Peer implements PeerActionsInterface {
         return true;
     }
 
-    private void registerDeleteRequest(String fileId) {
-        String peerPathPattern = "peer"; // Used to search for all peer folders
-        File [] rootDir = new File(".").listFiles(); // All files on the root directory
+//    private void registerDeleteRequest(String fileId) {
+//        String peerPathPattern = "peer"; // Used to search for all peer folders
+//        File [] rootDir = new File(".").listFiles(); // All files on the root directory
+//
+//        if (rootDir != null )
+//        for (File currentFile :  rootDir) {
+//            if (currentFile.isDirectory()) {
+//                String fileName = currentFile.getName();
+//                System.out.println("FileName = " + fileName);
+//                if (fileName.substring(0, fileName.length() - 1).equals(peerPathPattern)) {
+//                    System.out.println("File path = " + currentFile.getPath());
+//
+//                    try {
+//                        String filePath = currentFile.getPath() + MyUtils.DEFAULT_DELETE_BACKLOG_PATH;
+//                        File deleteRequestFile = new File(filePath);
+//                        if (deleteRequestFile.createNewFile()) // if file already exists will do nothing
+//                            System.out.println("\tCreated file " + filePath);
+//                        FileOutputStream oFile = new FileOutputStream(deleteRequestFile, true);
+//
+//                        oFile.write(MyUtils.convertStringToByteArray(fileId + "\n"));
+//                    } catch (IOException e) { e.printStackTrace(); }
+//
+//                }
+//            }
+//        }
+//    }
+//
+//    public boolean clearDeleteBacklog() {
+//        File deleteBacklog = new File(MyUtils.getPeerPath(this) + MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
+//        if (deleteBacklog.exists()) {
+//            try {
+//                FileInputStream iFile = new FileInputStream(deleteBacklog);
+//                BufferedReader br = new BufferedReader(new InputStreamReader(iFile));
+//
+//                String fileId;
+//                while ((fileId = br.readLine()) != null) {
+//                    this.getChunkOccurrences().deleteOccurrences(fileId);
+//                    this.getChunkStorage().deleteFile(fileId);
+//                }
+//
+//                if (!deleteBacklog.delete())
+//                    return false;
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return false;
+//            }
+//        }
+//
+//        return true;
+//    }
 
-        if (rootDir != null )
-        for (File currentFile :  rootDir) {
-            if (currentFile.isDirectory()) {
-                String fileName = currentFile.getName();
-                System.out.println("FileName = " + fileName);
-                if (fileName.substring(0, fileName.length() - 1).equals(peerPathPattern)) {
-                    System.out.println("File path = " + currentFile.getPath());
+    public List<String> getScheduledDeletes() { return this.scheduledDeletes; }
 
-                    try {
-                        String filePath = currentFile.getPath() + MyUtils.DEFAULT_DELETE_BACKLOG_PATH;
-                        File deleteRequestFile = new File(filePath);
-                        if (deleteRequestFile.createNewFile()) // if file already exists will do nothing
-                            System.out.println("\tCreated file " + filePath);
-                        FileOutputStream oFile = new FileOutputStream(deleteRequestFile, true);
-
-                        oFile.write(MyUtils.convertStringToByteArray(fileId + "\n"));
-                    } catch (IOException e) { e.printStackTrace(); }
-
-                }
-            }
-        }
+    public void concludeDelete(String fileId) {
+        this.scheduledDeletes.remove(fileId);
     }
 
-    public boolean clearDeleteBacklog() {
-        File deleteBacklog = new File(MyUtils.getPeerPath(this) + MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
-        if (deleteBacklog.exists()) {
-            try {
-                FileInputStream iFile = new FileInputStream(deleteBacklog);
-                BufferedReader br = new BufferedReader(new InputStreamReader(iFile));
-
-                String fileId;
-                while ((fileId = br.readLine()) != null) {
-                    this.getChunkOccurrences().deleteOccurrences(fileId);
-                    this.getChunkStorage().deleteFile(fileId);
-                }
-
-                if (!deleteBacklog.delete())
-                    return false;
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

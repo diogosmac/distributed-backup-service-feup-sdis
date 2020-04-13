@@ -23,20 +23,20 @@ public class MessageReceiver implements Runnable {
 
             case "PUTCHUNK":
                 if (senderId == peer.getPeerId()) break;
-                System.out.println("\tPUTCHUNK Message received | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "Chunk #" + args[4] + ", " +
-                                                                 "Number bytes: " + length);
+                System.out.println("\tPUTCHUNK Message received    | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new PutChunkReceiver(message, peer));
                 break;
 
             case "STORED":
                 if (senderId == peer.getPeerId()) break;
-                System.out.println("\tSTORED Message received   | Type: " + args[1] + ", " +
-                        "Sender: " + args[2] + ", " +
-                        "Chunk #" + args[4] + ", " +
-                        "Number bytes: " + length);
+                System.out.println("\tSTORED Message received      | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new StoredChunkReceiver(message, peer));
                 break;
@@ -44,42 +44,57 @@ public class MessageReceiver implements Runnable {
 
             case "GETCHUNK":
                 if (senderId == peer.getPeerId()) break;
-                System.out.println("\tGETCHUNK Message received | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "Chunk #" + args[4] + ", " +
-                                                                 "Number bytes: " + length);
+                System.out.println("\tGETCHUNK Message received    | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new GetChunkReceiver(message, peer));
                 break;
 
             case "CHUNK":
                 if (senderId == peer.getPeerId()) break;
-                System.out.println("\tCHUNK Message received    | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "Chunk #" + args[4] + ", " +
-                                                                 "Number bytes: " + length);
+                System.out.println("\tCHUNK Message received       | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new ChunkReceiver(message, peer));
                 break;
 
 
             case "DELETE":
-                System.out.println("\tDELETE Message received   | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "File ID: " + args[3] + ", " +
-                                                                 "Number bytes: " + length);
+                System.out.println("\tDELETE Message received      | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "File ID: " + args[3] + ", " +
+                                                                    "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new DeleteReceiver(message, peer));
                 break;
 
 
             case "REMOVED":
-                System.out.println("\tREMOVED Message received  | Type: " + args[1] + ", " +
-                                                                 "Sender: " + args[2] + ", " +
-                                                                 "File ID: " + args[3] + ", " +
-                                                                 "Chunk #" + args[4]);
+                System.out.println("\tREMOVED Message received     | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "File ID: " + args[3] + ", " +
+                                                                    "Chunk #" + args[4]);
                 System.out.flush();
                 peer.executeThread(new RemovedReceiver(message, peer));
+                break;
+
+            case "DELETEDFILE":
+                System.out.println("\tDELETEDFILE Message received | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2] + ", " +
+                                                                    "File ID: " + args[3]);
+                System.out.flush();
+                peer.executeThread(new DeletedFileReceiver(message, peer));
+                break;
+
+            case "HELLOWORLD":
+                System.out.println("\tHELLOWORLD Message received  | Type: " + args[1] + ", " +
+                                                                    "Sender: " + args[2]);
+                System.out.flush();
+                peer.executeThread(new HelloWorldReceiver(message, peer));
                 break;
 
             default:
