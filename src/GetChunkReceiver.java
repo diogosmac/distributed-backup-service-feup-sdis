@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 
 public class GetChunkReceiver implements Runnable {
 
@@ -16,8 +15,6 @@ public class GetChunkReceiver implements Runnable {
     public GetChunkReceiver(byte[] message, Peer peer) {
         this.message = message;
         this.peer = peer;
-        if (this.peer.getProtocolVersion().equals("2.0"))
-            this.serverPort = MyUtils.BASE_PORT + this.peer.getPeerId();
     }
 
     public String buildChunkHeader(String fileId, int chunkNumber) {
@@ -27,34 +24,47 @@ public class GetChunkReceiver implements Runnable {
                 MyUtils.CRLF + MyUtils.CRLF);
     }
 
-    public byte [] getConnectInfo() {
+    public byte[] getConnectInfo() {
 
         try {
             String addr = InetAddress.getLocalHost().getHostAddress();
             String info = addr + " " + (MyUtils.BASE_PORT+this.peer.getPeerId());
             return MyUtils.convertStringToByteArray(info);
         } catch (UnknownHostException e) {
-            e.printStackTrace();
+            System.out.println("Failed get connection info");
             return null;
         }
     }
 
-    public boolean openTcpSocket() {
+    public boolean openTcpSocket(int port) {
         try {
-            this.tcpSocket = new ServerSocket(this.serverPort);
+            this.tcpSocket = new ServerSocket(port);
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error opening TCP socket:" + e.toString());
             return false;
         }
     }
 
-    private void sendChunk(byte[] chunk) {
+    public void closeTcpSocket() {
+        try {
+            this.tcpSocket.close();
+        } catch (IOException e) {
+            System.out.println("Error closing TCP socket: " + e.toString());
+        }
+    }
+
+    private void sendChunk(byte[] chunk, int size) {
         Socket socket;
         try {
             socket = this.tcpSocket.accept();
             OutputStream oS = socket.getOutputStream();
-            oS.write(chunk);
+
+            String headerStr = size + " ";
+            byte[] header = MyUtils.convertStringToByteArray(headerStr);
+            byte[] chunkData = MyUtils.trimMessage(chunk, size);
+
+            oS.write(MyUtils.concatByteArrays(header, chunkData));
             oS.close();
             socket.close();
         }
@@ -91,17 +101,19 @@ public class GetChunkReceiver implements Runnable {
                     this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
                 }
                 else if (this.peer.getProtocolVersion().equals("2.0")) {
-                    byte[] socketInfo;
-                    if ((socketInfo = getConnectInfo()) == null) {
-                        System.out.println("Failed to open and send chunk via TCP");
-                        return;
-                    }
-                    byte[] chunkMessage = MyUtils.concatByteArrays(header, socketInfo);
-                    if (this.openTcpSocket()) {
-                        this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
-                        this.sendChunk(wantedChunk.getData());
-                    } else {
-                        System.out.println("Failed to open and send chunk via TCP");
+                    if (this.peer.notRecentlyReceived(fileId, chunkNumber)) {
+                        byte[] socketInfo;
+                        if ((socketInfo = getConnectInfo()) == null)
+                            return;
+
+                        byte[] chunkMessage = MyUtils.concatByteArrays(header, socketInfo);
+                        if (this.openTcpSocket(MyUtils.BASE_PORT + this.peer.getPeerId())) {
+                            this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
+                            System.out.println("Wanted chunk size (1): " + wantedChunk.getSize());
+                            this.sendChunk(wantedChunk.getData(), wantedChunk.getSize());
+                            System.out.println("Chunk #" + chunkNumber + " Sent!");
+                            this.closeTcpSocket();
+                        }
                     }
                 }
         }

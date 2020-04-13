@@ -17,21 +17,40 @@ public class ChunkReceiver implements Runnable {
         try {
             this.socket = new Socket(hostName, port);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error while reading from TCP socket: " + e.toString());
             return false;
         }
 
         return true;
     }
 
+    public void closeSocket() {
+        try {
+            this.socket.close();
+        } catch (IOException e) {
+            System.out.println("Error closing socket: " + e.toString());
+        }
+    }
+
     public byte[] readChunk() {
-        byte[] chunk = new byte[MyUtils.CHUNK_SIZE];
+        byte[] chunk = new byte[MyUtils.CHUNK_SIZE + 1000];
         try {
             InputStream iS = this.socket.getInputStream();
-            iS.read(chunk, 0, MyUtils.CHUNK_SIZE);
-            return chunk;
+            int nRead = iS.read(chunk, 0, MyUtils.CHUNK_SIZE + 1000);
+
+            String chunkStr = MyUtils.convertByteArrayToString(MyUtils.trimMessage(chunk, nRead));
+            int spaceIndex = chunkStr.indexOf(" ");
+            int chunkSize = Integer.parseInt(chunkStr.substring(0, spaceIndex));
+            String dataStr = chunkStr.substring(spaceIndex + 1);
+            byte[] data = MyUtils.convertStringToByteArray(dataStr);
+
+            if(chunkSize == data.length)  // No lost data
+                return data;
+            else
+                return null;
+
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error while reading from TCP socket: " + e.toString());
             return null;
         }
     }
@@ -53,18 +72,19 @@ public class ChunkReceiver implements Runnable {
                 if (this.peer.getProtocolVersion().equals("1.0")) {
                     body = MyUtils.convertStringToByteArray(bodyStr);
                 } else if (this.peer.getProtocolVersion().equals("2.0")) {
-                    if (this.buildSocket(bodyStr, Integer.parseInt(args[6]))) {
+                    String address = bodyStr.substring(0, bodyStr.indexOf(" "));
+                    if (this.buildSocket(address, Integer.parseInt(args[6]))) {
                         if ((body = this.readChunk()) == null) {
-                            System.out.println("Error while reading from TCP socket");
                             return;
                         }
                     }
-                    else {
-                        System.out.println("Error while reading from TCP socket");
+                    else
                         return;
-                    }
+
+                    this.closeSocket();
                 }
                 this.peer.getFileRestorer().saveRestoredChunk(fileId, chunkNumber, body);
+                System.out.println("Chunk stored!");
             }
 
         this.peer.saveReceivedChunkTime(fileId, chunkNumber);

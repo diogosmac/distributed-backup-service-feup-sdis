@@ -201,7 +201,6 @@ public class Peer implements PeerActionsInterface {
                     this.operations.remove(Operation.RESTORE);
                     return;
                 }
-
             }
 
         } while (this.fileRestorer.getChunkData(fileId, currentChunk++).length == MyUtils.CHUNK_SIZE);
