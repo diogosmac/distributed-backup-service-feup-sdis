@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,7 +11,7 @@ import java.util.Random;
 
 public class MyUtils {
 
-//    public final static int BASE_PORT = 1904;
+    public final static int BASE_PORT = 1904;
 
     public final static int CHUNK_SIZE = 64 * 1000;
     public final static long PEER_MAX_MEMORY_USE = CHUNK_SIZE * 10;
