@@ -97,7 +97,7 @@ public class OccurrencesStorage {
                 bw.write(fileOutput.toString());
             }
             bw.close();
-        } catch (Exception e) { System.out.println("Exception while writing to file: " + e.toString()); }
+        } catch (Exception e) { System.out.println("Exception while writing occurrences to file: " + e.toString()); }
     }
 
     private ConcurrentHashMap<String, OccurrenceInfo> loadFromFile() {

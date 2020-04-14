@@ -78,11 +78,8 @@ public class Peer implements PeerActionsInterface {
         this.operations = new ArrayList<>();
 
         this.scheduledDeletes = new ArrayList<>();
+        this.loadScheduledDeletes(this.scheduledDeletes);
 
-//        if (this.clearDeleteBacklog())
-//            System.out.println("Delete backlog successfully cleaned!");
-//        else
-//            System.out.println("Error cleaning delete backlog");
     }
 
     public void executeThread(Runnable thread) {
@@ -243,15 +240,10 @@ public class Peer implements PeerActionsInterface {
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
-//        if (this.protocolVersion.equals("1.1")) {
-//            registerDeleteRequest(sf.getId());
-//            System.out.println("Write to file finished");
-//        }
-
         String fileId = sf.getId();
 
         if (this.chunkOccurrences.hasFile(fileId))
-            this.scheduledDeletes.add(fileId);
+            this.scheduleDelete(fileId);
 
         // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
         String header = buildDeleteHeader(fileId);
@@ -346,62 +338,52 @@ public class Peer implements PeerActionsInterface {
         return true;
     }
 
-//    private void registerDeleteRequest(String fileId) {
-//        String peerPathPattern = "peer"; // Used to search for all peer folders
-//        File [] rootDir = new File(".").listFiles(); // All files on the root directory
-//
-//        if (rootDir != null )
-//        for (File currentFile :  rootDir) {
-//            if (currentFile.isDirectory()) {
-//                String fileName = currentFile.getName();
-//                System.out.println("FileName = " + fileName);
-//                if (fileName.substring(0, fileName.length() - 1).equals(peerPathPattern)) {
-//                    System.out.println("File path = " + currentFile.getPath());
-//
-//                    try {
-//                        String filePath = currentFile.getPath() + MyUtils.DEFAULT_DELETE_BACKLOG_PATH;
-//                        File deleteRequestFile = new File(filePath);
-//                        if (deleteRequestFile.createNewFile()) // if file already exists will do nothing
-//                            System.out.println("\tCreated file " + filePath);
-//                        FileOutputStream oFile = new FileOutputStream(deleteRequestFile, true);
-//
-//                        oFile.write(MyUtils.convertStringToByteArray(fileId + "\n"));
-//                    } catch (IOException e) { e.printStackTrace(); }
-//
-//                }
-//            }
-//        }
-//    }
-//
-//    public boolean clearDeleteBacklog() {
-//        File deleteBacklog = new File(MyUtils.getPeerPath(this) + MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
-//        if (deleteBacklog.exists()) {
-//            try {
-//                FileInputStream iFile = new FileInputStream(deleteBacklog);
-//                BufferedReader br = new BufferedReader(new InputStreamReader(iFile));
-//
-//                String fileId;
-//                while ((fileId = br.readLine()) != null) {
-//                    this.getChunkOccurrences().deleteOccurrences(fileId);
-//                    this.getChunkStorage().deleteFile(fileId);
-//                }
-//
-//                if (!deleteBacklog.delete())
-//                    return false;
-//
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                return false;
-//            }
-//        }
-//
-//        return true;
-//    }
-
     public List<String> getScheduledDeletes() { return this.scheduledDeletes; }
+
+    public void scheduleDelete(String fileId) {
+        this.scheduledDeletes.add(fileId);
+        this.saveScheduledDeletes();
+    }
 
     public void concludeDelete(String fileId) {
         this.scheduledDeletes.remove(fileId);
+        this.saveScheduledDeletes();
     }
+
+    private void saveScheduledDeletes() {
+        String dirPath = MyUtils.getPeerPath(this);
+        File file = new File(String.join("/", dirPath, MyUtils.DEFAULT_DELETE_BACKLOG_PATH));
+        if (file.getParentFile().mkdirs())
+            System.out.println("\tCreated " + dirPath + " directory.");
+
+        try {
+            PrintWriter writer = new PrintWriter(file);
+            StringBuilder output = new StringBuilder();
+            for (String fileId : this.scheduledDeletes) {
+                output.append(fileId).append("\n");
+            }
+            writer.print(output.toString());
+            writer.close();
+        } catch (Exception e) {
+            System.out.println("Exception while writing scheduled deletes to file: " + e.toString()); }
+    }
+
+    private void loadScheduledDeletes(List<String> scheduledDeletes) {
+        String dirPath = MyUtils.getPeerPath(this);
+        File file = new File(String.join("/", dirPath, MyUtils.DEFAULT_DELETE_BACKLOG_PATH));
+        if (file.exists()) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String fileId;
+                while ((fileId = br.readLine()) != null) {
+                    scheduledDeletes.add(fileId);
+                }
+                br.close();
+            } catch (Exception e) {
+                System.out.println("Exception while reading from file: " + e.toString());
+            }
+        }
+    }
+
 
 }

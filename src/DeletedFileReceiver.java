@@ -18,6 +18,7 @@ public class DeletedFileReceiver implements Runnable {
         boolean deletedLastOfFile = peer.getChunkOccurrences().handleDeletedFile(sender, fileId);
         if (deletedLastOfFile) {
             peer.getChunkOccurrences().deleteOccurrences(fileId);
+            System.out.println("\tAll occurrences of " + fileId + " have been deleted.");
             peer.concludeDelete(fileId);
         }
     }
