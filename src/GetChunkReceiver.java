@@ -79,6 +79,7 @@ public class GetChunkReceiver implements Runnable {
         String receivedMessage = MyUtils.convertByteArrayToString(this.message);
         String[] args = receivedMessage.split(" ");
 
+        String receivedProtocolVersion = args[0];
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
 
@@ -96,11 +97,7 @@ public class GetChunkReceiver implements Runnable {
             } catch (Exception e) { System.out.println("I can't sleep yet, there are monsters nearby"); }
 
             if (this.peer.notRecentlyReceived(fileId, chunkNumber))
-                if (this.peer.getProtocolVersion().equals("1.0")) {
-                    byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
-                    this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
-                }
-                else if (this.peer.getProtocolVersion().equals("2.0")) {
+                if (this.peer.getProtocolVersion().equals("2.0") && receivedProtocolVersion.equals("2.0")) {
                     if (this.peer.notRecentlyReceived(fileId, chunkNumber)) {
                         byte[] socketInfo;
                         if ((socketInfo = getConnectInfo()) == null)
@@ -109,12 +106,15 @@ public class GetChunkReceiver implements Runnable {
                         byte[] chunkMessage = MyUtils.concatByteArrays(header, socketInfo);
                         if (this.openTcpSocket(MyUtils.BASE_PORT + this.peer.getPeerId())) {
                             this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
-                            System.out.println("Wanted chunk size (1): " + wantedChunk.getSize());
                             this.sendChunk(wantedChunk.getData(), wantedChunk.getSize());
-                            System.out.println("Chunk #" + chunkNumber + " Sent!");
+                            System.out.println("Chunk #" + chunkNumber + " Sent! (TCP)");
                             this.closeTcpSocket();
                         }
                     }
+                }
+                else {
+                    byte[] chunkMessage = MyUtils.concatByteArrays(header, wantedChunk.getData());
+                    this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
                 }
         }
     }

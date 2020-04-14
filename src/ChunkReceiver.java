@@ -61,6 +61,7 @@ public class ChunkReceiver implements Runnable {
         // <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><TCP Address> <Port>   version = 2.0
         String messageStr = MyUtils.convertByteArrayToString(this.message);
         String[] args = messageStr.split(" ");
+        String receivedProtocolVersion = args[0];
         String fileId = args[3];
         int chunkNumber = Integer.parseInt(args[4]);
 
@@ -69,9 +70,7 @@ public class ChunkReceiver implements Runnable {
                 String bodyStr = messageStr.substring(messageStr.indexOf(MyUtils.CRLF + MyUtils.CRLF) + 2);
                 byte[] body = new byte[64000];
 
-                if (this.peer.getProtocolVersion().equals("1.0")) {
-                    body = MyUtils.convertStringToByteArray(bodyStr);
-                } else if (this.peer.getProtocolVersion().equals("2.0")) {
+                if (this.peer.getProtocolVersion().equals("2.0") && receivedProtocolVersion.equals("2.0")) {
                     String address = bodyStr.substring(0, bodyStr.indexOf(" "));
                     if (this.buildSocket(address, Integer.parseInt(args[6]))) {
                         if ((body = this.readChunk()) == null) {
@@ -83,8 +82,10 @@ public class ChunkReceiver implements Runnable {
 
                     this.closeSocket();
                 }
+                else
+                    body = MyUtils.convertStringToByteArray(bodyStr);
+
                 this.peer.getFileRestorer().saveRestoredChunk(fileId, chunkNumber, body);
-                System.out.println("Chunk stored!");
             }
 
         this.peer.saveReceivedChunkTime(fileId, chunkNumber);
