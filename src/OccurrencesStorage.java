@@ -97,7 +97,7 @@ public class OccurrencesStorage {
                 bw.write(fileOutput.toString());
             }
             bw.close();
-        } catch (Exception e) { System.out.println("Exception while writing to file: " + e.toString()); }
+        } catch (Exception e) { System.out.println("Exception while writing occurrences to file: " + e.toString()); }
     }
 
     private ConcurrentHashMap<String, OccurrenceInfo> loadFromFile() {
@@ -217,6 +217,35 @@ public class OccurrencesStorage {
 
         return sectionHeader + infoBody + sectionFooter + "\n\n";
 
+    }
+
+    public boolean handleDeletedFile(int peerId, String fileId) {
+        Integer peer = peerId;
+        OccurrenceInfo occurrenceInfo = this.chunkOccurrences.get(fileId);
+        for (int i = 0; i < occurrenceInfo.getNumChunks(); i++) {
+            List<Integer> chunkOcc = occurrenceInfo.occurrences.get(i);
+            chunkOcc.remove(peer);
+            if (chunkOcc.isEmpty()) {
+                occurrenceInfo.occurrences.remove(chunkOcc);
+                i--;
+            }
+        }
+        if (occurrenceInfo.getNumChunks() == 0) {
+            return true;
+        }
+        exportToFile();
+        return false;
+    }
+
+    public boolean hasFile(String fileId) { return this.chunkOccurrences.containsKey(fileId); }
+
+    public boolean peerHasFile(int peerId, String fileId) {
+        OccurrenceInfo occurrenceInfo = this.chunkOccurrences.get(fileId);
+        for (List<Integer> chunkOcc : occurrenceInfo.occurrences) {
+            if (chunkOcc.contains(peerId))
+                return true;
+        }
+        return false;
     }
 
 }

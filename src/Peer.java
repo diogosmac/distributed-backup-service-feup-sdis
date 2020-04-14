@@ -1,4 +1,4 @@
-import java.io.IOException;
+import java.io.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -46,6 +46,9 @@ public class Peer implements PeerActionsInterface {
 
     private final List<Operation> operations;
 
+    // elements are the IDs of the files to be deleted
+    private final List<String> scheduledDeletes;
+
     public Peer(String protocolVersion, int peerId,
                 String MCAddress, String MCPort,
                 String MDBAddress, String MDBPort,
@@ -73,6 +76,10 @@ public class Peer implements PeerActionsInterface {
         this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this));
 
         this.operations = new ArrayList<>();
+
+        this.scheduledDeletes = new ArrayList<>();
+        this.loadScheduledDeletes(this.scheduledDeletes);
+
     }
 
     public void executeThread(Runnable thread) {
@@ -115,6 +122,12 @@ public class Peer implements PeerActionsInterface {
             peer.executeThread(peer.multicastDataRestoreChannel);
             System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
 
+            if (peer.getProtocolVersion().equals("2.0")) {
+                String helloWorld = peer.buildHelloWorldHeader();
+                byte[] message = MyUtils.convertStringToByteArray(helloWorld);
+                peer.executeThread(new MessageSender(message, peer.multicastControlChannel));
+            }
+
         } catch (Exception e) { System.err.println("Peer exception : " + e.toString()); }
     }
 
@@ -127,6 +140,10 @@ public class Peer implements PeerActionsInterface {
         SavedFile sf = new SavedFile(filePath, replicationDegree); // Stores file bytes and splits it into chunks
 
         String fileId = sf.getId();
+
+        if (getProtocolVersion().equals("2.0"))
+            this.scheduledDeletes.remove(fileId);
+
         ArrayList<Chunk> fileChunks = sf.getChunks();
         String fileName = MyUtils.fileNameFromPath(filePath);
         this.chunkOccurrences.addFile(fileId, fileName, replicationDegree);
@@ -222,8 +239,13 @@ public class Peer implements PeerActionsInterface {
         System.out.println("\nDelete > File: " + filePath);
         SavedFile sf = new SavedFile(filePath);
 
+        String fileId = sf.getId();
+
+        if (this.chunkOccurrences.hasFile(fileId))
+            this.scheduleDelete(fileId);
+
         // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
-        String header = buildDeleteHeader(sf.getId());
+        String header = buildDeleteHeader(fileId);
         byte[] deleteMessage = MyUtils.convertStringToByteArray(header);
         this.scheduler.execute(new MessageSender(deleteMessage, this.multicastControlChannel));
 
@@ -255,6 +277,12 @@ public class Peer implements PeerActionsInterface {
     public Channel getMulticastControlChannel() { return this.multicastControlChannel; }
     public Channel getMulticastDataBackupChannel() { return this.multicastDataBackupChannel; }
     public Channel getMulticastDataRestoreChannel() { return this.multicastDataRestoreChannel; }
+
+    public String buildHelloWorldHeader() {
+        // <Version> HELLOWORLD <SenderId> <CRLF><CRLF>
+        return String.join(" ", this.protocolVersion, "HELLOWORLD", Integer.toString(this.peerId),
+                MyUtils.CRLF + MyUtils.CRLF);
+    }
 
     public String buildPutchunkHeader(String fileId, int currentChunk, int replicationDegree) {
         // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
@@ -308,5 +336,57 @@ public class Peer implements PeerActionsInterface {
         }
         return true;
     }
+
+    public List<String> getScheduledDeletes() { return this.scheduledDeletes; }
+
+    public void scheduleDelete(String fileId) {
+        if (!this.scheduledDeletes.contains(fileId)) {
+            this.scheduledDeletes.add(fileId);
+            this.saveScheduledDeletes();
+        }
+    }
+
+    public void concludeDelete(String fileId) {
+        if (this.scheduledDeletes.contains(fileId)) {
+            this.scheduledDeletes.remove(fileId);
+            this.saveScheduledDeletes();
+        }
+    }
+
+    private void saveScheduledDeletes() {
+        String dirPath = MyUtils.getPeerPath(this);
+        File file = new File(String.join("/", dirPath, MyUtils.DEFAULT_DELETE_BACKLOG_PATH));
+        if (file.getParentFile().mkdirs())
+            System.out.println("\tCreated " + dirPath + " directory.");
+
+        try {
+            PrintWriter writer = new PrintWriter(file);
+            StringBuilder output = new StringBuilder();
+            for (String fileId : this.scheduledDeletes) {
+                output.append(fileId).append("\n");
+            }
+            writer.print(output.toString());
+            writer.close();
+        } catch (Exception e) {
+            System.out.println("Exception while writing scheduled deletes to file: " + e.toString()); }
+    }
+
+    private void loadScheduledDeletes(List<String> scheduledDeletes) {
+        String dirPath = MyUtils.getPeerPath(this);
+        File file = new File(String.join("/", dirPath, MyUtils.DEFAULT_DELETE_BACKLOG_PATH));
+        if (file.exists()) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String fileId;
+                while ((fileId = br.readLine()) != null) {
+                    scheduledDeletes.add(fileId);
+                }
+                br.close();
+            } catch (Exception e) {
+                System.out.println("Exception while reading from file: " + e.toString());
+            }
+        }
+    }
+
 
 }

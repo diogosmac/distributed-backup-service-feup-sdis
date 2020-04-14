@@ -32,9 +32,9 @@ public class Channel implements Runnable {
             socket.send(messagePacket);
             String msg = MyUtils.convertByteArrayToString(message);
             String[] msgParts = msg.split(" ");
-            System.out.println("\tMessage sent              | Type: " + msgParts[1] + ", " +
-                                                             "Sender: " + msgParts[2] + ", " +
-                                                             "Number bytes (with header): " + message.length);
+            System.out.println("\tMessage sent                 | Type: " + msgParts[1] + ", " +
+                                                                "Sender: " + msgParts[2] + ", " +
+                                                                "Number bytes (with header): " + message.length);
             System.out.flush();
 
         } catch (IOException e) {

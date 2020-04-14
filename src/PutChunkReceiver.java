@@ -44,6 +44,7 @@ public class PutChunkReceiver implements Runnable {
     public void run() {
         Chunk receivedChunk = buildChunk();
         if (receivedChunk.getData() != null) {
+            this.peer.concludeDelete(receivedChunk.getFileID());
             this.peer.getChunkOccurrences().addFile(receivedChunk.getFileID(), receivedChunk.getReplicationDegree());
             int status = this.peer.getChunkStorage().addChunk(receivedChunk);
             switch (status) {

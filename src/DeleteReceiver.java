@@ -10,10 +10,27 @@ public class DeleteReceiver implements Runnable {
         this.peer = peer;
     }
 
+    public String buildDeletedFileMessage(String fileId) {
+        // <Version> DELETEDFILE <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+        return String.join(" ", peer.getProtocolVersion(), "DELETEDFILE",
+                Integer.toString(peer.getPeerId()), fileId,
+                MyUtils.CRLF + MyUtils.CRLF);
+    }
+
     @Override
     public void run() {
-        peer.getChunkOccurrences().deleteOccurrences(fileId);
+
+        if (peer.getProtocolVersion().equals("1.0"))
+            peer.getChunkOccurrences().deleteOccurrences(fileId);
+
         peer.getChunkStorage().deleteFile(fileId);
+
+        if (peer.getProtocolVersion().equals("2.0")) {
+            String deletedFileMessage = buildDeletedFileMessage(fileId);
+            byte[] message = MyUtils.convertStringToByteArray(deletedFileMessage);
+            peer.executeThread(new MessageSender(message, peer.getMulticastControlChannel()));
+        }
+
     }
 
 }

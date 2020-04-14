@@ -128,18 +128,19 @@ public class ChunkStorage {
         List<String> chunkPaths = this.chunkStorage.get(fileId);
         int numberDeletesFailed = 0;
 
-        for (String fileName : chunkPaths) {
+        if(chunkPaths != null)
+            for (String fileName : chunkPaths) {
 
-            String path = MyUtils.getBackupPath(this.peer);
-            File file = new File(path+fileName);
+                String path = MyUtils.getBackupPath(this.peer);
+                File file = new File(path+fileName);
 
-            long fileSize = file.length();
+                long fileSize = file.length();
 
-            if (file.delete())
-                this.availableMemory += fileSize;
-            else
-                numberDeletesFailed++;
-        }
+                if (file.delete())
+                    this.availableMemory += fileSize;
+                else
+                    numberDeletesFailed++;
+            }
 
         if (numberDeletesFailed > 0)
             System.out.println("Failed to delete " + numberDeletesFailed + " chunks.");
