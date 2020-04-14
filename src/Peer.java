@@ -341,13 +341,17 @@ public class Peer implements PeerActionsInterface {
     public List<String> getScheduledDeletes() { return this.scheduledDeletes; }
 
     public void scheduleDelete(String fileId) {
-        this.scheduledDeletes.add(fileId);
-        this.saveScheduledDeletes();
+        if (!this.scheduledDeletes.contains(fileId)) {
+            this.scheduledDeletes.add(fileId);
+            this.saveScheduledDeletes();
+        }
     }
 
     public void concludeDelete(String fileId) {
-        this.scheduledDeletes.remove(fileId);
-        this.saveScheduledDeletes();
+        if (this.scheduledDeletes.contains(fileId)) {
+            this.scheduledDeletes.remove(fileId);
+            this.saveScheduledDeletes();
+        }
     }
 
     private void saveScheduledDeletes() {

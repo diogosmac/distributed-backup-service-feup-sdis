@@ -1,5 +1,3 @@
-import java.io.File;
-
 public class DeleteReceiver implements Runnable {
 
     private final String fileId;
@@ -12,16 +10,6 @@ public class DeleteReceiver implements Runnable {
         this.peer = peer;
     }
 
-//    public boolean DeleteBacklog() {
-//        File DeleteBacklog = new File(MyUtils.getPeerPath(this.peer) + MyUtils.DEFAULT_DELETE_BACKLOG_PATH);
-//        if (DeleteBacklog.exists()) {
-//            if (!DeleteBacklog.delete())
-//                return false;
-//        }
-//
-//        return true;
-//    }
-
     public String buildDeletedFileMessage(String fileId) {
         // <Version> DELETEDFILE <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
         return String.join(" ", peer.getProtocolVersion(), "DELETEDFILE",
@@ -31,8 +19,6 @@ public class DeleteReceiver implements Runnable {
 
     @Override
     public void run() {
-//        if(!DeleteBacklog())
-//            System.out.println("Error removing delete backlog!");
 
         if (peer.getProtocolVersion().equals("1.0"))
             peer.getChunkOccurrences().deleteOccurrences(fileId);
