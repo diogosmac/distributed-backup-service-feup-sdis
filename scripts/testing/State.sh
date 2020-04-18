@@ -9,4 +9,4 @@ if [ "$#" -ne 1 ]; then
 fi
 
 access_point="ap$peer_id"
-gnome-terminal -x sh -c "cd ../src/; java Application $access_point STATE; sleep 10"
+gnome-terminal -x sh -c "cd ../build/; java Application $access_point STATE; sleep 10"

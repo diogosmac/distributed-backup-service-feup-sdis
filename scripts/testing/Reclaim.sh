@@ -10,4 +10,4 @@ if [ "$#" -ne 2 ]; then
 fi
 
 access_point="ap$peer_id"
-gnome-terminal -x sh -c "cd ../src/; java Application $access_point RECLAIM $final_space"
+gnome-terminal -x sh -c "cd ../build/; java Application $access_point RECLAIM $final_space"

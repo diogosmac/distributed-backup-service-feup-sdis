@@ -11,4 +11,4 @@ if [ "$#" -ne 3 ]; then
 fi
 
 access_point="ap$peer_id"
-gnome-terminal -x sh -c "cd ../src/; java Application $access_point BACKUP $file_path $rep_degree"
+gnome-terminal -x sh -c "cd ../build/; java Application $access_point BACKUP $file_path $rep_degree"
