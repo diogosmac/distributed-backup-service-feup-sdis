@@ -1,0 +1,324 @@
+\documentclass[a4paper]{article}
+
+%use the english line for english reports
+%usepackage[english]{babel}
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{color}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+    language=Java,
+    aboveskip=3mm,
+    belowskip=3mm,
+    showstringspaces=false,
+    columns=flexible,
+    basicstyle={\small\ttfamily},
+    numbers=none,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{dkgreen},
+    stringstyle=\color{mauve},
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=3
+}
+
+\begin{document}
+
+\setlength{\textwidth}{16cm}
+\setlength{\textheight}{22cm}
+
+%************************************************************************************************
+%************************************************************************************************
+
+\title{\Huge\textbf{Distributed Backup Service}\linebreak\linebreak\linebreak
+\Large\textbf{Project 1 - Final Report}\linebreak\linebreak
+\linebreak\linebreak
+\includegraphics[scale=0.1]{feup-logo.png}\linebreak\linebreak
+\linebreak\linebreak
+\Large{Master in Informatics and Computing Engineering} \linebreak\linebreak
+\Large{Distributed Systems}\linebreak
+}
+
+\author{\textbf{Class 6 - Group 08:}\\ Diogo Machado - up201706832 \\ José Pedro Baptista - up201705255
+\\\linebreak\linebreak \\
+ \\ Faculdade de Engenharia da Universidade do Porto \\ Rua Roberto Frias, s\/n, 4200-465 Porto, Portugal
+ \linebreak\linebreak\linebreak
+\linebreak\linebreak\vspace{1cm}}
+\maketitle
+\thispagestyle{empty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Introduction}
+
+This report was developed in the context of the first assignment of the curricular unit Distributed Systems, of the 2nd
+semester of the 3rd year of the Master in Informatics and Computing Engineering of the Faculty of Engineering of the
+University of Porto.
+
+The goal of this report is to specify some of the key aspects of our implementation of the assignment, such as:
+
+\begin{itemize}
+    \item \textbf{Compiling and Executing:} The necessary instructions to compile and execute our program, in Windows and
+    Linux.
+    \item \textbf{Concurrent Execution of Protocols:} Description of the data structures and mechanisms used to allow the
+    concurrent execution of the different protocols.
+    \item \textbf{Implemented Enhancements:} Description of the proposed enhancements that we implemented, as well as an
+    explanation of our implementation.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
+\section{Compiling and Executing}
+
+\subsection{Compiling Instructions}
+To compile our project, on both Windows and Linux, you need only change directory to the \textit{/src} folder, and compile
+all \textit{.java} files using javac:
+\begin{lstlisting}
+    cd <base_directory>/src
+    javac *.java
+\end{lstlisting}
+\subsubsection{Scripts}
+\begin{itemize}
+    \item \textbf{Make.sh:} compiles the code, preparing it for use;
+    \item \textbf{Clean.sh:} deletes the compilation files from the \textit{src/} directory.
+\end{itemize}
+\bigskip
+\subsection{Execution Instructions}
+To execute our project, there are 3 things you must do:
+\subsubsection{Starting the RMI Registry}
+Since this project implements the \textit{RemoteMethodInvocation} (RMI) Java Interface, to be able to use it you must first
+start the RMI registry, by running:
+\begin{lstlisting}
+    rmiregistry &           // for Linux ...
+    start rmiregistry       // for Windows ...
+\end{lstlisting}
+
+\subsubsection{Running the Peers}
+To run a Peer from the terminal, you use the following command:
+\begin{lstlisting}
+    java Peer <version> <peer_id> <peer_ap> <mc_address> <mc_port> <mdb_address> <mdb_port> <mdr_address> <mdr_port>
+\end{lstlisting}
+\begin{itemize}
+    \item \textbf{version:} Version of the protocol that the \textit{Peer} uses;
+    \item \textbf{peer\_id:} unique identifier of a given \textit{Peer};
+    \item \textbf{mc\_address:} IP address of the multicast control channel;
+    \item \textbf{mc\_port:} port of the multicast control channel;
+    \item \textbf{mdb\_address:} IP address of the multicast data backup channel;
+    \item \textbf{mdb\_port:} port of the multicast data backup channel;
+    \item \textbf{mdr\_address:} IP address of the multicast data restore channel;
+    \item \textbf{mdr\_port:} port of the multicast data restore channel.
+\end{itemize}
+For the effects of testing this project, we used the multicast IP Address 224.0.0, since the 
+range [224.0.0.0, 224.0.0.255] is the range of multicast addresses reserved for local networks.
+
+\subsubsection{Running the test Application}
+The command to execute the test \textit{Application} is as following:
+\begin{lstlisting}
+    java Application <peer_ap> <operation> [<operand_1> <operand_2>]
+\end{lstlisting}
+\begin{itemize}
+    \item \textbf{peer\_ap:} access point for the initiator \textit{Peer};
+    \item \textbf{operation:} protocol to be executed;
+    \item \textbf{operand\_1:} in the case of the protocols BACKUP, RESTORE and DELETE, the 
+    relative path of the file to use; in the case of the RECLAIM protocol, the maximum disk space
+    (in KBytes) that the \textit{Peer} can use;
+    \item \textbf{operand\_2:} only used in the BACKUP protocol, where it specifies the 
+    \textit{replication degree}.
+\end{itemize}
+
+\subsubsection{Scripts}
+\begin{itemize}
+    \item \textbf{LaunchPeers.sh:} opens N terminals, and launches a \textit{Peer} in every
+    terminal;
+    \begin{lstlisting}
+        sh LaunchPeers.sh <n_peers_to_launch> <peer_protocol_version>
+    \end{lstlisting}
+    \item \textbf{Backup.sh:} opens a terminal and starts a Backup (through Application.java) for
+    a given file, with a given desired replication degree, to a given \textit{Peer};
+    \begin{lstlisting}
+        sh Backup.sh <peer_id> <file_path> <desired_replication_degree>
+    \end{lstlisting}
+    \item \textbf{Restore.sh:} opens a terminal and starts a Restore (through Application.java)
+    of a given file in a given \textit{Peer};
+    \begin{lstlisting}
+        sh Restore.sh <peer_id> <file_path>
+    \end{lstlisting}
+    \item \textbf{Delete.sh:} opens a terminal and sends a Delete message (through
+    Application.java), of a given file, to a given \textit{Peer};
+    \begin{lstlisting}
+        sh Delete.sh <peer_id> <file_path>
+    \end{lstlisting}
+    \item \textbf{Reclaim.sh:} opens a terminal and starts a Reclaim process (through 
+    Application.java), of a given \textit{Peer}'s memory;
+    \begin{lstlisting}
+        sh Reclaim.sh <peer_id> <desired_space_usage>
+    \end{lstlisting}
+    \item \textbf{State.sh:} opens a terminal and asks for the state of a given \textit{Peer} 
+    (through Application.java); Stays open 10 seconds, in order for the user to be able to read 
+    the requested info.
+    \begin{lstlisting}
+        sh State.sh <peer_id>
+    \end{lstlisting}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Concurrent Execution of Protocols}
+In order to ensure that the protocols could be executed concurrently, to a good degree of 
+efficiency, we had to take a few factors into account. These factors include the number of
+simultaneous messages being sent by the various \textit{Peers}, the synchronization of "common" 
+resources across the \textit{Peers} (e.g. the information about the occurrences of the backed up
+files), and the fact that a \textit{Peer} can possibly have to save, delete and send files, all 
+at the same time.
+
+\bigskip
+
+The first measure we took to implement the concurrent execution was the use of threads. For that,
+we used the Java class \textit{ScheduledThreadPoolExecutor}, which was discussed in the classes 
+relative to the labs (namely, Lab02). This class provides a simple interface through which to 
+implement \textit{multi-threading} solutions, since it makes all the lower level mechanisms 
+available for high level usage. In addition to this, the fact that it "recycles" threads, thus 
+reducing the amount of resources spent on the creation and destruction of threads, also helps to 
+improve the efficiency of our implementation. Furthermore, this Java class limits the maximum 
+number of threads that it can schedule/execute, meaning that we mustn't concern ourselves with 
+the case that the number of concurrent threads becomes too large, as that situation is handled by
+the implementation of the class.
+
+\bigskip
+
+Our \textit{multi-threading} implementation follows the following structure:
+\begin{itemize}
+    \item When a protocol is invoked by the application, it calls the initiator \textit{Peer}'s 
+    function that implements the protocol;
+    \item For all protocols (with the exception of STATE), a thread (implemented on our class 
+    \textit{MessageSender}) is started, which receives the message to be sent and the multicast 
+    channel to which it must be sent, and sends it (the fact that each message is sent on a new
+    thread of this kind allows for multiple protocols to be started);
+    \item Whenever a peer receives a message, it starts a new thread (implemented on our class 
+    \textit{MessageReceiver}) which handles the message, interpreting the type of message 
+    received and starting a new thread that handles that specific message type.
+\end{itemize}
+
+When it comes to the data structures used to store the information on the \textit{Peers}, we
+chose to use the Java class \textit{ConcurrentHashMap}, instead of the standard \textit{HashMap}.
+The reason for this is that, as indicated by the name, \textit{ConcurrentHashMap} is designed to
+work correctly when used/accessed by several threads, as opposed to \textit{HashMap}, which
+doesn't guarantee this.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Implemented Enhancements}
+In this assignments, enhancements were suggested for the protocols BACKUP, RESTORE and DELETE. Of
+there, we successfully implemented the ones relative to the RESTORE and DELETE protocols.
+
+\subsection{Restore Protocol}
+
+\textbf{Suggested Enhancement}:
+\textit{If chunks are large, this protocol may not be desirable: only one peer needs to receive 
+the chunk, but we are using a multicast channel for sending the chunk. Can you think of a change
+to the protocol that would eliminate this problem, and yet interoperate with non-initiator peers
+that implement the protocol described in this section? Your enhancement \textbf{must use TCP} to
+get full credit.}
+
+\bigskip\textbf{Implementation}
+
+For this enhancement, we made it so that the chunk transfer would be made using TCP, and only one peer (the initiator one, or the one that sent the GETCHUNK), would receive the chunk data. In order to achieve that, we made a few changes to the CHUNK message:
+
+\begin{lstlisting}
+    // Protocol version 1.0
+    <version> CHUNK <sender_id> <file_id> <chunk_no> <CRLF><CRLF><body>
+    // Protocol version 2.0
+    <version> CHUNK <sender_id> <file_id> <chunk_no> <CRLF><CRLF><ip_address> <port> 
+\end{lstlisting}
+
+With this improved version, after a peer (that isn't the initiator one) receives a GETCHUNK 
+message, checks if it has the requested chunk stored, and if it does, waits a random time 
+interval (0-400ms) and if after that time there was no recent (in the last 400ms) CHUNK message 
+for the same chunk sent by another peer, it creates a ServerSocket, sends a CHUNK message and 
+proceeds to write the requested chunk data to the socket. When the initiator peer receives the 
+CHUNK message with the IP Address and Port for connection, creates a Socket using the information
+read, and reads the message that the non-initiator peer sent. The message has the following
+format: 
+
+\begin{lstlisting}
+    // Message written by the non-initiator peer   
+    <chunk_data_size> <chunk_data>
+\end{lstlisting}
+
+After reading this message, the initiator peer checks if \textbf{\textit{chunk\_data\_size}} is 
+equal to the length of \textbf{\textit{chunk\_data}}. If it is, saves 
+\textbf{\textit{chunk\_data}}, and proceeds to request the next file chunk. Otherwise, it is 
+discarded, and the GETCHUNK message is resent (up to 5 times). After every chunk is received the 
+file is restored. This enhancement will only be applied if both peers (initiator and 
+non-initiator) use the protocol version 2.0, otherwise 1.0 protocol will be used. This allows 
+peers that are using different protocol versions to still communicate and restore the requested 
+file flawlessly.
+
+\newpage
+\subsection{Delete Protocol}
+
+\textbf{Suggested Enhancement}:
+\textit{If a peer that backs up some chunks of the file is not running at the time the initiator peer sends a DELETE message
+for that file, the space used by these chunks will never be reclaimed. Can you think of a change to the protocol, possibly
+including additional messages, that would allow to reclaim storage space even in that event?}
+
+\bigskip\textbf{Implementation}
+
+For the implementation of this enhancement, we took an approach that would work not only locally, but also remotely. For
+this, we added two new message types to the protocol:
+\begin{lstlisting}
+    // HELLOWORLD message
+    <version> HELLOWORLD <sender_id> <CRLF><CRLF>
+    // DELETEDFILE message
+    <version> DELETEDFILE <sender_id> <file_id> <CRLF><CRLF>
+\end{lstlisting}
+
+\begin{itemize}
+    \item \textbf{HELLOWORLD:} This message is sent by a \textit{Peer} whenever it is started, in order to alert other \textit{Peers} that it is running;
+    \item \textbf{DELETEDFILE:} This message is sent by a \textit{Peer} whenever it deletes a 
+    file's chunks, by consequence of the DELETE protocol, and informs the remaining 
+    \textit{Peers} that the sender has deleted the respective file.
+\end{itemize}
+
+With these new messages, the implementation follows the following logic:
+\begin{itemize}
+    \item When the DELETE protocol is invoked on one of the active \textit{Peers}, it saves the 
+    ID of the file to be deleted on a data structure (as well as a file, so that this information
+    is not lost in case the \textit{Peer} is restarted);
+    \item Then, whenever the other \textit{Peers} receive the DELETE message, they now send an 
+    \textit{ACK-type} message (DELETEDFILE) to confirm to the initiator \textit{Peer} that they 
+    have deleted the file;
+    \item On receiving this message, the initiator \textit{Peer} updates the information on the
+    occurrences of the chunks of the specified file, only giving the operation as completed when
+    all the occurrences of the file are deleted;
+    \item In the case that a non-active \textit{Peer} has chunks of the file, when it is started 
+    it will alert the other \textit{Peers} with a HELLOWORLD message. Upon receiving this 
+    warning, the initiator \textit{Peer} for the DELETE protocol will send the DELETE message 
+    once again, until one of two things happens:
+    \begin{itemize}
+        \item All registered occurrences of the file are deleted (i.e. the initiator 
+        \textit{Peer}'s perceived replication degree for all chunks of that file becomes zero);
+        \item The BACKUP protocol is called for that same file (whether it be by the initiator 
+        \textit{Peer}, or by another one).
+    \end{itemize}
+\end{itemize}
+This ensures that, whenever the initiator \textit{Peer} is active and there are still occurrences of the file to delete,
+they will be eliminated as soon as the \textit{Peers} that hold them become active.
+
+\end{document}
