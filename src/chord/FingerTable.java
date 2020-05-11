@@ -10,17 +10,18 @@ public class FingerTable {
      */
     private final int MAX_SIZE;
 
-    ArrayList<NodePair<Integer, Integer>> table;
+    private ArrayList<NodePair<Integer, InetSocketAddress>> table;
 
     public FingerTable(int size) {
         this.table = new ArrayList<>();
         this.MAX_SIZE = size;
     }
 
-    public Integer lookup(Integer peerHash, Integer fileHash) {
+    public InetSocketAddress lookup(Integer peerHash, Integer fileHash) {
         // lookup in finger table for peer/node closest to fileHash
         for (int finger = MAX_SIZE - 1; finger >= 0; finger--) {
-            NodePair<Integer, Integer> possibleNode = this.table.get(finger);
+            NodePair<Integer, InetSocketAddress> possibleNode = this.table.get(finger);
+            System.out.println(possibleNode.getKey());
             if (!inBetween(fileHash, peerHash, possibleNode.getKey()))
                 return possibleNode.getValue();
         }
@@ -28,7 +29,7 @@ public class FingerTable {
         return getFirstNode().getValue();
     }
 
-    public NodePair<Integer, Integer> getFirstNode() {
+    public NodePair<Integer, InetSocketAddress> getFirstNode() {
         return this.table.get(0);
     }
 
@@ -36,10 +37,16 @@ public class FingerTable {
 
         int maxHashes = (int) Math.pow(2, this.MAX_SIZE);
 
-        if (upperBound < lowerBound)
+        if (upperBound < lowerBound) {
             upperBound += maxHashes;
+            target += maxHashes;
+        }
 
-        return lowerBound < maxHashes && maxHashes < upperBound;
-	}
+        return lowerBound < target && target < upperBound;
+    }
+    
+    public void addNodePair(int index, NodePair<Integer, InetSocketAddress> element) {
+        this.table.add(index, element);
+    }
     
 }
