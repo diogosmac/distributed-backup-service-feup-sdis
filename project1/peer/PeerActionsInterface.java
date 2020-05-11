@@ -1,3 +1,5 @@
+package peer;
+
 import java.rmi.Remote;
 
 public interface PeerActionsInterface extends Remote {

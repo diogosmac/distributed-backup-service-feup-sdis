@@ -1,3 +1,7 @@
+package messages;
+
+import channel.Channel;
+
 public class MessageSender implements Runnable {
 
     private final byte[] message;

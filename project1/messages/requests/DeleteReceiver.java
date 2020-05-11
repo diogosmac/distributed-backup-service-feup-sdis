@@ -1,3 +1,9 @@
+package messages.requests;
+
+import messages.MessageSender;
+import peer.Peer;
+import utils.MyUtils;
+
 public class DeleteReceiver implements Runnable {
 
     private final String fileId;

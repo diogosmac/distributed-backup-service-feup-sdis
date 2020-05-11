@@ -1,3 +1,9 @@
+package channel;
+
+import messages.MessageReceiver;
+import peer.Peer;
+import utils.MyUtils;
+
 import java.io.IOException;
 import java.net.*;
 

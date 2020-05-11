@@ -1,3 +1,8 @@
+package messages.replies;
+
+import peer.Peer;
+import utils.MyUtils;
+
 public class DeletedFileReceiver implements Runnable {
 
     private final String fileId;

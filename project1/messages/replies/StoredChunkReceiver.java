@@ -1,3 +1,8 @@
+package messages.replies;
+
+import peer.Peer;
+import utils.MyUtils;
+
 public class StoredChunkReceiver implements Runnable {
 
     private final byte[] message;

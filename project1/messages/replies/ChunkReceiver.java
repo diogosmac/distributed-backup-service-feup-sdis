@@ -1,3 +1,8 @@
+package messages.replies;
+
+import peer.Peer;
+import utils.MyUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;

@@ -1,3 +1,16 @@
+package messages;
+
+import messages.replies.ChunkReceiver;
+import messages.replies.DeletedFileReceiver;
+import messages.replies.RemovedReceiver;
+import messages.replies.StoredChunkReceiver;
+import messages.requests.DeleteReceiver;
+import messages.requests.GetChunkReceiver;
+import messages.requests.HelloWorldReceiver;
+import messages.requests.PutChunkReceiver;
+import peer.Peer;
+import utils.MyUtils;
+
 public class MessageReceiver implements Runnable {
 
     private final byte[] message;
@@ -25,7 +38,7 @@ public class MessageReceiver implements Runnable {
                 if (senderId == peer.getPeerId()) break;
                 System.out.println("\tPUTCHUNK Message received    | Type: " + args[1] + ", " +
                                                                     "Sender: " + args[2] + ", " +
-                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "storage.Chunk #" + args[4] + ", " +
                                                                     "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new PutChunkReceiver(message, peer));
@@ -35,7 +48,7 @@ public class MessageReceiver implements Runnable {
                 if (senderId == peer.getPeerId()) break;
                 System.out.println("\tSTORED Message received      | Type: " + args[1] + ", " +
                                                                     "Sender: " + args[2] + ", " +
-                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "storage.Chunk #" + args[4] + ", " +
                                                                     "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new StoredChunkReceiver(message, peer));
@@ -46,7 +59,7 @@ public class MessageReceiver implements Runnable {
                 if (senderId == peer.getPeerId()) break;
                 System.out.println("\tGETCHUNK Message received    | Type: " + args[1] + ", " +
                                                                     "Sender: " + args[2] + ", " +
-                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "storage.Chunk #" + args[4] + ", " +
                                                                     "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new GetChunkReceiver(message, peer));
@@ -56,7 +69,7 @@ public class MessageReceiver implements Runnable {
                 if (senderId == peer.getPeerId()) break;
                 System.out.println("\tCHUNK Message received       | Type: " + args[1] + ", " +
                                                                     "Sender: " + args[2] + ", " +
-                                                                    "Chunk #" + args[4] + ", " +
+                                                                    "storage.Chunk #" + args[4] + ", " +
                                                                     "Number bytes: " + length);
                 System.out.flush();
                 peer.executeThread(new ChunkReceiver(message, peer));
@@ -77,7 +90,7 @@ public class MessageReceiver implements Runnable {
                 System.out.println("\tREMOVED Message received     | Type: " + args[1] + ", " +
                                                                     "Sender: " + args[2] + ", " +
                                                                     "File ID: " + args[3] + ", " +
-                                                                    "Chunk #" + args[4]);
+                                                                    "storage.Chunk #" + args[4]);
                 System.out.flush();
                 peer.executeThread(new RemovedReceiver(message, peer));
                 break;

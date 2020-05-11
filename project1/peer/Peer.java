@@ -1,3 +1,10 @@
+package peer;
+
+import channel.Channel;
+import messages.MessageSender;
+import storage.*;
+import utils.MyUtils;
+
 import java.io.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -58,15 +65,15 @@ public class Peer implements PeerActionsInterface {
         this.peerId = peerId;
 
         this.multicastControlChannel = new Channel(MCAddress, Integer.parseInt(MCPort), this,
-                "MC Control Channel is open!");
+                "MC Control channel.Channel is open!");
         this.multicastDataBackupChannel = new Channel(MDBAddress, Integer.parseInt(MDBPort), this,
-                "MC Data Backup Channel is open!");
+                "MC Data Backup channel.Channel is open!");
         this.multicastDataRestoreChannel = new Channel(MDRAddress, Integer.parseInt(MDRPort), this,
-                "MC Data Restore Channel is open!");
+                "MC Data Restore channel.Channel is open!");
 
         this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(300);
 
-//        this.port = MyUtils.BASE_PORT + this.peerId;
+//        this.port = utils.MyUtils.BASE_PORT + this.peerId;
 //        this.serverSocket = new ServerSocket(this.port);
 
         this.chunkOccurrences = new OccurrencesStorage(this);
@@ -100,7 +107,7 @@ public class Peer implements PeerActionsInterface {
 
         if (args.length != 9) {
             System.out.println(
-                    "Usage: java Peer <protocol_version> <peer_id> <service access point> " +
+                    "Usage: java peer.Peer <protocol_version> <peer_id> <service access point> " +
                             "<mc_address> <mc_port> " +
                             "<mdb_address> <mdb_port> " +
                             "<mdr_address> <mdr_port>");
@@ -120,7 +127,7 @@ public class Peer implements PeerActionsInterface {
             peer.executeThread(peer.multicastControlChannel);
             peer.executeThread(peer.multicastDataBackupChannel);
             peer.executeThread(peer.multicastDataRestoreChannel);
-            System.out.println("\nPeer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
+            System.out.println("\npeer.Peer " + id + " ready. v" + version + " accessPoint: " + accessPoint);
 
             if (peer.getProtocolVersion().equals("2.0")) {
                 String helloWorld = peer.buildHelloWorldHeader();
@@ -128,7 +135,7 @@ public class Peer implements PeerActionsInterface {
                 peer.executeThread(new MessageSender(message, peer.multicastControlChannel));
             }
 
-        } catch (Exception e) { System.err.println("Peer exception : " + e.toString()); }
+        } catch (Exception e) { System.err.println("peer.Peer exception : " + e.toString()); }
     }
 
     @Override
@@ -266,7 +273,7 @@ public class Peer implements PeerActionsInterface {
     @Override
     public String state() throws Exception {
         this.operations.add(Operation.STATE);
-        String header = "\nSTATE: Peer " + this.getPeerId() + "\n\n";
+        String header = "\nSTATE: peer.Peer " + this.getPeerId() + "\n\n";
         String peerMemoryInfo = this.chunkStorage.getMemoryInfo();
         String backupFilesInfo = this.chunkOccurrences.getOccurrencesInfo();
         String storedChunksInfo = this.chunkStorage.getChunkInfo();
@@ -293,7 +300,7 @@ public class Peer implements PeerActionsInterface {
     public String buildGetchunkHeader(String fileId, int currentChunk) {
         //  <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
         return String.join(" ", this.protocolVersion, "GETCHUNK", Integer.toString(this.peerId),
-                fileId, Integer.toString(currentChunk), MyUtils.CRLF+MyUtils.CRLF);
+                fileId, Integer.toString(currentChunk), MyUtils.CRLF+ MyUtils.CRLF);
     }
 
     public String buildDeleteHeader(String fileId) {

@@ -1,3 +1,5 @@
+import peer.PeerActionsInterface;
+
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 

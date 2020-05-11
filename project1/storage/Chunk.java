@@ -1,3 +1,5 @@
+package storage;
+
 public class Chunk {
 
     private final int num;

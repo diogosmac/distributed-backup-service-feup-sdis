@@ -1,3 +1,9 @@
+package storage;
+
+import messages.MessageSender;
+import peer.Peer;
+import utils.MyUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -195,7 +201,7 @@ public class ChunkStorage {
 
     public String getMemoryInfo() {
 
-        String sectionHeader = "-- Peer Storage Section --\n|\n";
+        String sectionHeader = "-- peer.Peer Storage Section --\n|\n";
         String sectionFooter = "\n|\n--------------------------";
 
         long max = MyUtils.PEER_MAX_MEMORY_USE;
@@ -204,7 +210,7 @@ public class ChunkStorage {
         int freePercentage = (int) (this.availableMemory * 100 / max);
 
         String info = String.join("\n|\t",
-                "|\tPeer ID: " + this.peer.getPeerId(),
+                "|\tpeer.Peer ID: " + this.peer.getPeerId(),
                 "Storage Capacity: " + max * 0.001 + " KB",
                 "Used space: " + used * 0.001 + " KB\t(approx. " + usePercentage + "%)",
                 "Free space: " + this.availableMemory * 0.001 + " KB\t(approx. " + freePercentage + "%)");
@@ -235,8 +241,8 @@ public class ChunkStorage {
                 int replicationDegree = this.peer.getChunkOccurrences().getChunkOccurrences(fileId, chunkNumber);
 
                 String chunkInfo = String.join("\n|\t",
-                        "|\tChunk #" + chunkNumber + " of file with id: " + fileId,
-                        "Chunk size: " + fileSize * 0.001 + " KB",
+                        "|\tstorage.Chunk #" + chunkNumber + " of file with id: " + fileId,
+                        "storage.Chunk size: " + fileSize * 0.001 + " KB",
                         "Perceived replication degree: " + replicationDegree);
 
                 infoBody.append(chunkInfo).append('\n');

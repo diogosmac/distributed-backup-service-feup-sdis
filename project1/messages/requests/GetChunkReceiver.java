@@ -1,3 +1,10 @@
+package messages.requests;
+
+import messages.MessageSender;
+import storage.Chunk;
+import peer.Peer;
+import utils.MyUtils;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -107,7 +114,7 @@ public class GetChunkReceiver implements Runnable {
                         if (this.openTcpSocket(MyUtils.BASE_PORT + this.peer.getPeerId())) {
                             this.peer.executeThread(new MessageSender(chunkMessage, this.peer.getMulticastDataRestoreChannel()));
                             this.sendChunk(wantedChunk.getData(), wantedChunk.getSize());
-                            System.out.println("Chunk #" + chunkNumber + " Sent! (TCP)");
+                            System.out.println("storage.Chunk #" + chunkNumber + " Sent! (TCP)");
                             this.closeTcpSocket();
                         }
                     }

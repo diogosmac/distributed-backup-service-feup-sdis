@@ -1,3 +1,8 @@
+package storage;
+
+import peer.Peer;
+import utils.MyUtils;
+
 import java.io.*;
 import java.util.*;
 import java.util.ArrayList;
@@ -209,7 +214,7 @@ public class OccurrencesStorage {
             infoBody.append("|\tDesired Replication Degree: ").append(replicationDegree).append("\n");
 
             for (int chunk = 0; chunk < oi.getNumChunks(); chunk++) {
-                infoBody.append("|\t\tChunk #").append(chunk).append(
+                infoBody.append("|\t\tstorage.Chunk #").append(chunk).append(
                         " - Perceived Replication Degree: ").append(oi.getOccurrenceCount(chunk)).append('\n');
             }
 

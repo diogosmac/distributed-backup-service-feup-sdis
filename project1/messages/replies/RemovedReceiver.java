@@ -1,3 +1,9 @@
+package messages.replies;
+
+import messages.MessageSender;
+import peer.Peer;
+import utils.MyUtils;
+
 public class RemovedReceiver implements Runnable {
 
     private final int senderId;
