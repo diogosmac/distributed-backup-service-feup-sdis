@@ -16,10 +16,8 @@ public class FingerTableTest {
         table.addNodePair(4, new NodePair<Integer,InetSocketAddress>(18, null));
 
         // lookup
-        Integer result = table.lookup(1, 8);
-        System.out.println(result);
-
-        System.out.println("___________________");
+        //Integer result = table.lookup(1, 8);
+        //System.out.println(result);
 
         table = new FingerTable(m);
         table.addNodePair(0, new NodePair<Integer,InetSocketAddress>(1, null));
@@ -29,8 +27,8 @@ public class FingerTableTest {
         table.addNodePair(4, new NodePair<Integer,InetSocketAddress>(14, null));
 
         // lookup
-        result = table.lookup(28, 12);
-        System.out.println("RESULT: " + result);
+        //result = table.lookup(28, 12);
+        //System.out.println("RESULT: " + result);
     }
     
 }
