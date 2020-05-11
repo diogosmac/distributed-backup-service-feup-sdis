@@ -12,12 +12,16 @@ KeyStore_PW="123456"
 TrustStore="truststore"
 TrustStore_PW="123456"
 
-if [[ "$#" -ne 2 && "$#" -ne 3 ]]; then
+if [[ "$#" -ne 1 && "$#" -ne 2 && "$#" -ne 3 ]]; then
   echo "Usage: client.sh <oper> <opnd>*"
   exit 1
 fi
 
-if [[ "$#" -eq 2 ]]; then
+if [[ "$#" -eq 1 ]]; then
+    java -Djavax.net.ssl.keyStore="$KeyStore" -Djavax.net.ssl.keyStorePassword="$KeyStore_PW" \
+        -Djavax.net.ssl.trustStore="$TrustStore" -Djavax.net.ssl.trustStorePassword="$TrustStore_PW" \
+        -cp "$OUT_DIR" "$SSLClient" "$Host" "$Port" "$1" "${CypherSuite[@]}"
+elif [[ "$#" -eq 2 ]]; then
     java -Djavax.net.ssl.keyStore="$KeyStore" -Djavax.net.ssl.keyStorePassword="$KeyStore_PW" \
         -Djavax.net.ssl.trustStore="$TrustStore" -Djavax.net.ssl.trustStorePassword="$TrustStore_PW" \
         -cp "$OUT_DIR" "$SSLClient" "$Host" "$Port" "$1" "$2" "${CypherSuite[@]}"

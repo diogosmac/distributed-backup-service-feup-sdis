@@ -20,9 +20,6 @@ public class SSLClient {
 
         SSLSocket sslSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(hostname, port);
 
-        Request request = Request.fromArgs(Arrays.copyOfRange(args, 2, args.length));
-        if (request == null) return;
-
         int n_arguments_before_cypher;
 
         switch (args[2]) {
@@ -36,6 +33,10 @@ public class SSLClient {
                 n_arguments_before_cypher = 3;
                 break;
         }
+
+        Request request = Request.fromArgs(Arrays.copyOfRange(args, 2, n_arguments_before_cypher));
+        if (request == null) return;
+
 
         if (args.length > n_arguments_before_cypher) {
             String [] cyphers = Arrays.copyOfRange(args, n_arguments_before_cypher, args.length);

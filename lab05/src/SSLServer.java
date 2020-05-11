@@ -56,15 +56,17 @@ public class SSLServer {
         SSLServerSocket sslSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
         System.out.println("\nServer opened at " + sslSocket.getInetAddress().getHostName() + ":" + port + '\n');
 
-        SSLSocket socket;
-        try {
-            socket = (SSLSocket) sslSocket.accept();
-        } catch (IOException e) {
-            System.out.println("Accept failed: " + port);
-            return;
-        }
+        SSLSocket socket = null;
 
         while (!closeRequested) {
+
+            try {
+                socket = (SSLSocket) sslSocket.accept();
+            } catch (IOException e) {
+                System.out.println("Accept failed: " + port);
+                return;
+            }
+
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
