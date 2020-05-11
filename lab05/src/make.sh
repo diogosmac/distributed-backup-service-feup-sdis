@@ -1,1 +1,0 @@
-javac -d build *.java

@@ -56,16 +56,15 @@ public class SSLServer {
         SSLServerSocket sslSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
         System.out.println("\nServer opened at " + sslSocket.getInetAddress().getHostName() + ":" + port + '\n');
 
+        SSLSocket socket;
+        try {
+            socket = (SSLSocket) sslSocket.accept();
+        } catch (IOException e) {
+            System.out.println("Accept failed: " + port);
+            return;
+        }
+
         while (!closeRequested) {
-
-            SSLSocket socket = null;
-            try {
-                socket = (SSLSocket) sslSocket.accept();
-            } catch (IOException e) {
-                System.out.println("Accept failed: " + port);
-                return;
-            }
-
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -75,14 +74,17 @@ public class SSLServer {
             Request request = Request.fromArgs(arguments);
             String reply = (request != null) ? process(request) : "ERROR";
 
+            if(args.length > 1) {
+                String[] cyphers = Arrays.copyOfRange(args, 1, args.length);
+                socket.setEnabledCipherSuites(cyphers);
+            }
+
             System.out.println("SSLServer: " + received);
             out.println(reply);
 
             out.close();
             in.close();
-            socket.close();
-
         }
-
+        socket.close();
     }
 }
