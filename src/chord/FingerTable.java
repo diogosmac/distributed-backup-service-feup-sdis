@@ -72,30 +72,10 @@ public class FingerTable {
         for (int finger = MAX_SIZE - 1; finger >= 0; finger--) {
             NodePair<Integer, InetSocketAddress> possibleNode = this.table.get(finger);
             System.out.println(possibleNode.getKey());
-            if (!inBetween(fileID, nodeID, possibleNode.getKey()))
+            if (!Utils.inBetween(fileID, nodeID, possibleNode.getKey(), MAX_SIZE))
                 return possibleNode.getValue();
         }
         // if not found then we move to the next node/peer
         return getFirstNode().getValue();
-    }
-
-    /**
-     * 
-     * @param target wanted file's ID
-     * @param lowerBound
-     * @param upperBound
-     * @return true if 'target' is between 'lowerBound' and 'upperBound'
-     */
-    private boolean inBetween(Integer target, Integer lowerBound, Integer upperBound) {
-        // calculate max nodes in the chord
-        int maxNodes = (int) Math.pow(2, this.MAX_SIZE);
-        // if upper bound is smaller than lower bound, then we have made a complete
-        // loop in the chord's ring
-        if (upperBound < lowerBound) {
-            upperBound += maxNodes;
-            target += maxNodes;
-        }
-        // finally, calculate target intervals
-        return lowerBound < target && target < upperBound;
     }
 }
