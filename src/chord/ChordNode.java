@@ -63,5 +63,13 @@ public class ChordNode {
         // perform maintenance every half second after 1.5 seconds after starting
         this.scheduler.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
 	}
+
+	protected InetSocketAddress getAddress() {
+	    return address;
+    }
+
+    protected void execute(Runnable command) {
+	    this.scheduler.execute(command);
+    }
     
 }
