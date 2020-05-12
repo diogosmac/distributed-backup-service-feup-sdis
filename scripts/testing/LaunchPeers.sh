@@ -12,5 +12,5 @@ fi
 
 for i in $(seq 1 "$n_peers"); do
   access_point="ap$i"
-  gnome-terminal -x sh -c "cd ../build/; java Peer $protocol_version $i $access_point 224.0.0 8001 224.0.0 8002 224.0.0 8003"
+  gnome-terminal -x sh -c "cd ../build/; java peer.Peer $protocol_version $i $access_point 224.0.0 8001 224.0.0 8002 224.0.0 8003"
 done
