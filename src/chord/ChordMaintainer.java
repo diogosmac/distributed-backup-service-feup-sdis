@@ -1,10 +1,15 @@
 package chord;
 
+/**
+ * Chord Maintainer
+ * 
+ * 
+ */
 public class ChordMaintainer implements Runnable {
 
-    private Chord chord;
+    private ChordNode chord;
 
-    public ChordMaintainer(Chord chord) {
+    public ChordMaintainer(ChordNode chord) {
 		this.chord = chord;
 	}
 

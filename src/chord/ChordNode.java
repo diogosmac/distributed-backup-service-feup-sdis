@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Chord {
+public class ChordNode {
 
     /**
 	 * The peer's unique identifier
@@ -47,7 +47,7 @@ public class Chord {
      */
     private ScheduledThreadPoolExecutor scheduler;
 
-    public Chord() {
+    public ChordNode() {
 
         // start chord maintainer thread
         this.startMaintainer();
