@@ -86,12 +86,14 @@ public class ChordChannel implements Runnable {
      * @param port Number of the port in which the socket will be opened
      */
     protected void open(int port) {
+
         try {
             serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
         } catch (IOException e) {
             System.out.println("Error creating SSLServerSocket in port " + port);
             e.printStackTrace();
         }
+
     }
 
     /**
@@ -138,7 +140,7 @@ public class ChordChannel implements Runnable {
      * @param message Message to be sent
      */
     protected void sendMessage(InetSocketAddress address, String message) {
-        // TODO: Properly send message
+
         if (address.equals(this.parent.getAddress())) {
             handleMessage(null, message);
             return;
@@ -156,13 +158,6 @@ public class ChordChannel implements Runnable {
 
         } catch (IOException e) { e.printStackTrace(); }
 
-    }
-
-    /**
-     * Starts the thread in charge of running the ChordChannel
-     */
-    protected void start() {
-        this.parent.execute(this);
     }
 
 }

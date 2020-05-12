@@ -45,31 +45,44 @@ public class ChordNode {
     /**
      * Thread Executor used for chord maintainer
      */
-    private ScheduledThreadPoolExecutor scheduler;
+    private ScheduledThreadPoolExecutor executor;
 
     public ChordNode() {
-
+        // creates the ChordNode's scheduled thread executor
+        this.createExecutor();
         // start chord maintainer thread
         this.startMaintainer();
+        // start chord communication channel thread
+        this.startChannel();
     }
 
+    /**
+     * Create scheduled thread executor and limit to two threads
+     */
+    private void createExecutor() {
+        this.executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+    }
 
     /**
 	 * Starts the maintenance routine
 	 */
 	private void startMaintainer() {
-        // create scheduled thread executor and limit to one thread
-        this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);
         // perform maintenance every half second after 1.5 seconds after starting
-        this.scheduler.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
+        this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
 	}
 
+    /**
+     * Starts the Chord communication channel
+     */
+    private void startChannel() {
+        this.executor.execute(new ChordChannel(this));
+    }
+
+    /**
+     * Gets a ChordNode's InetSocketAddress
+     */
 	protected InetSocketAddress getAddress() {
 	    return address;
     }
 
-    protected void execute(Runnable command) {
-	    this.scheduler.execute(command);
-    }
-    
 }
