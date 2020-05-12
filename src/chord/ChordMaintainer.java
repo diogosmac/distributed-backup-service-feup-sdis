@@ -80,19 +80,13 @@ public class ChordMaintainer implements Runnable {
     }
 
     /**
-     * 
+     * This method notifies node 'n's successor of 'n's existence, giving the
+     * successor the chance to change its predecessor to 'n'. The successor only
+     * does this if it knows of no closer predecessor than 'n'.
      * @param node 
      */
     private void notify(NodePair<Integer, InetSocketAddress> node) {
-        // get 'chord's sucessor's predecessor
-        NodePair<Integer, InetSocketAddress> successor = chord.getSuccessor();
-        NodePair<Integer, InetSocketAddress> successorsPredecessor = chord.getSuccessorsPredecessor();
-        // check if sucessor's predecessor ID is between 'chord' and 'chords's successor
-        // if so, then successorsPredecessor is our new successor
-        if (Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
-            chord.setSuccessor(successorsPredecessor);
-        // notify 'chord's successor of 'chord's existance 
-        // TODO 
+        
     }
 
     /**
