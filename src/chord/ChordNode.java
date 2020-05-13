@@ -6,10 +6,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Chord Node
+ * 
+ * Class used to represent a node in the chord's network
+ */
 public class ChordNode {
 
     /**
-	 * The peer's unique identifier
+	 * The node's unique identifier
      */
     private Integer id;
 
@@ -24,19 +29,24 @@ public class ChordNode {
     private int r;
 
     /**
-     * The peer's address
+     * The node's address
      */
     private InetSocketAddress address;
 
     /**
-     * The peer's predecessor
+     * The node's predecessor
      */
     private NodePair<Integer, InetSocketAddress> predecessor;
 
     /**
-     * The peer's finger table. Stores m entries of other peers in the ring
+     * The node's finger table. Stores m entries of other nodes in the ring
      */
     private FingerTable fingerTable;
+
+    /**
+     * The finger (index) of the finger table entry to fix
+     */
+    private int finger;
 
     /**
 	 * The list of its successors, size r
@@ -122,6 +132,20 @@ public class ChordNode {
     }
 
     /**
+     * @return the finger
+     */
+    public int getFinger() {
+        return finger;
+    }
+
+    /**
+     * @param finger the finger to set
+     */
+    public void setFinger(int finger) {
+        this.finger = finger;
+    }
+
+    /**
      * @return chord node's sucessor, which happens to be
      * the first element of 'successorList' and also the first
      * element of 'fingerTable'
@@ -136,7 +160,7 @@ public class ChordNode {
      * @param node new chord's successor
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
-        this.fingerTable.addNodePair(0, node);
+        this.fingerTable.setNodePair(0, node);
     }
 
     /**
@@ -150,6 +174,16 @@ public class ChordNode {
         // build pair and return it
 
         return null;
+    }
+
+    /**
+     * Set entry in finger table given finger (index) and entry (node)
+     * 
+     * @param finger the finger table index
+     * @param fingerTable the fingerTable to set
+     */
+    public void setFingerTableEntry(int finger, NodePair<Integer, InetSocketAddress> node) {
+        this.fingerTable.setNodePair(finger, node);
     }
     
 }

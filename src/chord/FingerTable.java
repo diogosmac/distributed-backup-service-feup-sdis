@@ -42,12 +42,12 @@ public class FingerTable {
 
     /**
      * 
-     * @param index Index in the finger table
-     * @param element NodePair containing node's hashed ID as keys, and
+     * @param finger Index in the finger table
+     * @param node NodePair containing node's hashed ID as keys, and
      * Socket Address (IP and Port) as value
      */
-    public void addNodePair(int index, NodePair<Integer, InetSocketAddress> element) {
-        this.table.add(index, element);
+    public void setNodePair(int finger, NodePair<Integer, InetSocketAddress> node) {
+        this.table.add(finger, node);
     }
     
     /**

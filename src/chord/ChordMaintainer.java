@@ -75,17 +75,22 @@ public class ChordMaintainer implements Runnable {
         // if so, then successorsPredecessor is our new successor
         if (Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
-        // notify 'chord's successor of 'chord's existance 
-        // TODO 
+        // TODO notify 'chord's successor of 'chord's existance 
+        // ...
     }
 
     /**
      * This method notifies node 'n's successor of 'n's existence, giving the
      * successor the chance to change its predecessor to 'n'. The successor only
      * does this if it knows of no closer predecessor than 'n'.
-     * @param node 
+     * @param node possible new predecessor
      */
     private void notify(NodePair<Integer, InetSocketAddress> node) {
+        NodePair<Integer, InetSocketAddress> predecessor = chord.getPredecessor();
+        // if predecessor is null then it means that 'checkPredecessor' method
+        // has determined that 'chord's predecessor has failed
+        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), chord.getId(), chord.getM()))
+            chord.setPredecessor(node);
         
     }
 
@@ -96,7 +101,17 @@ public class ChordMaintainer implements Runnable {
      * finger tables.
      */
     private void fixFingers() {
+        // get, update and set finger
+        int finger = this.chord.getFinger();
+        finger = (finger + 1) % this.chord.getM();
+        chord.setFinger(finger);
 
+        // calculate new node ID
+        Integer nodeID = chord.getId() + (int) Math.pow(2, finger - 1);
+        // TODO get successor of nodeID
+        NodePair<Integer, InetSocketAddress> node = new NodePair<>(nodeID, null);
+        // update entry in finger table with index 'finger'
+        chord.setFingerTableEntry(finger, node);
     }
 
     /**
@@ -105,7 +120,7 @@ public class ChordMaintainer implements Runnable {
      * 'notify' method.
      */
     private void checkPredecessor() {
-
+        
     }
 
     /**
