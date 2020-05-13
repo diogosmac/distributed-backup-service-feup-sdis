@@ -120,7 +120,12 @@ public class ChordMaintainer implements Runnable {
      * 'notify' method.
      */
     private void checkPredecessor() {
-        
+        // node may not have a predecessor yet
+        if (chord.getPredecessor() == null)
+            return;
+        // TODO: send request to predecessor
+        // if he does not respond set it as failed (null)
+        chord.setPredecessor(null);
     }
 
     /**
