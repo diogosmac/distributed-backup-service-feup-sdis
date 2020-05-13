@@ -129,11 +129,13 @@ public class ChordMaintainer implements Runnable {
     }
 
     /**
-     * Thread 
+     * Thread to maintain dynamic operations and failure resistance in chord node
+     * 
      */
     @Override
     public void run() {
-        // TODO Auto-generated method stub
-
+        this.stabilize();
+        this.fixFingers();
+        this.checkPredecessor();
     }
 }
