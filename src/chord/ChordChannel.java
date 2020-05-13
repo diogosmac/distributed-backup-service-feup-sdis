@@ -160,4 +160,59 @@ public class ChordChannel implements Runnable {
 
     }
 
+    /**
+     * Creates the findSuccessor message to be later sent
+     * @param requestOrigin Contains the IP and Port of the ChordNode that wants to find the successor of id
+     * @param requestedId Id that the origin Node requested
+     * @return Message to be sent, delegating the findSuccessor work to other node
+     */
+    protected String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("FINDSUCCESSOR").append(" "); // Header
+        sb.append(requestOrigin.getAddress().getHostAddress()).append(" "); // Origin's IP
+        sb.append(requestOrigin.getPort()).append(" "); // Origin's Port
+        sb.append(requestedId); // Id requested
+
+        return sb.toString();
+    }
+
+    /**
+     * Delegates the work of finding the successor of id, by sending a message to destination
+     * @param requestOrigin Contains the IP and Port of the ChordNode that wants to find the successor of id
+     * @param requestedId Id that the origin Node requested
+     * @param destination Contains the IP and Port of the ChordNode that will be receiving the request
+     */
+    protected String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
+                                            InetSocketAddress destination) {
+        String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
+        this.sendMessage(destination, message);
+
+        if (!this.parent.getAddress().getHostName().equals(requestOrigin.getAddress().getHostName()))  // This node didn't request the id
+            return null; // Delegates work, and returns
+        else
+        {
+            synchronized (this.parent) {
+                try {
+                    this.parent.wait(this.timeout*2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                for (Message currentMessage : this.messageQueue) {
+                    //TODO CHECK if response is in queue
+                    return currentMessage.arguments;
+                }
+
+            }
+
+        }
+
+        return null;
+    }
+
+    protected String returnFindSuccessor() {
+        //TODO
+        return "TODO";
+    }
+
 }

@@ -47,6 +47,11 @@ public class ChordNode {
      */
     private ScheduledThreadPoolExecutor executor;
 
+    /**
+     * Chord channel used for communication
+     */
+    private ChordChannel channel = null;
+
     public ChordNode() {
         // creates the ChordNode's scheduled thread executor
         this.createExecutor();
@@ -75,7 +80,8 @@ public class ChordNode {
      * Starts the Chord communication channel
      */
     private void startChannel() {
-        this.executor.execute(new ChordChannel(this));
+        this.channel = new ChordChannel(this);
+        this.executor.execute(this.channel);
     }
 
     /**
@@ -83,6 +89,71 @@ public class ChordNode {
      */
 	protected InetSocketAddress getAddress() {
 	    return address;
+    }
+
+    /**
+     * Gets a ChordNode's id
+     */
+    protected int getId() {
+	    return this.id;
+    }
+
+    /**
+     * Gets node's successor id
+     */
+    protected int getSuccessorId() {
+        return this.fingerTable.getFirstNode().getKey();
+    }
+
+    /**
+     * Gets node's successor address
+     */
+    protected InetSocketAddress getSuccessorAddress() {
+        return this.fingerTable.getFirstNode().getValue();
+    }
+
+    /**
+     * Gets closest preceding node address
+     */
+    protected InetSocketAddress getClosestPreceding(int id) {
+        return this.fingerTable.lookup(this.getId(), id);
+    }
+
+    /**
+     * Returns predecessor's id
+     */
+    protected int getPredecessorId() {
+        return this.predecessor.getKey();
+    }
+
+    /**
+     * Returns predecessor's address
+     */
+    protected InetSocketAddress getPredecessorAddress() {
+        return this.predecessor.getValue();
+    }
+
+    /**
+     * Finds the successor node of id
+     */
+    protected void findSuccessor(int id) {
+        this.findSuccessor(this.getAddress(), id);
+    }
+
+    /**
+     * Finds the successor node of id
+     */
+    protected void findSuccessor(InetSocketAddress requestOrigin, int id) {
+        //TODO: Check predecessor?
+
+        int successorId = this.fingerTable.getFirstNode().getKey();
+        if (this.fingerTable.inBetween(id, this.getId(), successorId)) {
+            //TODO: Send Message to origin with Successor Address AKA Return
+        }
+        else {
+            InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
+            this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
+        }
     }
 
 }

@@ -86,7 +86,7 @@ public class FingerTable {
      * @param upperBound
      * @return true if 'target' is between 'lowerBound' and 'upperBound'
      */
-    private boolean inBetween(Integer target, Integer lowerBound, Integer upperBound) {
+    protected boolean inBetween(Integer target, Integer lowerBound, Integer upperBound) {
         // calculate max nodes in the chord
         int maxNodes = (int) Math.pow(2, this.MAX_SIZE);
         // if upper bound is smaller than lower bound, then we have made a complete
