@@ -124,9 +124,7 @@ public class ChordNode {
         this.startChannel();
 
         // get known address node's identifier
-
-        // join the chord ring
-        this.join(new NodePair<Integer,InetSocketAddress>(port, knownAddress));
+        this.join(knownAddress);
     }
 
     /**
@@ -148,13 +146,15 @@ public class ChordNode {
      * 
      * @param node any know node in the chord network
      */
-    private void join(NodePair<Integer, InetSocketAddress> node) {
+    protected void join(InetSocketAddress node) {
         // no predecessor
         this.setPredecessor(null);
         // successor is found by 'node'
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
-        // successorList.add(node.findSuccessor(this.getId()));
+
         this.setSuccessorList(successorList);
+
+        this.channel.sendJoiningMessage(node);
     }
 
     /**
@@ -315,8 +315,8 @@ public class ChordNode {
     /**
      * Finds the successor node of id
      */
-    protected void findSuccessor(int id) {
-        this.findSuccessor(this.getAddress(), id);
+    protected String[] findSuccessor(int id) {
+        return this.findSuccessor(this.getAddress(), id);
     }
 
     /**
@@ -326,7 +326,7 @@ public class ChordNode {
         // TODO: Check predecessor?
         int successorId = this.fingerTable.getFirstNode().getKey();
         if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
-            this.channel.returnFindSuccessor(requestOrigin, id, this.getSuccessorAddress());
+            this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
             return null;
         }
         else {

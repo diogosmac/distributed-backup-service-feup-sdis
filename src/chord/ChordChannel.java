@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ChordChannel implements Runnable {
@@ -135,26 +136,42 @@ public class ChordChannel implements Runnable {
         // TODO: Handle received message
         String[] args = message.split(" ");
         switch(args[0]) {
-            case "FINDSUCCESSOR":
+            case "FINDSUCCESSOR": {
                 int id = Integer.parseInt(args[1]);
                 InetSocketAddress fsAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 this.parent.findSuccessor(fsAddress, id);
                 break;
+            }
 
-            case "SUCCESSORFOUND":
+            case "SUCCESSORFOUND": {
                 synchronized (this.parent) {
                     InetSocketAddress sfAddress = getAddress(socket);
                     messageQueue.add(new Message(sfAddress, message));
                     this.parent.notify();
                 }
                 break;
+            }
 
-            case "JOINING":
-                //Calls find successor as the new node
-                InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+            case "JOINING": {
                 int newNodeId = Integer.parseInt(args[1]);
-                this.parent.findSuccessor(newNodeInfo, newNodeId);
+                String[] successorArgs = this.parent.findSuccessor(newNodeId);
+
+                InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+                InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[2], Integer.parseInt(successorArgs[3]));
+                int successorId = Integer.parseInt(successorArgs[1]);
+
+                this.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
                 break;
+            }
+
+            case "WELCOME": {
+                int successorId = Integer.parseInt(args[1]);
+                InetSocketAddress successorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+                NodePair<Integer, InetSocketAddress> successor = new NodePair<>(successorId, successorInfo);
+
+                this.parent.setSuccessor(successor);
+                break;
+            }
 
         }
 
@@ -216,25 +233,21 @@ public class ChordChannel implements Runnable {
 
         if (!this.parent.getAddress().getHostName().equals(requestOrigin.getAddress().getHostName()))  // This node didn't request the id
             return null; // Delegates work, and returns
-        else
-        {
-            synchronized (this.parent) {
-                try {
-                    this.parent.wait(this.timeout*2);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
 
-                for (Message currentMessage : this.messageQueue) {
-                    String [] messageReceived = currentMessage.getArguments();
-                    if (messageReceived.length == 4 && messageReceived[1].equals(Integer.toString(requestedId))) // Answer to request made
-                        return messageReceived;
-
-                    return currentMessage.arguments;
-                }
-
+        synchronized (this.parent) {
+            try {
+                this.parent.wait(this.timeout*2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
+            for (Message currentMessage : this.messageQueue) {
+                String [] messageReceived = currentMessage.getArguments();
+                if (messageReceived[0].equals("SUCCESSORFOUND") && messageReceived[1].equals(Integer.toString(requestedId))) { // Answer to request made
+                    this.messageQueue.remove(currentMessage);
+                    return messageReceived;
+                }
+            }
         }
 
         return null;
@@ -243,16 +256,18 @@ public class ChordChannel implements Runnable {
     /**
      * Builds the message with the requested information about the Node with requestedId
      * @param requestedId
-     * @param requestedNodeInfo
+     * @param successorId
+     * @param successorNodeInfo
      * @return
      */
-    private String createReturnMessage(int requestedId, InetSocketAddress requestedNodeInfo) {
-        // Message format: SUCCESSORFOUND <requestedId> <requestedNodeIp> <requestedNodePort>
+    private String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+        // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORFOUND").append(" ");
         sb.append(requestedId).append(" ");
-        sb.append(requestedNodeInfo.getAddress().getHostName()).append(" ");
-        sb.append(requestedNodeInfo.getPort()).append(" ");
+        sb.append(successorId).append(" ");
+        sb.append(successorNodeInfo.getAddress().getHostName()).append(" ");
+        sb.append(successorNodeInfo.getPort()).append(" ");
         return sb.toString();
     }
 
@@ -260,10 +275,10 @@ public class ChordChannel implements Runnable {
      * Sends a message with the information requested to the Node that made the request to find the successor
      * @param requestOrigin
      * @param requestedId
-     * @param requestedNodeInfo
+     * @param successorNodeInfo
      */
-    protected void returnFindSuccessor(InetSocketAddress requestOrigin, int requestedId, InetSocketAddress requestedNodeInfo) {
-        String message = this.createReturnMessage(requestedId, requestedNodeInfo);
+    protected void sendSuccessorFound(InetSocketAddress requestOrigin, int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+        String message = this.createSuccessorFoundMessage(requestedId, successorId, successorNodeInfo);
         this.sendMessage(requestOrigin, message);
     }
 
@@ -288,6 +303,28 @@ public class ChordChannel implements Runnable {
     protected void sendJoiningMessage(InetSocketAddress knownNode) {
         String message = this.createJoiningMessage();
         this.sendMessage(knownNode, message);
+    }
+
+    /**
+     *
+     * @param successor
+     * @return
+     */
+    private String createWelcomeMessage(int successorId, InetSocketAddress successor) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("WELCOME").append(" ");
+        sb.append(successorId).append(" ");
+        sb.append(successor.getAddress().getHostName()).append(" ");
+        sb.append(successor.getPort());
+        return sb.toString();
+    }
+
+    /**
+     *
+     */
+    protected void sendWelcomeMessage(InetSocketAddress newNode, int successorId, InetSocketAddress successor) {
+        String message = this.createWelcomeMessage(successorId, successor);
+        this.sendMessage(newNode, message);
     }
 
 }
