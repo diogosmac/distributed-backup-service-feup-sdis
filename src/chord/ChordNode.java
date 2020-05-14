@@ -65,10 +65,22 @@ public class ChordNode {
      */
     private ChordChannel channel = null;
 
+    /**
+     * Constructor without IP address
+     * @param id Chord Node identifier
+     * @param m Number of bits of the addressing space
+     * @throws UnknownHostException If unable to get localhost
+     */
     public ChordNode(Integer id, int m) throws UnknownHostException {
         this(id, m, new InetSocketAddress(InetAddress.getLocalHost(), 2));
     }
 
+    /**
+     * Constructor without IP address
+     * @param id Chord Node identifier
+     * @param m Number of bits of the addressing space
+     * @param address IP address to join the Chord 'network'
+     */
     public ChordNode(Integer id, int m, InetSocketAddress address) {
 
         this.id = id;
@@ -78,8 +90,10 @@ public class ChordNode {
 
         // creates the ChordNode's scheduled thread executor
         this.createExecutor();
+
         // start chord maintainer thread
         this.startMaintainer();
+
         // start chord communication channel thread
         this.startChannel();
     }
@@ -95,7 +109,7 @@ public class ChordNode {
 	 * Starts the maintenance routine
 	 */
 	private void startMaintainer() {
-        // perform maintenance every half second after 1.5 seconds after starting
+         // perform maintenance every half second after 1.5 seconds after starting
         this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
     }
 
@@ -250,7 +264,7 @@ public class ChordNode {
      * Finds the successor node of id
      */
     protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
-        //TODO: Check predecessor?
+        // TODO: Check predecessor?
 
         int successorId = this.fingerTable.getFirstNode().getKey();
         if (this.fingerTable.inBetween(id, this.getId(), successorId)) {
