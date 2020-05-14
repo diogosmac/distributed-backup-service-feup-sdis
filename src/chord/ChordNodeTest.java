@@ -11,7 +11,6 @@ public class ChordNodeTest {
 
         int id;
         InetSocketAddress connectionPeer;
-
         ChordNode node;
 
         if (args.length == 1) {
@@ -35,35 +34,41 @@ public class ChordNodeTest {
         }
 
         switch (id) {
-            case 1 -> {
+
+            case 1:
                 node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(4, null));
                 node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(4, null));
                 node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(9, null));
                 node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(9, null));
                 node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(18, null));
-            }
-            case 18 -> {
+                break;
+
+            case 18:
                 node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(20, null));
                 node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(20, null));
                 node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(4, null));
-            }
-            case 20 -> {
+                break;
+
+            case 20:
                 node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(21, null));
                 node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(4, null));
-            }
-            case 21 -> {
+                break;
+
+            case 21:
                 node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(28, null));
                 node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(1, null));
                 node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(9, null));
-            }
-            default -> { return; }
+                break;
+
+            default: return;
+
         }
 
         System.out.println("h3h3h3");
