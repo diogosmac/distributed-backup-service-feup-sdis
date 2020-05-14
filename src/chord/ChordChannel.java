@@ -150,7 +150,10 @@ public class ChordChannel implements Runnable {
                 break;
 
             case "JOINING":
-                // TODO: Message when a node joins disChord
+                //Calls find successor as the new node
+                InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+                int newNodeId = Integer.parseInt(args[1]);
+                this.parent.findSuccessor(newNodeInfo, newNodeId);
                 break;
 
         }
@@ -189,7 +192,7 @@ public class ChordChannel implements Runnable {
      * @param requestedId Id that the origin Node requested
      * @return Message to be sent, delegating the findSuccessor work to other node
      */
-    protected String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
+    private String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
         // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("FINDSUCCESSOR").append(" "); // Header
@@ -238,6 +241,22 @@ public class ChordChannel implements Runnable {
     }
 
     /**
+     * Builds the message with the requested information about the Node with requestedId
+     * @param requestedId
+     * @param requestedNodeInfo
+     * @return
+     */
+    private String createReturnMessage(int requestedId, InetSocketAddress requestedNodeInfo) {
+        // Message format: SUCCESSORFOUND <requestedId> <requestedNodeIp> <requestedNodePort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("SUCCESSORFOUND").append(" ");
+        sb.append(requestedId).append(" ");
+        sb.append(requestedNodeInfo.getAddress().getHostName()).append(" ");
+        sb.append(requestedNodeInfo.getPort()).append(" ");
+        return sb.toString();
+    }
+
+    /**
      * Sends a message with the information requested to the Node that made the request to find the successor
      * @param requestOrigin
      * @param requestedId
@@ -249,19 +268,26 @@ public class ChordChannel implements Runnable {
     }
 
     /**
-     * Builds the message with the requested information about the Node with requestedId
-     * @param requestedId
-     * @param requestedNodeInfo
+     * Builds the joining message, used when a peer joins the chord
      * @return
      */
-    protected String createReturnMessage(int requestedId, InetSocketAddress requestedNodeInfo) {
-        // Message format: SUCCESSORFOUND <requestedId> <requestedNodeIp> <requestedNodePort>
+    private String createJoiningMessage() {
+        // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
         StringBuilder sb = new StringBuilder();
-        sb.append("SUCCESSORFOUND").append(" ");
-        sb.append(requestedId).append(" ");
-        sb.append(requestedNodeInfo.getAddress().getHostName()).append(" ");
-        sb.append(requestedNodeInfo.getPort()).append(" ");
+        sb.append("JOINING").append(" ");
+        sb.append(this.parent.getId()).append(" ");
+        sb.append(this.parent.getAddress().getHostName()).append(" ");
+        sb.append(this.parent.getAddress().getPort());
         return sb.toString();
+    }
+
+    /**
+     * Creates and sends a joining message to the known node
+     * @param knownNode
+     */
+    protected void sendJoiningMessage(InetSocketAddress knownNode) {
+        String message = this.createJoiningMessage();
+        this.sendMessage(knownNode, message);
     }
 
 }
