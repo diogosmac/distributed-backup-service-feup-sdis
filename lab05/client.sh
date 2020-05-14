@@ -7,10 +7,10 @@ Host="localhost"
 Port=12345
 CypherSuite=("TLS_RSA_WITH_AES_128_CBC_SHA" "TLS_DHE_RSA_WITH_AES_128_CBC_SHA")
 
-KeyStore="client.keys"
+KeyStore="keys/client.keys"
 KeyStore_PW="123456"
 
-TrustStore="truststore"
+TrustStore="keys/truststore"
 TrustStore_PW="123456"
 
 nArgs="$#"
