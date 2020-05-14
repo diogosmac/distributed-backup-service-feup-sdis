@@ -120,6 +120,12 @@ public class ChordChannel implements Runnable {
 
     }
 
+    private InetSocketAddress getAddress(SSLSocket socket) {
+        return (socket == null
+                ? this.parent.getAddress()
+                : (InetSocketAddress) socket.getRemoteSocketAddress());
+    }
+
     /**
      * Handles a message received by the ChordChannel
      * @param socket Socket from which the message was read
@@ -127,11 +133,19 @@ public class ChordChannel implements Runnable {
      */
     protected void handleMessage(SSLSocket socket, String message) {
         // TODO: Handle received message
-        InetSocketAddress address = (
-                socket == null
-                        ? this.parent.getAddress()
-                        : (InetSocketAddress) socket.getRemoteSocketAddress());
-        messageQueue.add(new Message(address, message));
+        String[] args = message.split(" ");
+        switch(args[0]) {
+            case "FINDSUCCESSOR":
+                break;
+            case "SUCCESSORFOUND":
+                synchronized (this.parent) {
+                    InetSocketAddress address = getAddress(socket);
+                    messageQueue.add(new Message(address, message));
+                    this.parent.notify();
+                }
+                break;
+        }
+
     }
 
     /**
