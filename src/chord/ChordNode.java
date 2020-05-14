@@ -56,32 +56,52 @@ public class ChordNode {
     /**
      * Thread Executor used for chord maintainer
      */
-    private ScheduledThreadPoolExecutor scheduler;
+    private ScheduledThreadPoolExecutor executor;
+
+    /**
+     * Chord channel used for communication
+     */
+    private ChordChannel channel = null;
 
     public ChordNode() {
-
+        // creates the ChordNode's scheduled thread executor
+        this.createExecutor();
         // start chord maintainer thread
         this.startMaintainer();
+        // start chord communication channel thread
+        this.startChannel();
     }
 
+    /**
+     * Create scheduled thread executor and limit to two threads
+     */
+    private void createExecutor() {
+        this.executor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
+    }
 
     /**
 	 * Starts the maintenance routine
 	 */
 	private void startMaintainer() {
-        // create scheduled thread executor and limit to one thread
-        this.scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);
         // perform maintenance every half second after 1.5 seconds after starting
-        this.scheduler.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
+        this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
     }
-    
+
+    /**
+     * Starts the Chord communication channel
+     */
+    private void startChannel() {
+        this.channel = new ChordChannel(this);
+        this.executor.execute(this.channel);
+    }
+
     /**
      * @return the fingerTable
      */
     public FingerTable getFingerTable() {
         return fingerTable;
     }
-
+    
     /**
      * @return the predecessor
      */
@@ -137,7 +157,7 @@ public class ChordNode {
     public int getFinger() {
         return finger;
     }
-
+    
     /**
      * @param finger the finger to set
      */
@@ -152,6 +172,20 @@ public class ChordNode {
      */
     public NodePair<Integer, InetSocketAddress> getSuccessor() {
         return this.fingerTable.getFirstNode();
+    }
+
+    /**
+     * Gets node's successor id
+     */
+    protected int getSuccessorId() {
+        return this.getSuccessor().getKey();
+    }
+
+    /**
+     * Gets node's successor address
+     */
+    protected InetSocketAddress getSuccessorAddress() {
+        return this.getSuccessor().getValue();
     }
 
     /**
@@ -185,5 +219,36 @@ public class ChordNode {
     public void setFingerTableEntry(int finger, NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(finger, node);
     }
-    
+
+    /**
+     * Gets closest preceding node address
+     */
+    protected InetSocketAddress getClosestPreceding(int id) {
+        return this.fingerTable.lookup(this.getId(), id);
+    }
+
+    /**
+     * Finds the successor node of id
+     */
+    protected void findSuccessor(int id) {
+        this.findSuccessor(this.getAddress(), id);
+    }
+
+    /**
+     * Finds the successor node of id
+     */
+    protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
+        //TODO: Check predecessor?
+
+        int successorId = this.fingerTable.getFirstNode().getKey();
+        if (this.fingerTable.inBetween(id, this.getId(), successorId)) {
+            this.channel.returnFindSuccessor(requestOrigin, id, this.getSuccessorAddress());
+            return null;
+        }
+        else {
+            InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
+            return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
+        }
+    }
+
 }
