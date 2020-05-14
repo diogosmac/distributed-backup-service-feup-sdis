@@ -267,7 +267,7 @@ public class ChordNode {
         // TODO: Check predecessor?
 
         int successorId = this.fingerTable.getFirstNode().getKey();
-        if (this.fingerTable.inBetween(id, this.getId(), successorId)) {
+        if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             this.channel.returnFindSuccessor(requestOrigin, id, this.getSuccessorAddress());
             return null;
         }

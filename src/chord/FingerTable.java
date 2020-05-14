@@ -78,24 +78,4 @@ public class FingerTable {
         // if not found then we move to the next node/peer
         return getFirstNode().getValue();
     }
-
-    /**
-     * 
-     * @param target wanted file's ID
-     * @param lowerBound
-     * @param upperBound
-     * @return true if 'target' is between 'lowerBound' and 'upperBound'
-     */
-    protected boolean inBetween(Integer target, Integer lowerBound, Integer upperBound) {
-        // calculate max nodes in the chord
-        int maxNodes = (int) Math.pow(2, this.MAX_SIZE);
-        // if upper bound is smaller than lower bound, then we have made a complete
-        // loop in the chord's ring
-        if (upperBound < lowerBound) {
-            upperBound += maxNodes;
-            target += maxNodes;
-        }
-        // finally, calculate target intervals
-        return lowerBound < target && target < upperBound;
-    }
 }

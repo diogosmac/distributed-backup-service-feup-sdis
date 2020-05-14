@@ -1,5 +1,9 @@
 package chord;
 
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class Utils {
     
     /**
@@ -21,5 +25,28 @@ public class Utils {
         }
         // finally, calculate target intervals
         return lowerBound < target && target < upperBound;
+    }
+
+    /**
+     * 
+     * @param str
+     * @return
+     */
+    public static Integer hash(String str) {
+        ByteBuffer wrapped = ByteBuffer.wrap(sha1(str));
+		return wrapped.getInt();
+    }
+
+    /** */
+    private static byte[] sha1(String str) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+            return messageDigest.digest(str.getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        
+
     }
 }
