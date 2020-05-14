@@ -9,7 +9,7 @@ import java.util.ArrayList;
  * In order to ensure that lookups execute correctly as the set of participating
  * nodes changes, Chord must ensure that each node's successor is up to date. It
  * does this using a "stabilization" protocol that each node runs periodically
- * in the background and whichi updates Chord's finger tables and successor
+ * in the background and which updates Chord's finger tables and successor
  * pointers.
  * 
  */
@@ -18,7 +18,7 @@ public class ChordMaintainer implements Runnable {
     /**
      * Node in Chord network
      */
-    private ChordNode chord;
+    private final ChordNode chord;
 
     /**
      * Default Constructor
@@ -68,10 +68,10 @@ public class ChordMaintainer implements Runnable {
      * does this if it knows of no closer predecessor than 'n'.
      */
     private void stabilize() {
-        // get 'chord's sucessor's predecessor
+        // get 'chord's successor's predecessor
         NodePair<Integer, InetSocketAddress> successor = chord.getSuccessor();
         NodePair<Integer, InetSocketAddress> successorsPredecessor = chord.getSuccessorsPredecessor();
-        // check if sucessor's predecessor ID is between 'chord' and 'chords's successor
+        // check if successor's predecessor ID is between 'chord' and 'chords's successor
         // if so, then successorsPredecessor is our new successor
         if (Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
