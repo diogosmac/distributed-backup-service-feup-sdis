@@ -72,11 +72,11 @@ public class ChordNode {
      * @throws UnknownHostException If unable to get localhost
      */
     public ChordNode(Integer id, int m) throws UnknownHostException {
-        this(id, m, new InetSocketAddress(InetAddress.getLocalHost(), 2));
+        this(id, m, new InetSocketAddress(InetAddress.getLocalHost(), 5001));
     }
 
     /**
-     * Constructor without IP address
+     * Constructor with IP address
      * @param id Chord Node identifier
      * @param m Number of bits of the addressing space
      * @param address IP address to join the Chord 'network'
@@ -96,6 +96,65 @@ public class ChordNode {
 
         // start chord communication channel thread
         this.startChannel();
+
+        // create the chord ring
+        this.create();
+    }
+
+    /**
+     * Constructor with IP address
+     * @param id Chord Node identifier
+     * @param m Number of bits of the addressing space
+     * @param address IP address to join the Chord 'network'
+     */
+    public ChordNode(Integer id, int m, InetSocketAddress address, InetSocketAddress knownAddress) {
+
+        this.id = id;
+        this.m = m;
+        this.fingerTable = new FingerTable(m);
+        this.address = address;
+
+        // creates the ChordNode's scheduled thread executor
+        this.createExecutor();
+
+        // start chord maintainer thread
+        this.startMaintainer();
+
+        // start chord communication channel thread
+        this.startChannel();
+
+        // get known address node's identifier
+
+        // join the chord ring
+        this.join(new NodePair<Integer,InetSocketAddress>(port, knownAddress));
+    }
+
+    /**
+     * When the first chord node enters the ring we need to create a new Chord ring
+     */
+    private void create() {
+        // no predecessor
+        this.setPredecessor(null);
+        // successor is itself
+        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        successorList.add(new NodePair<Integer,InetSocketAddress>(this.getId(), this.getAddress()));
+        this.setSuccessorList(successorList);
+    }
+
+    /**
+     * Join a Chord ring containing any known node 'node'. This method asks 'node'
+     * to find the immediate successor of the newly joined node. By itself this method
+     * does not make the rest of the network aware of 'chord'
+     * 
+     * @param node any know node in the chord network
+     */
+    private void join(NodePair<Integer, InetSocketAddress> node) {
+        // no predecessor
+        this.setPredecessor(null);
+        // successor is found by 'node'
+        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        // successorList.add(node.findSuccessor(this.getId()));
+        this.setSuccessorList(successorList);
     }
 
     /**
@@ -109,7 +168,7 @@ public class ChordNode {
 	 * Starts the maintenance routine
 	 */
 	private void startMaintainer() {
-         // perform maintenance every half second after 1.5 seconds after starting
+        // perform maintenance every half second after 1.5 seconds after starting
         this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
     }
 
@@ -265,7 +324,6 @@ public class ChordNode {
      */
     protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         // TODO: Check predecessor?
-
         int successorId = this.fingerTable.getFirstNode().getKey();
         if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             this.channel.returnFindSuccessor(requestOrigin, id, this.getSuccessorAddress());

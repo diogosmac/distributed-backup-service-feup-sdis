@@ -28,34 +28,6 @@ public class ChordMaintainer implements Runnable {
     public ChordMaintainer(ChordNode chord) {
 		this.chord = chord;
     }
-    
-    /**
-     * When the first chord node enters the ring we need to create a new Chord ring
-     */
-    private void create() {
-        // no predecessor
-        chord.setPredecessor(null);
-        // successor is itself
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
-        successorList.add(new NodePair<Integer,InetSocketAddress>(chord.getId(), chord.getAddress()));
-        chord.setSuccessorList(successorList);
-    }
-
-    /**
-     * Join a Chord ring containing any known node 'node'. This method asks 'node'
-     * to find the immediate successor of 'chord'. By itself this method does not
-     * make the rest of the network aware of 'chord'
-     * 
-     * @param node any know node in the chord network
-     */
-    private void join(NodePair<Integer, InetSocketAddress> node) {
-        // no predecessor
-        chord.setPredecessor(null);
-        // successor is found by 'node'
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
-        //successorList.add(node.findSuccessor(this.chord));
-        chord.setSuccessorList(successorList);
-    }
 
     /**
      * This method is called periodically by every node in the network to learn about

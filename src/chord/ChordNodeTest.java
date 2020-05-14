@@ -33,6 +33,7 @@ public class ChordNodeTest {
             return;
         }
 
+        /*
         switch (id) {
 
             case 1:
@@ -68,11 +69,11 @@ public class ChordNodeTest {
                 break;
 
             default: return;
+        */
 
         }
 
         System.out.println("h3h3h3");
 
     }
-
 }
