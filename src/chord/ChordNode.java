@@ -143,16 +143,18 @@ public class ChordNode {
     /**
      * Finds the successor node of id
      */
-    protected void findSuccessor(InetSocketAddress requestOrigin, int id) {
+    //TODO: Return type?
+    protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         //TODO: Check predecessor?
 
         int successorId = this.fingerTable.getFirstNode().getKey();
         if (this.fingerTable.inBetween(id, this.getId(), successorId)) {
-            //TODO: Send Message to origin with Successor Address AKA Return
+            this.channel.returnFindSuccessor(requestOrigin, id, this.getSuccessorAddress());
+            return null;
         }
         else {
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
-            this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
+            return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
         }
     }
 

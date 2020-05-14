@@ -167,11 +167,12 @@ public class ChordChannel implements Runnable {
      * @return Message to be sent, delegating the findSuccessor work to other node
      */
     protected String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
+        // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("FINDSUCCESSOR").append(" "); // Header
+        sb.append(requestedId).append(" "); // Id requested
         sb.append(requestOrigin.getAddress().getHostAddress()).append(" "); // Origin's IP
-        sb.append(requestOrigin.getPort()).append(" "); // Origin's Port
-        sb.append(requestedId); // Id requested
+        sb.append(requestOrigin.getPort()); // Origin's Port
 
         return sb.toString();
     }
@@ -199,7 +200,10 @@ public class ChordChannel implements Runnable {
                 }
 
                 for (Message currentMessage : this.messageQueue) {
-                    //TODO CHECK if response is in queue
+                    String [] messageReceived = currentMessage.getArguments();
+                    if (messageReceived.length == 4 && messageReceived[1].equals(Integer.toString(requestedId))) // Answer to request made
+                        return messageReceived;
+
                     return currentMessage.arguments;
                 }
 
@@ -210,9 +214,31 @@ public class ChordChannel implements Runnable {
         return null;
     }
 
-    protected String returnFindSuccessor() {
-        //TODO
-        return "TODO";
+    /**
+     * Sends a message with the information requested to the Node that made the request to find the successor
+     * @param requestOrigin
+     * @param requestedId
+     * @param requestedNodeInfo
+     */
+    protected void returnFindSuccessor(InetSocketAddress requestOrigin, int requestedId, InetSocketAddress requestedNodeInfo) {
+        String message = this.createReturnMessage(requestedId, requestedNodeInfo);
+        this.sendMessage(requestOrigin, message);
+    }
+
+    /**
+     * Builds the message with the requested information about the Node with requestedId
+     * @param requestedId
+     * @param requestedNodeInfo
+     * @return
+     */
+    protected String createReturnMessage(int requestedId, InetSocketAddress requestedNodeInfo) {
+        // Message format: SUCCESSORFOUND <requestedId> <requestedNodeIp> <requestedNodePort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("SUCCESSORFOUND").append(" ");
+        sb.append(requestedId).append(" ");
+        sb.append(requestedNodeInfo.getAddress().getHostName()).append(" ");
+        sb.append(requestedNodeInfo.getPort()).append(" ");
+        return sb.toString();
     }
 
 }
