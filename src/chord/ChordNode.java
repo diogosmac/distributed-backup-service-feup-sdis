@@ -1,6 +1,8 @@
 package chord;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -16,12 +18,12 @@ public class ChordNode {
     /**
 	 * The node's unique identifier
      */
-    private Integer id;
+    private final Integer id;
 
     /**
      * Number of bits of the addressing space
      */
-    private int m;
+    private final int m;
 
     /**
      * The successorList's size, r < m
@@ -31,7 +33,7 @@ public class ChordNode {
     /**
      * The node's address
      */
-    private InetSocketAddress address;
+    private final InetSocketAddress address;
 
     /**
      * The node's predecessor
@@ -41,7 +43,7 @@ public class ChordNode {
     /**
      * The node's finger table. Stores m entries of other nodes in the ring
      */
-    private FingerTable fingerTable;
+    private final FingerTable fingerTable;
 
     /**
      * The finger (index) of the finger table entry to fix
@@ -63,11 +65,35 @@ public class ChordNode {
      */
     private ChordChannel channel = null;
 
-    public ChordNode() {
+    /**
+     * Constructor without IP address
+     * @param id Chord Node identifier
+     * @param m Number of bits of the addressing space
+     * @throws UnknownHostException If unable to get localhost
+     */
+    public ChordNode(Integer id, int m) throws UnknownHostException {
+        this(id, m, new InetSocketAddress(InetAddress.getLocalHost(), 2));
+    }
+
+    /**
+     * Constructor without IP address
+     * @param id Chord Node identifier
+     * @param m Number of bits of the addressing space
+     * @param address IP address to join the Chord 'network'
+     */
+    public ChordNode(Integer id, int m, InetSocketAddress address) {
+
+        this.id = id;
+        this.m = m;
+        this.fingerTable = new FingerTable(m);
+        this.address = address;
+
         // creates the ChordNode's scheduled thread executor
         this.createExecutor();
+
         // start chord maintainer thread
         this.startMaintainer();
+
         // start chord communication channel thread
         this.startChannel();
     }
@@ -83,7 +109,7 @@ public class ChordNode {
 	 * Starts the maintenance routine
 	 */
 	private void startMaintainer() {
-        // perform maintenance every half second after 1.5 seconds after starting
+         // perform maintenance every half second after 1.5 seconds after starting
         this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
     }
 
@@ -198,7 +224,7 @@ public class ChordNode {
     }
 
     /**
-     * @return chord node's sucessor's predecessor
+     * @return chord node's successor's predecessor
      */
     public NodePair<Integer, InetSocketAddress> getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
@@ -214,7 +240,7 @@ public class ChordNode {
      * Set entry in finger table given finger (index) and entry (node)
      * 
      * @param finger the finger table index
-     * @param fingerTable the fingerTable to set
+     * @param node the information to store on the finger table
      */
     public void setFingerTableEntry(int finger, NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(finger, node);
@@ -238,7 +264,7 @@ public class ChordNode {
      * Finds the successor node of id
      */
     protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
-        //TODO: Check predecessor?
+        // TODO: Check predecessor?
 
         int successorId = this.fingerTable.getFirstNode().getKey();
         if (this.fingerTable.inBetween(id, this.getId(), successorId)) {
