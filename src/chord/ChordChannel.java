@@ -136,14 +136,23 @@ public class ChordChannel implements Runnable {
         String[] args = message.split(" ");
         switch(args[0]) {
             case "FINDSUCCESSOR":
+                int id = Integer.parseInt(args[1]);
+                InetSocketAddress fsAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+                this.parent.findSuccessor(fsAddress, id);
                 break;
+
             case "SUCCESSORFOUND":
                 synchronized (this.parent) {
-                    InetSocketAddress address = getAddress(socket);
-                    messageQueue.add(new Message(address, message));
+                    InetSocketAddress sfAddress = getAddress(socket);
+                    messageQueue.add(new Message(sfAddress, message));
                     this.parent.notify();
                 }
                 break;
+
+            case "JOINING":
+                // TODO: Message when a node joins disChord
+                break;
+
         }
 
     }
