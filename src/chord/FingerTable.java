@@ -4,21 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-/**
- * Finger Table
- * To avoid linear search, Chord implements a faster search method by requiring
- * each node to keep a finger table containing up to 'm' entries, recall that
- * 'm' is the number of bits in the hash key. The 'i'th entry of node 'n' will
- * contain successor(('n' + 2^('i' − 1)) mod 2^'m'). The first entry of finger
- * table is actually the node's immediate successor (and therefore an extra successor
- * field is not needed). Every time a node wants to look up a key 'k', it will pass the
- * query to the closest successor or predecessor (depending on the finger table) of 'k'
- * in its finger table (the "largest" one on the circle whose ID is smaller than 'k'),
- * until a node finds out the key is stored in its immediate successor.
- * 
- * With such a finger table, the number of nodes that must be contacted to find a successor
- * in an 'N'-node network is O(log⁡ 'N'). 
- */
+
 public class FingerTable {
 
     /**

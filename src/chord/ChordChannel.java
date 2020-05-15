@@ -87,6 +87,13 @@ public class ChordChannel implements Runnable {
      * @param port Number of the port in which the socket will be opened
      */
     protected void open(int port) {
+        // Keystore
+        System.setProperty("javax.net.ssl.keyStore", "../keys/keystore" + (this.parent.getId() % 3 + 1));
+        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+
+        // Truststore
+        System.setProperty("javax.net.ssl.trustStore", "../keys/truststore");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
         try {
             serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
