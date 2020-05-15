@@ -18,6 +18,14 @@ public class SSLClient {
         String hostname = args[0];
         int port = Integer.parseInt(args[1]);
 
+        // Keystore
+        System.setProperty("javax.net.ssl.keyStore", "keys/client.keys");
+        System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+
+        // Truststore
+        System.setProperty("javax.net.ssl.trustStore", "keys/truststore");
+        System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+
         SSLSocket sslSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(hostname, port);
 
         int n_arguments_before_cypher;

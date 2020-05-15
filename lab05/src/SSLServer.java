@@ -51,7 +51,14 @@ public class SSLServer {
         dnsTable = new HashMap<>();
 
         int port = Integer.parseInt(args[0]);
-//        cypherSuites.addAll(Arrays.asList(args).subList(1, args.length));
+
+        // Keystore
+        System.setProperty("javax.net.ssl.keyStore", "keys/server.keys");
+        System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+
+        // Truststore
+        System.setProperty("javax.net.ssl.trustStore", "keys/truststore");
+        System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 
         SSLServerSocket sslSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
         System.out.println("\nServer opened at " + sslSocket.getInetAddress().getHostName() + ":" + port + '\n');
