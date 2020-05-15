@@ -48,7 +48,7 @@ public class ChordNode {
     /**
      * The finger (index) of the finger table entry to fix
      */
-    private int finger;
+    private int finger = 0;
 
     /**
 	 * The list of its successors, size r
@@ -289,11 +289,13 @@ public class ChordNode {
     public NodePair<Integer, InetSocketAddress> getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
 
-        // TODO
         // send request to successor.getValue() (InetSocketAddress) for its predecessor
         // build pair and return it
+        String [] reply = this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
+        int predecessorId = Integer.parseInt(reply[1]);
+        InetSocketAddress predecessorInfo = new InetSocketAddress(reply[2], Integer.parseInt(reply[3]));
 
-        return null;
+        return new NodePair<>(predecessorId, predecessorInfo);
     }
 
     /**
@@ -325,7 +327,7 @@ public class ChordNode {
      */
     protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         // TODO: Check predecessor?
-        int successorId = this.fingerTable.getFirstNode().getKey();
+        int successorId = this.getSuccessorId();
         if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
             return null;
@@ -336,4 +338,21 @@ public class ChordNode {
         }
     }
 
+    /**
+     * This method notifies node 'n's successor of 'n's existence, giving the
+     * successor the chance to change its predecessor to 'n'. The successor only
+     * does this if it knows of no closer predecessor than 'n'.
+     * @param node possible new predecessor
+     */
+    protected void notify(NodePair<Integer, InetSocketAddress> node) {
+        NodePair<Integer, InetSocketAddress> predecessor = this.getPredecessor();
+        // if predecessor is null then it means that 'checkPredecessor' method
+        // has determined that 'chord's predecessor has failed
+        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getId(), this.getM()))
+            this.setPredecessor(node);
+    }
+
+    protected ChordChannel getChannel() {
+        return channel;
+    }
 }

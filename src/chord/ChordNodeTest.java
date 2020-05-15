@@ -64,15 +64,15 @@ class ChordNodePrinter extends TimerTask {
     @Override
     public void run() {
         //
-        System.out.println("\nFINGER TABLE");
-        System.out.println(node.getFingerTable());
-        //
-        System.out.println("\nSUCCESSOR LIST");
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = node.getSuccessorList();
-        for (NodePair<Integer, InetSocketAddress> successor : successorList)
-            System.out.println(successor);
-        //
-        System.out.println("\nPREDECESSOR");
-        System.out.println(node.getPredecessor());
+//        System.out.println("\nFINGER TABLE");
+//        System.out.println(node.getFingerTable());
+//        //
+//        System.out.println("\nSUCCESSOR LIST");
+//        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = node.getSuccessorList();
+//        for (NodePair<Integer, InetSocketAddress> successor : successorList)
+//            System.out.println(successor);
+//        //
+//        System.out.println("\nPREDECESSOR");
+//        System.out.println(node.getPredecessor());
     }
 }

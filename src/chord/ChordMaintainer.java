@@ -47,23 +47,9 @@ public class ChordMaintainer implements Runnable {
         // if so, then successorsPredecessor is our new successor
         if (Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
-        // TODO notify 'chord's successor of 'chord's existance 
-        // ...
-    }
+        // notify 'chord's successor of 'chord's existance
 
-    /**
-     * This method notifies node 'n's successor of 'n's existence, giving the
-     * successor the chance to change its predecessor to 'n'. The successor only
-     * does this if it knows of no closer predecessor than 'n'.
-     * @param node possible new predecessor
-     */
-    private void notify(NodePair<Integer, InetSocketAddress> node) {
-        NodePair<Integer, InetSocketAddress> predecessor = chord.getPredecessor();
-        // if predecessor is null then it means that 'checkPredecessor' method
-        // has determined that 'chord's predecessor has failed
-        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), chord.getId(), chord.getM()))
-            chord.setPredecessor(node);
-        
+        this.chord.getChannel().sendNotifyMessage(chord.getId(), chord.getAddress(), successor.getValue());
     }
 
     /**
@@ -80,8 +66,12 @@ public class ChordMaintainer implements Runnable {
 
         // calculate new node ID
         Integer nodeID = chord.getId() + (int) Math.pow(2, finger - 1);
-        // TODO get successor of nodeID
-        NodePair<Integer, InetSocketAddress> node = new NodePair<>(nodeID, null);
+
+        String[] reply = this.chord.findSuccessor(nodeID);
+        int replyNodeId = Integer.parseInt(reply[2]);
+        InetSocketAddress replyNodeInfo = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
+
+        NodePair<Integer, InetSocketAddress> node = new NodePair<>(replyNodeId, replyNodeInfo);
         // update entry in finger table with index 'finger'
         chord.setFingerTableEntry(finger, node);
     }

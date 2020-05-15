@@ -144,6 +144,7 @@ public class ChordChannel implements Runnable {
         String[] args = message.split(" ");
         switch(args[0]) {
             case "FINDSUCCESSOR": {
+                System.out.println("[FINDSUCCESSOR]");
                 int id = Integer.parseInt(args[1]);
                 InetSocketAddress fsAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 this.parent.findSuccessor(fsAddress, id);
@@ -151,6 +152,7 @@ public class ChordChannel implements Runnable {
             }
 
             case "SUCCESSORFOUND": {
+                System.out.println("[SUCCESSORFOUND]");
                 synchronized (this.parent) {
                     InetSocketAddress sfAddress = getAddress(socket);
                     messageQueue.add(new Message(sfAddress, message));
@@ -160,9 +162,9 @@ public class ChordChannel implements Runnable {
             }
 
             case "JOINING": {
+                System.out.println("[JOINING]");
                 int newNodeId = Integer.parseInt(args[1]);
                 String[] successorArgs = this.parent.findSuccessor(newNodeId);
-
                 InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[2], Integer.parseInt(successorArgs[3]));
                 int successorId = Integer.parseInt(successorArgs[1]);
@@ -172,6 +174,7 @@ public class ChordChannel implements Runnable {
             }
 
             case "WELCOME": {
+                System.out.println("[WELCOME]");
                 int successorId = Integer.parseInt(args[1]);
                 InetSocketAddress successorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 NodePair<Integer, InetSocketAddress> successor = new NodePair<>(successorId, successorInfo);
@@ -180,6 +183,31 @@ public class ChordChannel implements Runnable {
                 break;
             }
 
+            case "GETPREDECESSOR": {
+                System.out.println("[GETPREDECESSOR]");
+                NodePair<Integer, InetSocketAddress> predecessor = this.parent.getPredecessor();
+                InetSocketAddress destination = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+                this.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
+                break;
+            }
+
+            case "PREDECESSOR": {
+                System.out.println("[PREDECESSOR]");
+                synchronized (this.parent) {
+                    InetSocketAddress sfAddress = getAddress(socket);
+                    messageQueue.add(new Message(sfAddress, message));
+                    this.parent.notify();
+                }
+                break;
+            }
+
+            case "NOTIFY": {
+                System.out.println("[NOTIFY]");
+                int originId = Integer.parseInt(args[1]);
+                InetSocketAddress originInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+                this.parent.notify(new NodePair<>(originId, originInfo));
+                break;
+            }
         }
 
     }
@@ -332,6 +360,67 @@ public class ChordChannel implements Runnable {
     protected void sendWelcomeMessage(InetSocketAddress newNode, int successorId, InetSocketAddress successor) {
         String message = this.createWelcomeMessage(successorId, successor);
         this.sendMessage(newNode, message);
+    }
+
+    private String createGetPredecessorMessage(InetSocketAddress originInfo) {
+        // Message format: GETPREDECESSOR <originIP> <originPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("GETPREDECESSOR").append(" ");
+        sb.append(originInfo.getHostName()).append(" ");
+        sb.append(originInfo.getPort());
+        return sb.toString();
+    }
+
+    protected String[] sendGetPredecessorMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = this.createGetPredecessorMessage(origin);
+        this.sendMessage(destination, message);
+
+        synchronized (this.parent) {
+            try {
+                this.parent.wait(this.timeout*2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            for (Message currentMessage : this.messageQueue) {
+                String [] messageReceived = currentMessage.getArguments();
+                if (messageReceived[0].equals("PREDECESSOR")) { // Answer to request made
+                    this.messageQueue.remove(currentMessage);
+                    return messageReceived;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private String createPredecessorMessage(int predecessorId, InetSocketAddress predecessorAddress) {
+        // Message format: PREDECESSOR <predecessorId> <predecessorIP> <predecessorPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("PREDECESSOR").append(" ");
+        sb.append(predecessorId).append(" ");
+        sb.append(predecessorAddress.getAddress().getHostAddress()).append(" ");
+        sb.append(predecessorAddress.getPort());
+        return sb.toString();
+    }
+
+    private void sendPredecessorMessage(int predecessorId, InetSocketAddress predecessorAddress, InetSocketAddress destination) {
+        String message = this.createPredecessorMessage(predecessorId, predecessorAddress);
+        this.sendMessage(destination, message);
+    }
+
+    private String createNotifyMessage(int originId, InetSocketAddress origin) {
+        // Message format: NOTIFY <originId> <originIP> <originPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append(originId).append(" ");
+        sb.append(origin.getAddress().getHostName()).append(" ");
+        sb.append(origin.getPort());
+        return sb.toString();
+    }
+
+    protected void sendNotifyMessage(int originId, InetSocketAddress origin, InetSocketAddress destination) {
+       String message = this.createNotifyMessage(originId, origin);
+       this.sendMessage(destination, message);
     }
 
 }
