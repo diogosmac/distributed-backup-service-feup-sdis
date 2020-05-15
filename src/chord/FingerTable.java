@@ -2,6 +2,7 @@ package chord;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Finger Table
@@ -77,5 +78,15 @@ public class FingerTable {
         }
         // if not found then we move to the next node/peer
         return getFirstNode().getValue();
+    }
+
+    @Override
+    public String toString() {
+        return this.table.isEmpty()
+            ? "empty"
+            : this.table.stream()
+                .map( n -> n.toString() )
+                .collect( Collectors.joining("\n"));
+
     }
 }

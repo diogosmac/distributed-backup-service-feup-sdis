@@ -1,7 +1,11 @@
 package chord;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ChordNodeTest {
 
@@ -10,9 +14,9 @@ public class ChordNodeTest {
         int m = 5;
 
         int id;
-        InetSocketAddress connectionPeer;
-        ChordNode node;
+        ChordNode node = null;
 
+        // First node is joining the network
         if (args.length == 1) {
             id = Integer.parseInt(args[0]);
             try {
@@ -21,59 +25,54 @@ public class ChordNodeTest {
                 e.printStackTrace();
                 return;
             }
-        }
-        else if (args.length == 3) {
-            id = Integer.parseInt(args[0]);
-            connectionPeer = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-
-            node = new ChordNode(id, m, connectionPeer);
-        }
-        else {
+        // Other node is joining
+        } else if (args.length == 3) {
+            try {
+                id = Integer.parseInt(args[0]);
+                InetSocketAddress thisAddress = new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 5000 + id);
+                InetSocketAddress knownAddress = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+                node = new ChordNode(id, m, thisAddress, knownAddress);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                return;
+            }
+        // You dumbass
+        } else {
             System.out.println("Usage: java ChordNodeTest <node-id> [ <connection-address> <connection-port> ]");
             return;
         }
 
-        /*
-        switch (id) {
+        System.out.println("Started chord node");
+        System.out.println("\tID: " + node.getId());
+        System.out.println("\tAddress: " + node.getAddress());
 
-            case 1:
-                node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(4, null));
-                node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(4, null));
-                node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(9, null));
-                node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(9, null));
-                node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(18, null));
-                break;
+        Timer timer = new Timer(); 
+        ChordNodePrinter printer = new ChordNodePrinter(node);
+        timer.schedule(printer, 1000, 3000);
+    }
 
-            case 18:
-                node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(20, null));
-                node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(20, null));
-                node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(4, null));
-                break;
+}
 
-            case 20:
-                node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(21, null));
-                node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(4, null));
-                break;
+class ChordNodePrinter extends TimerTask {
 
-            case 21:
-                node.setFingerTableEntry(0, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(1, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(2, new NodePair<Integer, InetSocketAddress>(28, null));
-                node.setFingerTableEntry(3, new NodePair<Integer, InetSocketAddress>(1, null));
-                node.setFingerTableEntry(4, new NodePair<Integer, InetSocketAddress>(9, null));
-                break;
+    private ChordNode node;
 
-            default: return;
-        */
+    public ChordNodePrinter(ChordNode node) {
+        this.node = node;
+    }
 
-        }
-
-        System.out.println("h3h3h3");
-
+    @Override
+    public void run() {
+        //
+        System.out.println("\nFINGER TABLE");
+        System.out.println(node.getFingerTable());
+        //
+        System.out.println("\nSUCCESSOR LIST");
+        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = node.getSuccessorList();
+        for (NodePair<Integer, InetSocketAddress> successor : successorList)
+            System.out.println(successor);
+        //
+        System.out.println("\nPREDECESSOR");
+        System.out.println(node.getPredecessor());
     }
 }

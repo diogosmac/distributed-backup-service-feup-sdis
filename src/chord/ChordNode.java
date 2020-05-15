@@ -72,7 +72,7 @@ public class ChordNode {
      * @throws UnknownHostException If unable to get localhost
      */
     public ChordNode(Integer id, int m) throws UnknownHostException {
-        this(id, m, new InetSocketAddress(InetAddress.getLocalHost(), 5001));
+        this(id, m, new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 5000 + id));
     }
 
     /**
@@ -106,6 +106,7 @@ public class ChordNode {
      * @param id Chord Node identifier
      * @param m Number of bits of the addressing space
      * @param address IP address to join the Chord 'network'
+     * @param knownAddress 
      */
     public ChordNode(Integer id, int m, InetSocketAddress address, InetSocketAddress knownAddress) {
 
@@ -149,11 +150,11 @@ public class ChordNode {
     protected void join(InetSocketAddress node) {
         // no predecessor
         this.setPredecessor(null);
-        // successor is found by 'node'
+        // set successor list to empty
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
-
         this.setSuccessorList(successorList);
-
+        // successor is found by 'node'
+        // send message no 'node' se he can find our successor
         this.channel.sendJoiningMessage(node);
     }
 
@@ -168,7 +169,7 @@ public class ChordNode {
 	 * Starts the maintenance routine
 	 */
 	private void startMaintainer() {
-        // perform maintenance every half second after 1.5 seconds after starting
+        // perform maintenance every half second 1.5 seconds after starting
         this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
     }
 

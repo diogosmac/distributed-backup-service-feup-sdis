@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ChordChannel implements Runnable {
@@ -79,6 +78,7 @@ public class ChordChannel implements Runnable {
     public ChordChannel(ChordNode parent) {
         this.parent = parent;
         messageQueue = new ConcurrentLinkedQueue<>();
+        this.open(this.parent.getAddress().getPort());
     }
 
     /**
