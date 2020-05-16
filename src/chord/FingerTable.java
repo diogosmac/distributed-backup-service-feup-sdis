@@ -25,6 +25,9 @@ public class FingerTable {
     public FingerTable(int size) {
         this.table = new ArrayList<>();
         this.MAX_SIZE = size;
+        for (int i = 0; i < size; i++) {
+            this.table.add(i, new NodePair<>(null, null));
+        }
     }
 
     /**
@@ -34,7 +37,7 @@ public class FingerTable {
      * Socket Address (IP and Port) as value
      */
     public void setNodePair(int finger, NodePair<Integer, InetSocketAddress> node) {
-        this.table.add(finger, node);
+        this.table.set(finger, node);
     }
     
     /**
@@ -58,8 +61,7 @@ public class FingerTable {
         // lookup in finger table for peer/node closest to fileID
         for (int finger = MAX_SIZE - 1; finger >= 0; finger--) {
             NodePair<Integer, InetSocketAddress> possibleNode = this.table.get(finger);
-            System.out.println(possibleNode.getKey());
-            if (!Utils.inBetween(fileID, nodeID, possibleNode.getKey(), MAX_SIZE))
+            if (possibleNode.getKey() != null && !Utils.inBetween(fileID, nodeID, possibleNode.getKey(), MAX_SIZE))
                 return possibleNode.getValue();
         }
         // if not found then we move to the next node/peer

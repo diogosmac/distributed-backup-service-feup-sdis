@@ -48,7 +48,6 @@ public class ChordMaintainer implements Runnable {
         if (Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
         // notify 'chord's successor of 'chord's existance
-
         this.chord.getChannel().sendNotifyMessage(chord.getId(), chord.getAddress(), successor.getValue());
     }
 

@@ -136,8 +136,10 @@ public class ChordNode {
         this.setPredecessor(null);
         // successor is itself
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
-        successorList.add(new NodePair<Integer,InetSocketAddress>(this.getId(), this.getAddress()));
+        NodePair<Integer, InetSocketAddress> successor = new NodePair<>(this.getId(), this.getAddress());
+        successorList.add(successor);
         this.setSuccessorList(successorList);
+        this.fingerTable.setNodePair(0, successor);
     }
 
     /**
