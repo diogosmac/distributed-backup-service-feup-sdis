@@ -1,7 +1,6 @@
 package chord;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 
 /**
  * Chord Maintainer
@@ -45,7 +44,7 @@ public class ChordMaintainer implements Runnable {
         NodePair<Integer, InetSocketAddress> successorsPredecessor = chord.getSuccessorsPredecessor();
         // check if successor's predecessor ID is between 'chord' and 'chords's successor
         // if so, then successorsPredecessor is our new successor
-        if (Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
+        if (successorsPredecessor != null && Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
         // notify 'chord's successor of 'chord's existance
         this.chord.getChannel().sendNotifyMessage(chord.getId(), chord.getAddress(), successor.getValue());
@@ -62,7 +61,6 @@ public class ChordMaintainer implements Runnable {
         int finger = this.chord.getFinger();
         finger = (finger + 1) % this.chord.getM();
         chord.setFinger(finger);
-
         // calculate new node ID
         Integer nodeID = chord.getId() + (int) Math.pow(2, finger - 1);
 

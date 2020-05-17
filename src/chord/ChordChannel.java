@@ -166,8 +166,8 @@ public class ChordChannel implements Runnable {
                 int newNodeId = Integer.parseInt(args[1]);
                 String[] successorArgs = this.parent.findSuccessor(newNodeId);
                 InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
-                InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[2], Integer.parseInt(successorArgs[3]));
-                int successorId = Integer.parseInt(successorArgs[1]);
+                InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[3], Integer.parseInt(successorArgs[4]));
+                int successorId = Integer.parseInt(successorArgs[2]);
 
                 this.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
                 break;
@@ -249,7 +249,7 @@ public class ChordChannel implements Runnable {
         StringBuilder sb = new StringBuilder();
         sb.append("FINDSUCCESSOR").append(" "); // Header
         sb.append(requestedId).append(" "); // Id requested
-        sb.append(requestOrigin.getAddress().getHostAddress()).append(" "); // Origin's IP
+        sb.append(requestOrigin.getHostString()).append(" "); // Origin's IP
         sb.append(requestOrigin.getPort()); // Origin's Port
 
         return sb.toString();
@@ -263,10 +263,18 @@ public class ChordChannel implements Runnable {
      */
     protected String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
                                             InetSocketAddress destination) {
+
+        // TODO: Is this correct?
+        // if findSuccessor request origin == destination, then just return origins successor
+        if (requestOrigin.getHostString().equals(destination.getHostString())) {
+            NodePair<Integer, InetSocketAddress> successor = this.parent.getSuccessor();
+            return this.createSuccessorFoundMessage(requestedId, successor.getKey(), successor.getValue()).split(" ");
+        }
+
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
 
-        if (!this.parent.getAddress().getHostName().equals(requestOrigin.getAddress().getHostName()))  // This node didn't request the id
+        if (!this.parent.getAddress().getHostString().equals(requestOrigin.getHostString()))  // This node didn't request the id
             return null; // Delegates work, and returns
 
         synchronized (this.parent) {
@@ -301,7 +309,7 @@ public class ChordChannel implements Runnable {
         sb.append("SUCCESSORFOUND").append(" ");
         sb.append(requestedId).append(" ");
         sb.append(successorId).append(" ");
-        sb.append(successorNodeInfo.getAddress().getHostName()).append(" ");
+        sb.append(successorNodeInfo.getHostString()).append(" ");
         sb.append(successorNodeInfo.getPort()).append(" ");
         return sb.toString();
     }
@@ -326,7 +334,7 @@ public class ChordChannel implements Runnable {
         StringBuilder sb = new StringBuilder();
         sb.append("JOINING").append(" ");
         sb.append(this.parent.getId()).append(" ");
-        sb.append(this.parent.getAddress().getHostName()).append(" ");
+        sb.append(this.parent.getAddress().getHostString()).append(" ");
         sb.append(this.parent.getAddress().getPort());
         return sb.toString();
     }
@@ -349,7 +357,7 @@ public class ChordChannel implements Runnable {
         StringBuilder sb = new StringBuilder();
         sb.append("WELCOME").append(" ");
         sb.append(successorId).append(" ");
-        sb.append(successor.getAddress().getHostName()).append(" ");
+        sb.append(successor.getHostString()).append(" ");
         sb.append(successor.getPort());
         return sb.toString();
     }
@@ -366,7 +374,7 @@ public class ChordChannel implements Runnable {
         // Message format: GETPREDECESSOR <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("GETPREDECESSOR").append(" ");
-        sb.append(originInfo.getHostName()).append(" ");
+        sb.append(originInfo.getHostString()).append(" ");
         sb.append(originInfo.getPort());
         return sb.toString();
     }
@@ -381,7 +389,6 @@ public class ChordChannel implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
             for (Message currentMessage : this.messageQueue) {
                 String [] messageReceived = currentMessage.getArguments();
                 if (messageReceived[0].equals("PREDECESSOR")) { // Answer to request made
@@ -399,7 +406,7 @@ public class ChordChannel implements Runnable {
         StringBuilder sb = new StringBuilder();
         sb.append("PREDECESSOR").append(" ");
         sb.append(predecessorId).append(" ");
-        sb.append(predecessorAddress.getAddress().getHostAddress()).append(" ");
+        sb.append(predecessorAddress.getHostString()).append(" ");
         sb.append(predecessorAddress.getPort());
         return sb.toString();
     }
@@ -413,7 +420,7 @@ public class ChordChannel implements Runnable {
         // Message format: NOTIFY <originId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append(originId).append(" ");
-        sb.append(origin.getAddress().getHostName()).append(" ");
+        sb.append(origin.getHostString()).append(" ");
         sb.append(origin.getPort());
         return sb.toString();
     }

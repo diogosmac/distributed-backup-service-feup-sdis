@@ -88,17 +88,17 @@ public class ChordNode {
         this.fingerTable = new FingerTable(m);
         this.address = address;
 
+        // create the chord ring
+        this.create();
+
         // creates the ChordNode's scheduled thread executor
         this.createExecutor();
-
-        // start chord maintainer thread
-        this.startMaintainer();
 
         // start chord communication channel thread
         this.startChannel();
 
-        // create the chord ring
-        this.create();
+        // start chord maintainer thread
+        this.startMaintainer();
     }
 
     /**
@@ -118,11 +118,11 @@ public class ChordNode {
         // creates the ChordNode's scheduled thread executor
         this.createExecutor();
 
-        // start chord maintainer thread
-        this.startMaintainer();
-
         // start chord communication channel thread
         this.startChannel();
+
+        // start chord maintainer thread
+        this.startMaintainer();
 
         // get known address node's identifier
         this.join(knownAddress);
@@ -154,6 +154,7 @@ public class ChordNode {
         this.setPredecessor(null);
         // set successor list to empty
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        successorList.add(new NodePair<>(null, null));
         this.setSuccessorList(successorList);
         // successor is found by 'node'
         // send message no 'node' se he can find our successor
@@ -283,6 +284,7 @@ public class ChordNode {
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(0, node);
+        this.successorList.set(0, node);
     }
 
     /**
@@ -290,13 +292,14 @@ public class ChordNode {
      */
     public NodePair<Integer, InetSocketAddress> getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
-
+        // successor may be this node
+        if (successor.getKey() == this.getId())
+            return this.predecessor;
         // send request to successor.getValue() (InetSocketAddress) for its predecessor
         // build pair and return it
         String [] reply = this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
         int predecessorId = Integer.parseInt(reply[1]);
         InetSocketAddress predecessorInfo = new InetSocketAddress(reply[2], Integer.parseInt(reply[3]));
-
         return new NodePair<>(predecessorId, predecessorInfo);
     }
 
