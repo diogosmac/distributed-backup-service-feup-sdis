@@ -82,9 +82,13 @@ public class ChordMaintainer implements Runnable {
         // node may not have a predecessor yet
         if (chord.getPredecessor() == null)
             return;
-        // TODO: send request to predecessor
+
+        boolean online = chord.getChannel().sendPingMessage(this.chord.getAddress(),
+                this.chord.getPredecessor().getValue());
+
         // if he does not respond set it as failed (null)
-        chord.setPredecessor(null);
+        if (!online)
+            chord.setPredecessor(null);
     }
 
     /**

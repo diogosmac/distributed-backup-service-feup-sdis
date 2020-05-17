@@ -145,6 +145,7 @@ public class ChordChannel implements Runnable {
         switch(args[0]) {
             case "FINDSUCCESSOR": {
                 System.out.println("[FINDSUCCESSOR]");
+                // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
                 int id = Integer.parseInt(args[1]);
                 InetSocketAddress fsAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 this.parent.findSuccessor(fsAddress, id);
@@ -163,7 +164,9 @@ public class ChordChannel implements Runnable {
 
             case "JOINING": {
                 System.out.println("[JOINING]");
+                // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
                 int newNodeId = Integer.parseInt(args[1]);
+                // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
                 String[] successorArgs = this.parent.findSuccessor(newNodeId);
                 InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[3], Integer.parseInt(successorArgs[4]));
@@ -175,6 +178,8 @@ public class ChordChannel implements Runnable {
 
             case "WELCOME": {
                 System.out.println("[WELCOME]");
+
+                // Message format: WELCOME <successorId> <successorIP> <successorPort>
                 int successorId = Integer.parseInt(args[1]);
                 InetSocketAddress successorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 NodePair<Integer, InetSocketAddress> successor = new NodePair<>(successorId, successorInfo);
@@ -206,6 +211,23 @@ public class ChordChannel implements Runnable {
                 int originId = Integer.parseInt(args[1]);
                 InetSocketAddress originInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 this.parent.notify(new NodePair<>(originId, originInfo));
+                break;
+            }
+
+            case "PING": {
+                System.out.println("[PING]");
+                InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+                sendPongMessage(this.parent.getAddress(), originInfo);
+                break;
+            }
+
+            case "PONG": {
+                System.out.println("[PONG]");
+                synchronized (this.parent) {
+                    InetSocketAddress sfAddress = getAddress(socket);
+                    messageQueue.add(new Message(sfAddress, message));
+                    this.parent.notify();
+                }
                 break;
             }
         }
@@ -263,14 +285,6 @@ public class ChordChannel implements Runnable {
      */
     protected String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
                                             InetSocketAddress destination) {
-
-        // TODO: Is this correct?
-        // if findSuccessor request origin == destination, then just return origins successor
-        if (requestOrigin.getHostString().equals(destination.getHostString())) {
-            NodePair<Integer, InetSocketAddress> successor = this.parent.getSuccessor();
-            return this.createSuccessorFoundMessage(requestedId, successor.getKey(), successor.getValue()).split(" ");
-        }
-
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
 
@@ -303,7 +317,7 @@ public class ChordChannel implements Runnable {
      * @param successorNodeInfo
      * @return
      */
-    private String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+    protected String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
         // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORFOUND").append(" ");
@@ -354,6 +368,7 @@ public class ChordChannel implements Runnable {
      * @return
      */
     private String createWelcomeMessage(int successorId, InetSocketAddress successor) {
+        // Message format: WELCOME <successorId> <successorIP> <successorPort>
         StringBuilder sb = new StringBuilder();
         sb.append("WELCOME").append(" ");
         sb.append(successorId).append(" ");
@@ -428,6 +443,52 @@ public class ChordChannel implements Runnable {
     protected void sendNotifyMessage(int originId, InetSocketAddress origin, InetSocketAddress destination) {
        String message = this.createNotifyMessage(originId, origin);
        this.sendMessage(destination, message);
+    }
+
+    private String createPingMessage(InetSocketAddress origin) {
+        // Message format: PING <originIP> <originPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("PING").append(" ");
+        sb.append(origin.getAddress().getHostName()).append(" ");
+        sb.append(origin.getPort());
+        return sb.toString();
+    }
+
+    public boolean sendPingMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createPingMessage(origin);
+        this.sendMessage(destination, message);
+
+        synchronized (this.parent) {
+            try {
+                this.parent.wait(this.timeout*2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            for (Message currentMessage : this.messageQueue) {
+                String [] messageReceived = currentMessage.getArguments();
+                if (messageReceived[0].equals("PONG")) { // Answer to request made
+                    this.messageQueue.remove(currentMessage);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    private String createPongMessage(InetSocketAddress origin) {
+        // Message format: PONG <originIP> <originPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("PONG").append(" ");
+        sb.append(origin.getAddress().getHostName()).append(" ");
+        sb.append(origin.getPort());
+        return sb.toString();
+    }
+
+    public void sendPongMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createPongMessage(origin);
+        this.sendMessage(destination, message);
     }
 
 }

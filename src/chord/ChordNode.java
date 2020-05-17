@@ -333,7 +333,11 @@ public class ChordNode {
     protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         // TODO: Check predecessor?
         int successorId = this.getSuccessorId();
-        if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
+
+        if (successorId == this.getId()) {
+            return this.channel.createSuccessorFoundMessage(id, this.getId(), this.getAddress()).split(" ");
+        }
+        else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
             return null;
         }
