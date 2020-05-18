@@ -192,7 +192,11 @@ public class ChordChannel implements Runnable {
                 System.out.println("[GETPREDECESSOR]");
                 NodePair<Integer, InetSocketAddress> predecessor = this.parent.getPredecessor();
                 InetSocketAddress destination = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                this.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
+
+                if (predecessor == null)
+                    this.sendNullPredecessorMessage(destination);
+                else
+                    this.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
                 break;
             }
 
@@ -431,9 +435,15 @@ public class ChordChannel implements Runnable {
         this.sendMessage(destination, message);
     }
 
+    private void sendNullPredecessorMessage(InetSocketAddress destination) {
+        String message = "PREDECESSOR NULL";
+        this.sendMessage(destination, message);
+    }
+
     private String createNotifyMessage(int originId, InetSocketAddress origin) {
         // Message format: NOTIFY <originId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
+        sb.append("NOTIFY").append(" ");
         sb.append(originId).append(" ");
         sb.append(origin.getHostString()).append(" ");
         sb.append(origin.getPort());
@@ -443,13 +453,17 @@ public class ChordChannel implements Runnable {
     protected void sendNotifyMessage(int originId, InetSocketAddress origin, InetSocketAddress destination) {
        String message = this.createNotifyMessage(originId, origin);
        this.sendMessage(destination, message);
+
+        System.out.println("NOTIFY SENT to:");
+        System.out.println(destination.getHostString());
+        System.out.println(destination.getPort());
     }
 
     private String createPingMessage(InetSocketAddress origin) {
         // Message format: PING <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("PING").append(" ");
-        sb.append(origin.getAddress().getHostName()).append(" ");
+        sb.append(origin.getHostString()).append(" ");
         sb.append(origin.getPort());
         return sb.toString();
     }
@@ -481,7 +495,7 @@ public class ChordChannel implements Runnable {
         // Message format: PONG <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("PONG").append(" ");
-        sb.append(origin.getAddress().getHostName()).append(" ");
+        sb.append(origin.getHostString()).append(" ");
         sb.append(origin.getPort());
         return sb.toString();
     }

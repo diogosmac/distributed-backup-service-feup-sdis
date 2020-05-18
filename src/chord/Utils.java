@@ -20,8 +20,10 @@ public class Utils {
         // if upper bound is smaller than lower bound, then we have made a complete
         // loop in the chord's ring
         if (upperBound < lowerBound) {
+            if (target < lowerBound) {
+                target += maxNodes;
+            }
             upperBound += maxNodes;
-            target += maxNodes;
         }
         // finally, calculate target intervals
         return lowerBound < target && target < upperBound;
