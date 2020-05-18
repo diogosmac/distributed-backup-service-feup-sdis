@@ -355,7 +355,7 @@ public class ChordNode {
             return this.channel.createSuccessorFoundMessage(id, this.getId(), this.getAddress()).split(" ");
         }
         else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
-            if (!requestOrigin.getHostString().equals(this.getAddress().getHostString())) {
+            if (!requestOrigin.equals(this.getAddress())) {
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
             }

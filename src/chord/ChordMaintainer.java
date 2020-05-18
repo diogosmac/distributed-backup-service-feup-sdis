@@ -39,8 +39,6 @@ public class ChordMaintainer implements Runnable {
      * does this if it knows of no closer predecessor than 'n'.
      */
     private void stabilize() {
-        System.out.println("Stabilize===================");
-
         // get 'chord's successor's predecessor
         NodePair<Integer, InetSocketAddress> successor = chord.getSuccessor();
         NodePair<Integer, InetSocketAddress> successorsPredecessor = chord.getSuccessorsPredecessor();
@@ -48,9 +46,6 @@ public class ChordMaintainer implements Runnable {
         // if so, then successorsPredecessor is our new successor
         if (successorsPredecessor != null && Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
-
-        System.out.println("ENTERING SEND NOTIFY");
-
         // notify 'chord's successor of 'chord's existance
         this.chord.getChannel().sendNotifyMessage(chord.getId(), chord.getAddress(), successor.getValue());
     }
@@ -68,8 +63,12 @@ public class ChordMaintainer implements Runnable {
         chord.setFinger(finger);
         // calculate new node ID
         Integer nodeID = chord.getId() + (int) Math.pow(2, finger);
-
+        
         String[] reply = this.chord.findSuccessor(nodeID);
+
+        if (reply == null)
+            System.out.println("=============== FODA-SE ================");
+
         int replyNodeId = Integer.parseInt(reply[2]);
         InetSocketAddress replyNodeInfo = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
 
@@ -102,8 +101,11 @@ public class ChordMaintainer implements Runnable {
      */
     @Override
     public void run() {
+        System.out.println(" ---- STABLE");
         this.stabilize();
+        System.out.println(" ---- FIX FINGERS");
         this.fixFingers();
+        System.out.println(" ---- CHECK PREDECESSOR");
         this.checkPredecessor();
     }
 }

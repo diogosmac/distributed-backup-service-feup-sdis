@@ -291,6 +291,7 @@ public class ChordChannel implements Runnable {
                                             InetSocketAddress destination) {
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
+        System.out.println(message + " -> " + destination.getHostString() + ":" + destination.getPort());
 
         if (!this.parent.getAddress().getHostString().equals(requestOrigin.getHostString()))  // This node didn't request the id
             return null; // Delegates work, and returns

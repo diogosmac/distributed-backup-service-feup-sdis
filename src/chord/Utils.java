@@ -26,7 +26,7 @@ public class Utils {
             upperBound += maxNodes;
         }
         // finally, calculate target intervals
-        return lowerBound < target && target < upperBound;
+        return lowerBound < target && target <= upperBound;
     }
 
     /**
