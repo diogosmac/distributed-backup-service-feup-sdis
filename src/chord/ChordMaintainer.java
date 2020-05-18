@@ -91,8 +91,10 @@ public class ChordMaintainer implements Runnable {
                 this.chord.getPredecessor().getValue());
 
         // if he does not respond set it as failed (null)
-        if (!online)
+        if (!online) {
+            System.out.println("PREDECESSOR SET NULL =======================================================");
             chord.setPredecessor(null);
+        }
     }
 
     /**

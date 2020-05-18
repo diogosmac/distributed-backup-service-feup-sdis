@@ -455,9 +455,9 @@ public class ChordChannel implements Runnable {
        String message = this.createNotifyMessage(originId, origin);
        this.sendMessage(destination, message);
 
-        System.out.println("NOTIFY SENT to:");
-        System.out.println(destination.getHostString());
-        System.out.println(destination.getPort());
+//        System.out.println("NOTIFY SENT to:");
+//        System.out.println(destination.getHostString());
+//        System.out.println(destination.getPort());
     }
 
     private String createPingMessage(InetSocketAddress origin) {
@@ -472,6 +472,9 @@ public class ChordChannel implements Runnable {
     public boolean sendPingMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createPingMessage(origin);
         this.sendMessage(destination, message);
+        System.out.println("=============================================================== PING SENT");
+        System.out.println(destination);
+        System.out.println(this.messageQueue.size());
 
         synchronized (this.parent) {
             try {
@@ -504,6 +507,11 @@ public class ChordChannel implements Runnable {
     public void sendPongMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createPongMessage(origin);
         this.sendMessage(destination, message);
+
+        System.out.println("PONG SENT ===============================================================");
+        System.out.println(message);
+        System.out.println(destination);
+        System.out.println(this.messageQueue.size());
     }
 
 }
