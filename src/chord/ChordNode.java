@@ -299,7 +299,7 @@ public class ChordNode {
         // build pair and return it
         String [] reply = this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
 
-        if (reply[1].equals("NULL"))
+        if (reply == null || reply[1].equals("NULL"))
             return null;
 
         int predecessorId = Integer.parseInt(reply[1]);
@@ -356,6 +356,7 @@ public class ChordNode {
         }
         else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             if (!requestOrigin.equals(this.getAddress())) {
+                System.out.println("INSIDE FIND SUCCESSOR -> " + id);
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
             }

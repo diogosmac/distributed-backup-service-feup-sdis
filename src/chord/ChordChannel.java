@@ -7,6 +7,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -122,7 +123,9 @@ public class ChordChannel implements Runnable {
 
                 socket.close();
 
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         }
 
@@ -146,8 +149,10 @@ public class ChordChannel implements Runnable {
             case "FINDSUCCESSOR": {
                 System.out.println("[FINDSUCCESSOR]");
                 // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
+                System.out.println("IN HANDLER -> " + message);
                 int id = Integer.parseInt(args[1]);
                 InetSocketAddress fsAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+                System.out.println("BEFORE FIND SUCCESSOR IN HANDLER -> " + message);
                 this.parent.findSuccessor(fsAddress, id);
                 break;
             }
@@ -244,24 +249,29 @@ public class ChordChannel implements Runnable {
      * @param message Message to be sent
      */
     protected void sendMessage(InetSocketAddress address, String message) {
+        
+        synchronized(this.parent) {
 
-        if (address.equals(this.parent.getAddress())) {
-            handleMessage(null, message);
-            return;
+            if (address.equals(this.parent.getAddress())) {
+                handleMessage(null, message);
+                return;
+            }
+
+            try {
+
+                SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
+                socket.connect(address, timeout);
+
+                OutputStream os = socket.getOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(os);
+                oos.writeObject(message);
+
+                socket.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
-        try {
-
-            SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
-            socket.connect(address, timeout);
-
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            oos.writeObject(message);
-
-            socket.close();
-
-        } catch (IOException e) { e.printStackTrace(); }
-
     }
 
     /**
@@ -340,8 +350,10 @@ public class ChordChannel implements Runnable {
      * @param successorNodeInfo
      */
     protected void sendSuccessorFound(InetSocketAddress requestOrigin, int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+        System.out.println("INSIDE sendSuccessorFound -> " + requestedId);
         String message = this.createSuccessorFoundMessage(requestedId, successorId, successorNodeInfo);
         this.sendMessage(requestOrigin, message);
+        System.out.println(message + " -> " + requestOrigin.getHostString() + ":" + requestOrigin.getPort());
     }
 
     /**
@@ -452,12 +464,10 @@ public class ChordChannel implements Runnable {
     }
 
     protected void sendNotifyMessage(int originId, InetSocketAddress origin, InetSocketAddress destination) {
-       String message = this.createNotifyMessage(originId, origin);
-       this.sendMessage(destination, message);
-
-//        System.out.println("NOTIFY SENT to:");
-//        System.out.println(destination.getHostString());
-//        System.out.println(destination.getPort());
+        String message = this.createNotifyMessage(originId, origin);
+        System.out.println("NOTIFY SENT to:");
+        System.out.println(destination);
+        this.sendMessage(destination, message);
     }
 
     private String createPingMessage(InetSocketAddress origin) {
@@ -472,7 +482,7 @@ public class ChordChannel implements Runnable {
     public boolean sendPingMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createPingMessage(origin);
         this.sendMessage(destination, message);
-        System.out.println("=============================================================== PING SENT");
+        System.out.println("============================ PING SENT");
         System.out.println(destination);
         System.out.println(this.messageQueue.size());
 

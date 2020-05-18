@@ -62,7 +62,7 @@ public class ChordMaintainer implements Runnable {
         finger = (finger + 1) % this.chord.getM();
         chord.setFinger(finger);
         // calculate new node ID
-        Integer nodeID = chord.getId() + (int) Math.pow(2, finger);
+        Integer nodeID = (chord.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
         
         String[] reply = this.chord.findSuccessor(nodeID);
 
@@ -86,7 +86,7 @@ public class ChordMaintainer implements Runnable {
         // node may not have a predecessor yet
         if (chord.getPredecessor() == null)
             return;
-
+        /*
         boolean online = chord.getChannel().sendPingMessage(this.chord.getAddress(),
                 this.chord.getPredecessor().getValue());
 
@@ -95,6 +95,7 @@ public class ChordMaintainer implements Runnable {
             System.out.println("PREDECESSOR SET NULL =======================================================");
             chord.setPredecessor(null);
         }
+        */
     }
 
     /**

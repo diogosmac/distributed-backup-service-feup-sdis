@@ -29,7 +29,7 @@ public class ChordNodeTest {
         } else if (args.length == 3) {
             try {
                 id = Integer.parseInt(args[0]);
-                InetSocketAddress thisAddress = new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 5000 + id);
+                InetSocketAddress thisAddress = new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 30000 + id);
                 InetSocketAddress knownAddress = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
                 node = new ChordNode(id, m, thisAddress, knownAddress);
             } catch (UnknownHostException e) {
