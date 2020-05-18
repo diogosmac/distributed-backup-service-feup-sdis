@@ -39,6 +39,8 @@ public class ChordMaintainer implements Runnable {
      * does this if it knows of no closer predecessor than 'n'.
      */
     private void stabilize() {
+        System.out.println("Stabilize===================");
+
         // get 'chord's successor's predecessor
         NodePair<Integer, InetSocketAddress> successor = chord.getSuccessor();
         NodePair<Integer, InetSocketAddress> successorsPredecessor = chord.getSuccessorsPredecessor();
@@ -46,6 +48,9 @@ public class ChordMaintainer implements Runnable {
         // if so, then successorsPredecessor is our new successor
         if (successorsPredecessor != null && Utils.inBetween(successorsPredecessor.getKey(), chord.getId(), successor.getKey(), chord.getM()))
             chord.setSuccessor(successorsPredecessor);
+
+        System.out.println("ENTERING SEND NOTIFY");
+
         // notify 'chord's successor of 'chord's existance
         this.chord.getChannel().sendNotifyMessage(chord.getId(), chord.getAddress(), successor.getValue());
     }

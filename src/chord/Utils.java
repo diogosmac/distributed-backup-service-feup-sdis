@@ -19,7 +19,7 @@ public class Utils {
         int maxNodes = (int) Math.pow(2, m);
         // if upper bound is smaller than lower bound, then we have made a complete
         // loop in the chord's ring
-        if (upperBound < lowerBound) {
+        if (upperBound <= lowerBound) {
             if (target < lowerBound) {
                 target += maxNodes;
             }

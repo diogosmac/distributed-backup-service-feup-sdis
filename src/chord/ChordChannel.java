@@ -122,7 +122,7 @@ public class ChordChannel implements Runnable {
 
                 socket.close();
 
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception ignored) {}
 
         }
 
