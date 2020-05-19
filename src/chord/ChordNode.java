@@ -1,6 +1,9 @@
 package chord;
 
 import peer.Peer;
+import storage.Chunk;
+import storage.SavedFile;
+import utils.MyUtils;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -460,4 +463,27 @@ public class ChordNode {
     public ChordChannel getChannel() {
         return channel;
     }
+
+    public void initiateBackup(String filePath, int replicationDegree) {
+
+        System.out.print("\nBACKUP PROTOCOL\n" +
+                "\t> File: " + filePath + "\n" +
+                "\t> RD:   " + replicationDegree + "\n");
+
+        // Stores file bytes and splits it into chunks
+        SavedFile sf = new SavedFile(filePath, replicationDegree);
+
+        ArrayList<Chunk> fileChunks = sf.getChunks();
+        String fileID = sf.getId();
+
+        for (Chunk chunk : fileChunks) {
+            Integer chunkID = Utils.hash(fileID + ":" + chunk.getNum());
+            String[] succ = this.findSuccessor(chunkID);
+            // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
+            InetSocketAddress succAddress = new InetSocketAddress(succ[3], Integer.parseInt(succ[4]));
+            this.channel.sendPutchunkMessage(chunkID, replicationDegree, chunk.getData(), this.address, succAddress);
+        }
+
+    }
+
 }
