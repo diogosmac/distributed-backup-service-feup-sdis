@@ -114,6 +114,8 @@ public class MessageHandler extends Thread {
 
                     // notify 'chord's successor of 'chord's existance
                     this.ch.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
+                    // send message to update successor list
+                    this.ch.sendFindSuccessorListMessage(this.node.getAddress(), successor.getValue());
                 }
 
                 break;
@@ -141,6 +143,20 @@ public class MessageHandler extends Thread {
                     this.ch.addMessageQueue(new Message(sfAddress, message));
                     this.node.notify();
                 }
+                break;
+            }
+
+            case "FINDSUCCESSORLIST": {
+                System.out.println("[FINDSUCCESSORLIST]");
+                InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+                this.ch.sendSuccessorListMessage(this.node.getAddress(), originInfo);
+                break;
+            }
+
+            case "SUCCESSORLIST": {
+                System.out.println("[SUCCESSORLIST]");
+                // TODO César
+                
                 break;
             }
         }

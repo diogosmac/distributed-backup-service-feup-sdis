@@ -122,7 +122,9 @@ public class ChordChannel implements Runnable {
                 socket.close();
 
             } catch (Exception e) {
-                //e.printStackTrace();
+                // error in communication, maybe successor stopped working
+                // see type of message -> only if FINDSUCCESSOR
+                e.printStackTrace();
             }
     }
 
@@ -360,7 +362,8 @@ public class ChordChannel implements Runnable {
         this.sendMessage(destination, message);
     }
 
-    private String createSuccessorListMessage(InetSocketAddress origin, ArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
+    private String createSuccessorListMessage(InetSocketAddress origin) {
+        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = this.parent.getSuccessorList();
         // Message format: SUCCESSORLIST <originIP> <originPort> <successorList>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORLIST").append(" ");
@@ -376,8 +379,8 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    public void sendSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination, ArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
-        String message = createSuccessorListMessage(origin, successorList);
+    public void sendSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createSuccessorListMessage(origin);
         this.sendMessage(destination, message);
     }
 
