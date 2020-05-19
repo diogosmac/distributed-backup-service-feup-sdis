@@ -57,15 +57,15 @@ public class FingerTable {
      * @return InetSocketAddress of the "largest" node on the circle
      * whose ID is smaller than 'fileID'('k')
      */
-    public InetSocketAddress lookup(Integer nodeID, Integer fileID) {
+    public NodePair<Integer, InetSocketAddress> lookup(Integer nodeID, Integer fileID) {
         // lookup in finger table for peer/node closest to fileID
         for (int finger = MAX_SIZE - 1; finger >= 0; finger--) {
             NodePair<Integer, InetSocketAddress> possibleNode = this.table.get(finger);
             if (possibleNode.getKey() != null && !Utils.inBetween(fileID, nodeID, possibleNode.getKey(), MAX_SIZE))
-                return possibleNode.getValue();
+                return possibleNode;
         }
         // if not found then we move to the next node/peer
-        return getFirstNode().getValue();
+        return getFirstNode();
     }
 
     @Override

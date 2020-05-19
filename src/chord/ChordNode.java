@@ -314,7 +314,18 @@ public class ChordNode {
      * Gets closest preceding node address
      */
     public InetSocketAddress getClosestPreceding(int id) {
-        return this.fingerTable.lookup(this.getId(), id);
+        NodePair<Integer, InetSocketAddress> lookup = this.fingerTable.lookup(this.getId(), id);
+
+        Integer key = lookup.getKey();
+
+        for (int i = this.successorList.size() - 1; i >= 0; i--) {
+            NodePair<Integer, InetSocketAddress> succ = this.successorList.get(i);
+            
+            if (Utils.inBetween(succ.getKey(), key, id, this.m))
+                return succ.getValue();
+        }
+
+        return lookup.getValue();
     }
 
     /**
