@@ -39,7 +39,10 @@ public class ChordMaintainer implements Runnable {
      * does this if it knows of no closer predecessor than 'n'.
      */
     private void stabilize() {
-        this.chord.getSuccessorsPredecessor();
+        // send message to node's successor asking for its predecessor
+        // message handler will take care of the rest
+        NodePair<Integer, InetSocketAddress> successor = this.chord.getSuccessor();
+        this.chord.getChannel().sendGetPredecessorMessage(this.chord.getAddress(), successor.getValue());
     }
 
     /**
@@ -55,15 +58,13 @@ public class ChordMaintainer implements Runnable {
         chord.setFinger(finger);
         // calculate new node ID
         Integer nodeID = (chord.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
-        
+        // find node's successor
         String[] reply = this.chord.findSuccessor(nodeID);
-
         if (reply == null)
-            System.out.println("=============== FODA-SE ================");
-
+            System.out.println("=========== FODA-SE ===========");
+        // build reply node
         int replyNodeId = Integer.parseInt(reply[2]);
         InetSocketAddress replyNodeInfo = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
-
         NodePair<Integer, InetSocketAddress> node = new NodePair<>(replyNodeId, replyNodeInfo);
         // update entry in finger table with index 'finger'
         chord.setFingerTableEntry(finger, node);
@@ -78,16 +79,12 @@ public class ChordMaintainer implements Runnable {
         // node may not have a predecessor yet
         if (chord.getPredecessor() == null)
             return;
-        /*
+        // send message to predecessor
         boolean online = chord.getChannel().sendPingMessage(this.chord.getAddress(),
                 this.chord.getPredecessor().getValue());
-
         // if he does not respond set it as failed (null)
-        if (!online) {
-            System.out.println("PREDECESSOR SET NULL =======================================================");
+        if (!online)
             chord.setPredecessor(null);
-        }
-        */
     }
 
     /**

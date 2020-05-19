@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import chord.communication.ChordChannel;
 
 /**
  * Chord Node
@@ -266,14 +267,14 @@ public class ChordNode {
     /**
      * Gets node's successor id
      */
-    protected int getSuccessorId() {
+    public int getSuccessorId() {
         return this.getSuccessor().getKey();
     }
 
     /**
      * Gets node's successor address
      */
-    protected InetSocketAddress getSuccessorAddress() {
+    public InetSocketAddress getSuccessorAddress() {
         return this.getSuccessor().getValue();
     }
 
@@ -285,20 +286,6 @@ public class ChordNode {
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(0, node);
         this.successorList.set(0, node);
-    }
-
-    /**
-     * @return chord node's successor's predecessor
-     */
-    public void getSuccessorsPredecessor() {
-        NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
-//        // successor may be this node
-//        if (successor.getKey().intValue() == this.getId().intValue())
-//            return this.predecessor;
-
-        // send request to successor.getValue() (InetSocketAddress) for its predecessor
-        // build pair and return it
-        this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
     }
 
     /**
@@ -314,55 +301,36 @@ public class ChordNode {
     /**
      * Gets closest preceding node address
      */
-    protected InetSocketAddress getClosestPreceding(int id) {
+    public InetSocketAddress getClosestPreceding(int id) {
         return this.fingerTable.lookup(this.getId(), id);
     }
 
     /**
      * Finds the successor node of id
      */
-    protected String[] findSuccessor(int id) {
+    public String[] findSuccessor(int id) {
         return this.findSuccessor(this.getAddress(), id);
     }
 
     /**
      * Finds the successor node of id
      */
-    protected synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
-
-//        System.out.println("REQUEST ORIGIN");
-//        System.out.println(requestOrigin.getHostString());
-//        System.out.println(requestOrigin.getPort());
-//        System.out.println("ID");
-//        System.out.println(id);
-//        System.out.println("SUCCESSOR ID");
-//        System.out.println(this.getSuccessorId());
-//        System.out.println("THIS.ID");
-//        System.out.println(this.getId());
-//        System.out.println("m");
-//        System.out.println(this.m);
-        System.out.println("========== FINDING SUCCESSOR ==========");
-
-        // TODO: Check predecessor?
+    public synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         int successorId = this.getSuccessorId();
 
         if (successorId == this.getId()) {
-            System.out.println(">>>>>> SAO IGUAIS");
             return this.channel.createSuccessorFoundMessage(id, this.getId(), this.getAddress()).split(" ");
         }
         else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             if (!requestOrigin.equals(this.getAddress())) {
-                System.out.println("INSIDE FIND SUCCESSOR -> " + id);
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
             }
             else {
-                System.out.println(">>>>>> NAO E PRECISO ENVIAR");
                 return this.channel.createSuccessorFoundMessage(id, successorId, this.getSuccessor().getValue()).split(" ");
             }
         }
         else {
-            System.out.println(">>>>>> ELSE");
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
             return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
         }
@@ -374,7 +342,7 @@ public class ChordNode {
      * does this if it knows of no closer predecessor than 'n'.
      * @param node possible new predecessor
      */
-    protected synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
+    public synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
         NodePair<Integer, InetSocketAddress> predecessor = this.getPredecessor();
         // if predecessor is null then it means that 'checkPredecessor' method
         // has determined that 'chord's predecessor has failed
@@ -382,7 +350,7 @@ public class ChordNode {
             this.setPredecessor(node);
     }
 
-    protected ChordChannel getChannel() {
+    public ChordChannel getChannel() {
         return channel;
     }
 }
