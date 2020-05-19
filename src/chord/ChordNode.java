@@ -86,6 +86,7 @@ public class ChordNode {
 
         this.id = id;
         this.m = m;
+        this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
 
@@ -113,6 +114,7 @@ public class ChordNode {
 
         this.id = id;
         this.m = m;
+        this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
 
@@ -363,4 +365,16 @@ public class ChordNode {
     public ChordChannel getChannel() {
         return channel;
     }
+
+	public void receiveSuccessorListMessage(String[] args) {
+        NodePair<Integer, InetSocketAddress> successor = this.getSuccessor();
+        this.successorList.clear();
+        this.addSuccessor(successor);
+
+        for (int i = 1; i < args.length; i += 3) {
+            NodePair<Integer, InetSocketAddress> node = new NodePair<>(Integer.parseInt(args[i]), new InetSocketAddress(args[i+1], Integer.parseInt(args[i+2])));
+
+            this.addSuccessor(node);
+        }
+	}
 }

@@ -364,11 +364,9 @@ public class ChordChannel implements Runnable {
 
     private String createSuccessorListMessage(InetSocketAddress origin) {
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = this.parent.getSuccessorList();
-        // Message format: SUCCESSORLIST <originIP> <originPort> <successorList>
+        // Message format: SUCCESSORLIST <successorList>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORLIST").append(" ");
-        sb.append(origin.getHostString()).append(" ");
-        sb.append(origin.getPort()).append(" ");
         
         for (NodePair<Integer, InetSocketAddress> successor : successorList) {
             sb.append(successor.getKey()).append(" ");

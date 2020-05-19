@@ -9,7 +9,7 @@ import chord.Utils;
 import java.net.InetSocketAddress;
 
 public class MessageHandler extends Thread {
-    
+
     private final String message;
     private final SSLSocket socket;
     private final ChordChannel ch;
@@ -23,16 +23,14 @@ public class MessageHandler extends Thread {
     }
 
     private InetSocketAddress getAddress(SSLSocket socket) {
-        return (socket == null
-                ? this.node.getAddress()
-                : (InetSocketAddress) socket.getRemoteSocketAddress());
+        return (socket == null ? this.node.getAddress() : (InetSocketAddress) socket.getRemoteSocketAddress());
     }
 
     @Override
     public void run() {
         // Handles a message received by the ChordChannel
         String[] args = message.split(" ");
-        switch(args[0]) {
+        switch (args[0]) {
             case "FINDSUCCESSOR": {
                 System.out.println("[FINDSUCCESSOR]");
                 // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
@@ -56,10 +54,12 @@ public class MessageHandler extends Thread {
                 System.out.println("[JOINING]");
                 // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
                 int newNodeId = Integer.parseInt(args[1]);
-                // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
+                // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp>
+                // <successorNodePort>
                 String[] successorArgs = this.node.findSuccessor(newNodeId);
                 InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
-                InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[3], Integer.parseInt(successorArgs[4]));
+                InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[3],
+                        Integer.parseInt(successorArgs[4]));
                 int successorId = Integer.parseInt(successorArgs[2]);
 
                 this.ch.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
@@ -105,11 +105,14 @@ public class MessageHandler extends Thread {
                     int predecessorId = Integer.parseInt(args[1]);
                     InetSocketAddress predecessorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
 
-                    NodePair<Integer, InetSocketAddress> successorsPredecessor = new NodePair<>(predecessorId, predecessorInfo);
+                    NodePair<Integer, InetSocketAddress> successorsPredecessor = new NodePair<>(predecessorId,
+                            predecessorInfo);
 
-                    // check if successor's predecessor ID is between 'chord' and 'chords's successor
+                    // check if successor's predecessor ID is between 'chord' and 'chords's
+                    // successor
                     // if so, then successorsPredecessor is our new successor
-                    if (Utils.inBetween(successorsPredecessor.getKey(), this.node.getId(), successor.getKey(), this.node.getM()))
+                    if (Utils.inBetween(successorsPredecessor.getKey(), this.node.getId(), successor.getKey(),
+                            this.node.getM()))
                         this.node.setSuccessor(successorsPredecessor);
 
                     // notify 'chord's successor of 'chord's existance
@@ -155,8 +158,16 @@ public class MessageHandler extends Thread {
 
             case "SUCCESSORLIST": {
                 System.out.println("[SUCCESSORLIST]");
-                // TODO César
-                
+                NodePair<Integer, InetSocketAddress> successor = this.node.getSuccessor();
+                this.node.getSuccessorList().clear();
+                this.node.addSuccessor(successor);
+
+                for (int i = 1; i < args.length; i += 3) {
+                    NodePair<Integer, InetSocketAddress> node = new NodePair<>(Integer.parseInt(args[i]),
+                            new InetSocketAddress(args[i + 1], Integer.parseInt(args[i + 2])));
+
+                    this.node.addSuccessor(node);
+                }
                 break;
             }
         }
