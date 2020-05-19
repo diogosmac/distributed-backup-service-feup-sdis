@@ -1,5 +1,7 @@
 package chord;
 
+import utils.MyUtils;
+
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -356,6 +358,21 @@ public class ChordChannel implements Runnable {
 
     public synchronized void addMessageQueue(Message message) {
         this.messageQueue.add(message);
+    }
+
+    protected void sendPutchunkMessage(Integer chunkID, int replicationDegree, byte[] data,
+                                       InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createPutchunkMessage(chunkID, replicationDegree, origin, data);
+        this.sendMessage(destination, message);
+    }
+
+    private String createPutchunkMessage(Integer chunkID, int replicationDegree, InetSocketAddress origin, byte[] data) {
+        return "PUTCHUNK" + " " +
+                chunkID + " " +
+                replicationDegree + " " +
+                origin.getHostName() + " " +
+                origin.getPort() + " " +
+                MyUtils.convertByteArrayToString(data);
     }
 
 }

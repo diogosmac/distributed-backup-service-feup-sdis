@@ -1,5 +1,7 @@
 package chord;
 
+import utils.MyUtils;
+
 import javax.net.ssl.SSLSocket;
 import java.net.InetSocketAddress;
 
@@ -110,7 +112,7 @@ public class MessageHandler extends Thread {
                     if (Utils.inBetween(successorsPredecessor.getKey(), this.node.getId(), successor.getKey(), this.node.getM()))
                         this.node.setSuccessor(successorsPredecessor);
 
-                    // notify 'chord's successor of 'chord's existance
+                    // notify 'chord's successor of 'chord's existence
                     this.channel.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
                 }
 
@@ -141,6 +143,36 @@ public class MessageHandler extends Thread {
                 }
                 break;
             }
+
+            case "PUTCHUNK": {
+                System.out.println("[PUTCHUNK]");
+                // PUTCHUNK <chunk-id> <replication-degree> <origin-ip> <origin-port> <data>
+                InetSocketAddress senderAddress = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
+                if (senderAddress.equals(this.node.getAddress())) {
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                }
+                else {
+                    Integer chunkID = Integer.parseInt(args[1]);
+                    int replicationDegree = Integer.parseInt(args[2]);
+                    byte[] data = MyUtils.convertStringToByteArray(args[5]);
+
+                    // TODO: check if chunk is not yet stored
+
+                    // TODO: store chunk
+                    //
+                    //      this is the part where we store the chunk
+                    //
+                    // chunk is now stored
+
+                    if (replicationDegree > 1) {
+                        this.channel.sendPutchunkMessage(chunkID, replicationDegree - 1, data,
+                                this.node.getAddress(), this.node.getSuccessorAddress());
+                    }
+                }
+                break;
+
+            }
+
         }
 
     }
