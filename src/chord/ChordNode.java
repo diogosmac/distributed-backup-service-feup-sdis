@@ -1,5 +1,7 @@
 package chord;
 
+import peer.Peer;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -67,6 +69,11 @@ public class ChordNode {
     private ChordChannel channel = null;
 
     /**
+     * Peer supported by this chord node
+     */
+    private Peer peer;
+
+    /**
      * Constructor without IP address
      * @param id Chord Node identifier
      * @param m Number of bits of the addressing space
@@ -87,6 +94,7 @@ public class ChordNode {
         this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
+//        this.peer = new Peer()
 
         // create the chord ring
         this.create();
@@ -105,8 +113,8 @@ public class ChordNode {
      * Constructor with IP address
      * @param id Chord Node identifier
      * @param m Number of bits of the addressing space
-     * @param address IP address to join the Chord 'network'
-     * @param knownAddress 
+     * @param address IP address of this Chord node
+     * @param knownAddress IP address of a node on the Chord 'network' to be joined
      */
     public ChordNode(InetSocketAddress address, InetSocketAddress knownAddress) {
 
@@ -255,7 +263,7 @@ public class ChordNode {
     }
 
     /**
-     * @return chord node's sucessor, which happens to be
+     * @return chord node's successor, which happens to be
      * the first element of 'successorList' and also the first
      * element of 'fingerTable'. In case of failure and node's successor is
      * 'null', we get the next sucessor. In the rare case that there are none
@@ -286,7 +294,6 @@ public class ChordNode {
 
     /**
      * Set 'node' as node's new successor
-     * 
      * @param node new chord's successor
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
@@ -305,6 +312,21 @@ public class ChordNode {
     public void addSuccessor(NodePair<Integer, InetSocketAddress> node) {
         if (this.successorList.size() < r)
             this.successorList.add(node);
+    }
+
+    /**
+     * Given a node identifier, retrieve the closest preceding node, i.e. the
+     * node with the greatest identifier that is lower than 'id'. This is achieved
+     * by an enhancement of the original method, i.e. cross referencing the finger
+     * table with the successor list.
+     * 
+     * @param id Identifier of the wanted node's closest preceding node
+     */
+    public void getSuccessorsPredecessor() {
+        NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
+        // send request to successor.getValue() (InetSocketAddress) for its predecessor
+        // build pair and return it
+        this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
     }
 
     /**
@@ -343,13 +365,22 @@ public class ChordNode {
 
     
     /**
-     * Given a node identifier, retrieve the closest preceding node, i.e. the
-     * node with the greatest identifier that is lower than 'id'. This is achieved
-     * by an enhancement of the original method, i.e. cross referencing the finger
-     * table with the successor list.
-     * 
-     * @param id Identifier of the wanted node's closest preceding node
-     * @return Address of the wanted node's closest preceding node
+     * @return the peer associated to this node
+     */
+    public Peer getPeer() {
+        return peer;
+    }
+
+    /**
+     * Set peer that will be used to process and store this node's files
+     * @param peer the peer to be used
+     */
+    public void setPeer(Peer peer) {
+        this.peer = peer;
+    }
+
+    /**
+     * Gets closest preceding node address
      */
     public synchronized InetSocketAddress getClosestPreceding(Integer id) {
         NodePair<Integer, InetSocketAddress> lookup = this.fingerTable.lookup(this.getId(), id);
@@ -404,6 +435,7 @@ public class ChordNode {
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
             return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
         }
+
     }
 
     /**

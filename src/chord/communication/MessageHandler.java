@@ -32,7 +32,7 @@ public class MessageHandler extends Thread {
     /**
      * Node's Communication Channel
      */
-    private final ChordChannel ch;
+    private final ChordChannel channel;
 
     /**
      * Chord's Node
@@ -44,13 +44,13 @@ public class MessageHandler extends Thread {
      * 
      * @param sk Socket
      * @param message Message
-     * @param ch Channel
+     * @param channel Channel
      * @param node Node
      */
-    MessageHandler(SSLSocket sk, String message, ChordChannel ch, ChordNode node) {
+    MessageHandler(SSLSocket sk, String message, ChordChannel channel, ChordNode node) {
         this.socket = sk;
         this.message = message;
-        this.ch = ch;
+        this.channel = channel;
         this.node = node;
     }
 
@@ -82,7 +82,7 @@ public class MessageHandler extends Thread {
             case "SUCCESSORFOUND": {
                 synchronized (this.node) {
                     InetSocketAddress sfAddress = getAddress(socket);
-                    this.ch.addMessageQueue(new Message(sfAddress, message));
+                    this.channel.addMessageQueue(new Message(sfAddress, message));
                     this.node.notify();
                 }
                 break;
@@ -99,8 +99,9 @@ public class MessageHandler extends Thread {
                         Integer.parseInt(successorArgs[4]));
                 int successorId = Integer.parseInt(successorArgs[2]);
 
-                this.ch.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
+                this.channel.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
                 break;
+
             }
 
             case "WELCOME": {
@@ -118,19 +119,19 @@ public class MessageHandler extends Thread {
                 InetSocketAddress destination = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
 
                 if (predecessor.getKey() == null)
-                    this.ch.sendNullPredecessorMessage(destination);
+                    this.channel.sendNullPredecessorMessage(destination);
                 else
-                    this.ch.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
+                    this.channel.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
                 break;
             }
 
             case "PREDECESSOR": {
                 synchronized (this.node) {
-                    // get 'chord's successor's predecessor
+                    // get chord's successor's predecessor
                     NodePair<Integer, InetSocketAddress> successor = this.node.getSuccessor();
 
                     if (args[1].equals("NULL")) {
-                        this.ch.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
+                        this.channel.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
                         return;
                     }
 
@@ -148,9 +149,9 @@ public class MessageHandler extends Thread {
                         this.node.setSuccessor(successorsPredecessor);
 
                     // notify 'chord's successor of 'chord's existance
-                    this.ch.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
+                    this.channel.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
                     // send message to update successor list
-                    this.ch.sendFindSuccessorListMessage(this.node.getAddress(), successor.getValue());
+                    this.channel.sendFindSuccessorListMessage(this.node.getAddress(), successor.getValue());
                 }
 
                 break;
@@ -165,14 +166,14 @@ public class MessageHandler extends Thread {
 
             case "PING": {
                 InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                this.ch.sendPongMessage(this.node.getAddress(), originInfo);
+                this.channel.sendPongMessage(this.node.getAddress(), originInfo);
                 break;
             }
 
             case "PONG": {
                 synchronized (this.node) {
                     InetSocketAddress sfAddress = getAddress(socket);
-                    this.ch.addMessageQueue(new Message(sfAddress, message));
+                    this.channel.addMessageQueue(new Message(sfAddress, message));
                     this.node.notify();
                 }
                 break;
@@ -180,7 +181,7 @@ public class MessageHandler extends Thread {
 
             case "FINDSUCCESSORLIST": {
                 InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                this.ch.sendSuccessorListMessage(this.node.getAddress(), originInfo);
+                this.channel.sendSuccessorListMessage(this.node.getAddress(), originInfo);
                 break;
             }
 

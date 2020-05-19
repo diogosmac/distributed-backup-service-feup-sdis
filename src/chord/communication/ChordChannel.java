@@ -144,10 +144,10 @@ public class ChordChannel implements Runnable {
     private String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
         // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
-        sb.append("FINDSUCCESSOR").append(" "); // Header
-        sb.append(requestedId).append(" "); // Id requested
-        sb.append(requestOrigin.getHostString()).append(" "); // Origin's IP
-        sb.append(requestOrigin.getPort()); // Origin's Port
+        sb.append("FINDSUCCESSOR").append(" ");                 // Header
+        sb.append(requestedId).append(" ");                     // Id requested
+        sb.append(requestOrigin.getHostString()).append(" ");   // Origin's IP
+        sb.append(requestOrigin.getPort());                     // Origin's Port
 
         return sb.toString();
     }

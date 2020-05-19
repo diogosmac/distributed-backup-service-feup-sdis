@@ -38,12 +38,16 @@ public class Utils {
     }
 
     /**
-     * 
-     * @param str String to hash
-     * @return Integer number of hashed value using SHA1 algorithm
+     * @param str String to be hashed
+     * @return Hashed integer value of the string
      */
     public static Integer hash(String str) {
-        ByteBuffer wrapped = ByteBuffer.wrap(sha1(str));
+        byte[] encrypted = sha1(str);
+        if (encrypted == null) {
+            System.out.println("Error occurred when encrypting string!");
+            return null;
+        }
+        ByteBuffer wrapped = ByteBuffer.wrap(encrypted);
 		return Math.floorMod(wrapped.getInt(), (int) Math.pow(2, m));
     }
 
@@ -53,6 +57,7 @@ public class Utils {
      * @return byte array of hashed string using SHA1 algorithm
      */
     private static byte[] sha1(String str) {
+
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
             return messageDigest.digest(str.getBytes());

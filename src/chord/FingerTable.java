@@ -57,11 +57,9 @@ public class FingerTable {
     /**
      * Lookups the "largest" node on the circle whose ID is smaller
      * than 'fileID'('k')
-     * 
      * @param nodeID current node's ID
      * @param fileID wanted file's ID
-     * @return InetSocketAddress of the "largest" node on the circle
-     * whose ID is smaller than 'fileID'('k')
+     * @return InetSocketAddress of the "largest" node on the circle whose ID is smaller than 'fileID'('k')
      */
     public NodePair<Integer, InetSocketAddress> lookup(Integer nodeID, Integer fileID) {
         // lookup in finger table for peer/node closest to fileID
@@ -105,7 +103,7 @@ public class FingerTable {
         return this.table.isEmpty()
             ? "empty"
             : this.table.stream()
-                .map( n -> n.toString() )
+                .map(NodePair::toString)
                 .collect( Collectors.joining("\n"));
 
     }
