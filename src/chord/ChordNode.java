@@ -341,11 +341,13 @@ public class ChordNode {
 //        System.out.println(this.getId());
 //        System.out.println("m");
 //        System.out.println(this.m);
+        System.out.println("========== FINDING SUCCESSOR ==========");
 
         // TODO: Check predecessor?
         int successorId = this.getSuccessorId();
 
         if (successorId == this.getId()) {
+            System.out.println(">>>>>> SAO IGUAIS");
             return this.channel.createSuccessorFoundMessage(id, this.getId(), this.getAddress()).split(" ");
         }
         else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
@@ -354,10 +356,13 @@ public class ChordNode {
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
             }
-            else
+            else {
+                System.out.println(">>>>>> NAO E PRECISO ENVIAR");
                 return this.channel.createSuccessorFoundMessage(id, successorId, this.getSuccessor().getValue()).split(" ");
+            }
         }
         else {
+            System.out.println(">>>>>> ELSE");
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
             return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
         }
