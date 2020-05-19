@@ -10,8 +10,8 @@ public class Utils {
      * This method checks if an integer number is between in interval
      * 
      * @param target wanted file's ID
-     * @param lowerBound
-     * @param upperBound
+     * @param lowerBound lower bound of the interval (exclusive)
+     * @param upperBound upper bound of the interval (inclusive)
      * @return true if 'target' is between 'lowerBound' and 'upperBound'
      */
     public static boolean inBetween(Integer target, Integer lowerBound, Integer upperBound, int m) {
@@ -30,17 +30,22 @@ public class Utils {
     }
 
     /**
-     * 
-     * @param str
-     * @return
+     * @param str String to be hashed
+     * @return Hashed integer value of the string
      */
     public static Integer hash(String str) {
-        ByteBuffer wrapped = ByteBuffer.wrap(sha1(str));
+        byte[] encrypted = sha1(str);
+        if (encrypted == null) {
+            System.out.println("Error occurred when encrypting string!");
+            return null;
+        }
+        ByteBuffer wrapped = ByteBuffer.wrap(encrypted);
 		return wrapped.getInt();
     }
 
     /** */
     private static byte[] sha1(String str) {
+
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
             return messageDigest.digest(str.getBytes());
@@ -48,7 +53,6 @@ public class Utils {
             e.printStackTrace();
             return null;
         }
-        
 
     }
 }

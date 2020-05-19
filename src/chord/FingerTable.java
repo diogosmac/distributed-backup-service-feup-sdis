@@ -4,7 +4,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-
 public class FingerTable {
 
     /**
@@ -16,7 +15,7 @@ public class FingerTable {
      * List of NodePairs containing nodes' hashed ID as keys, and
      * Socket Address (IP and Port) as values
      */
-    private ArrayList<NodePair<Integer, InetSocketAddress>> table;
+    private final ArrayList<NodePair<Integer, InetSocketAddress>> table;
 
     /**
      * Constructor
@@ -51,11 +50,9 @@ public class FingerTable {
     /**
      * Lookups the "largest" node on the circle whose ID is smaller
      * than 'fileID'('k')
-     * 
      * @param nodeID current node's ID
      * @param fileID wanted file's ID
-     * @return InetSocketAddress of the "largest" node on the circle
-     * whose ID is smaller than 'fileID'('k')
+     * @return InetSocketAddress of the "largest" node on the circle whose ID is smaller than 'fileID'('k')
      */
     public InetSocketAddress lookup(Integer nodeID, Integer fileID) {
         // lookup in finger table for peer/node closest to fileID
@@ -73,7 +70,7 @@ public class FingerTable {
         return this.table.isEmpty()
             ? "empty"
             : this.table.stream()
-                .map( n -> n.toString() )
+                .map(NodePair::toString)
                 .collect( Collectors.joining("\n"));
 
     }

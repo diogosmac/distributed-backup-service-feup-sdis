@@ -6,13 +6,13 @@ import java.net.InetSocketAddress;
 public class MessageHandler extends Thread {
     private final String message;
     private final SSLSocket socket;
-    private final ChordChannel ch;
+    private final ChordChannel channel;
     private final ChordNode node;
 
-    MessageHandler(SSLSocket sk, String message, ChordChannel ch, ChordNode node) {
+    MessageHandler(SSLSocket sk, String message, ChordChannel channel, ChordNode node) {
         this.socket = sk;
         this.message = message;
-        this.ch = ch;
+        this.channel = channel;
         this.node = node;
     }
 
@@ -43,7 +43,7 @@ public class MessageHandler extends Thread {
                 System.out.println("[SUCCESSORFOUND]");
                 synchronized (this.node) {
                     InetSocketAddress sfAddress = getAddress(socket);
-                    this.ch.addMessageQueue(new Message(sfAddress, message));
+                    this.channel.addMessageQueue(new Message(sfAddress, message));
                     this.node.notify();
                 }
                 break;
@@ -53,19 +53,20 @@ public class MessageHandler extends Thread {
                 System.out.println("[JOINING]");
                 // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
                 int newNodeId = Integer.parseInt(args[1]);
-                // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
-                String[] successorArgs = this.node.findSuccessor(newNodeId);
                 InetSocketAddress newNodeInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
-                InetSocketAddress successorInfo = new InetSocketAddress(successorArgs[3], Integer.parseInt(successorArgs[4]));
-                int successorId = Integer.parseInt(successorArgs[2]);
 
-                this.ch.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
+                String[] successorArgs = this.node.findSuccessor(newNodeId);
+                // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
+                int successorId = Integer.parseInt(successorArgs[2]);
+                InetSocketAddress successorInfo = new InetSocketAddress(
+                        successorArgs[3], Integer.parseInt(successorArgs[4]));
+
+                this.channel.sendWelcomeMessage(newNodeInfo, successorId, successorInfo);
                 break;
             }
 
             case "WELCOME": {
                 System.out.println("[WELCOME]");
-
                 // Message format: WELCOME <successorId> <successorIP> <successorPort>
                 int successorId = Integer.parseInt(args[1]);
                 InetSocketAddress successorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
@@ -81,9 +82,9 @@ public class MessageHandler extends Thread {
                 InetSocketAddress destination = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
 
                 if (predecessor == null)
-                    this.ch.sendNullPredecessorMessage(destination);
+                    this.channel.sendNullPredecessorMessage(destination);
                 else
-                    this.ch.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
+                    this.channel.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);
                 break;
             }
 
@@ -91,11 +92,11 @@ public class MessageHandler extends Thread {
                 System.out.println("[PREDECESSOR]");
 
                 synchronized (this.node) {
-                    // get 'chord's successor's predecessor
+                    // get chord's successor's predecessor
                     NodePair<Integer, InetSocketAddress> successor = this.node.getSuccessor();
 
                     if (args[1].equals("NULL")) {
-                        this.ch.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
+                        this.channel.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
                         return;
                     }
 
@@ -110,7 +111,7 @@ public class MessageHandler extends Thread {
                         this.node.setSuccessor(successorsPredecessor);
 
                     // notify 'chord's successor of 'chord's existance
-                    this.ch.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
+                    this.channel.sendNotifyMessage(this.node.getId(), this.node.getAddress(), successor.getValue());
                 }
 
                 break;
@@ -127,7 +128,7 @@ public class MessageHandler extends Thread {
             case "PING": {
                 System.out.println("[PING]");
                 InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                this.ch.sendPongMessage(this.node.getAddress(), originInfo);
+                this.channel.sendPongMessage(this.node.getAddress(), originInfo);
                 break;
             }
 
@@ -135,7 +136,7 @@ public class MessageHandler extends Thread {
                 System.out.println("[PONG]");
                 synchronized (this.node) {
                     InetSocketAddress sfAddress = getAddress(socket);
-                    this.ch.addMessageQueue(new Message(sfAddress, message));
+                    this.channel.addMessageQueue(new Message(sfAddress, message));
                     this.node.notify();
                 }
                 break;

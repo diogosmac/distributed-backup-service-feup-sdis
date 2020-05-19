@@ -130,10 +130,10 @@ public class ChordChannel implements Runnable {
     private String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
         // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
-        sb.append("FINDSUCCESSOR").append(" "); // Header
-        sb.append(requestedId).append(" "); // Id requested
-        sb.append(requestOrigin.getHostString()).append(" "); // Origin's IP
-        sb.append(requestOrigin.getPort()); // Origin's Port
+        sb.append("FINDSUCCESSOR").append(" ");                 // Header
+        sb.append(requestedId).append(" ");                     // Id requested
+        sb.append(requestOrigin.getHostString()).append(" ");   // Origin's IP
+        sb.append(requestOrigin.getPort());                     // Origin's Port
 
         return sb.toString();
     }
@@ -148,12 +148,11 @@ public class ChordChannel implements Runnable {
                                             InetSocketAddress destination) {
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
-        System.out.println(message + " -> " + destination.getHostString() + ":" + destination.getPort());
+//        System.out.println(message + " -> " + destination.getHostString() + ":" + destination.getPort());
 
         if (!this.parent.getAddress().getHostString().equals(requestOrigin.getHostString()))  // This node didn't request the id
             return null; // Delegates work, and returns
 
-        System.out.println("VOU DORMIR =======================");
         synchronized (this.parent) {
             try {
                 this.parent.wait(this.timeout*2);

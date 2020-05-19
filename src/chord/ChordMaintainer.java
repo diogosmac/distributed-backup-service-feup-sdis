@@ -49,24 +49,27 @@ public class ChordMaintainer implements Runnable {
      * finger tables.
      */
     private void fixFingers() {
+
         // get, update and set finger
         int finger = this.chord.getFinger();
         finger = (finger + 1) % this.chord.getM();
         chord.setFinger(finger);
+
         // calculate new node ID
-        Integer nodeID = (chord.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
+        int nodeID = (chord.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
         
         String[] reply = this.chord.findSuccessor(nodeID);
-
         if (reply == null)
-            System.out.println("=============== FODA-SE ================");
+            return;
 
         int replyNodeId = Integer.parseInt(reply[2]);
         InetSocketAddress replyNodeInfo = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
 
         NodePair<Integer, InetSocketAddress> node = new NodePair<>(replyNodeId, replyNodeInfo);
+
         // update entry in finger table with index 'finger'
         chord.setFingerTableEntry(finger, node);
+
     }
 
     /**

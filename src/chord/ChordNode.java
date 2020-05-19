@@ -1,5 +1,7 @@
 package chord;
 
+import peer.Peer;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -66,6 +68,11 @@ public class ChordNode {
     private ChordChannel channel = null;
 
     /**
+     * Peer supported by this chord node
+     */
+    private Peer peer;
+
+    /**
      * Constructor without IP address
      * @param id Chord Node identifier
      * @param m Number of bits of the addressing space
@@ -87,6 +94,7 @@ public class ChordNode {
         this.m = m;
         this.fingerTable = new FingerTable(m);
         this.address = address;
+//        this.peer = new Peer()
 
         // create the chord ring
         this.create();
@@ -105,8 +113,8 @@ public class ChordNode {
      * Constructor with IP address
      * @param id Chord Node identifier
      * @param m Number of bits of the addressing space
-     * @param address IP address to join the Chord 'network'
-     * @param knownAddress 
+     * @param address IP address of this Chord node
+     * @param knownAddress IP address of a node on the Chord 'network' to be joined
      */
     public ChordNode(Integer id, int m, InetSocketAddress address, InetSocketAddress knownAddress) {
 
@@ -255,7 +263,7 @@ public class ChordNode {
     }
 
     /**
-     * @return chord node's sucessor, which happens to be
+     * @return chord node's successor, which happens to be
      * the first element of 'successorList' and also the first
      * element of 'fingerTable'
      */
@@ -279,7 +287,6 @@ public class ChordNode {
 
     /**
      * Set 'node' as node's new successor
-     * 
      * @param node new chord's successor
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
@@ -288,14 +295,10 @@ public class ChordNode {
     }
 
     /**
-     * @return chord node's successor's predecessor
+     * Gets chord node's successor's predecessor
      */
     public void getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
-//        // successor may be this node
-//        if (successor.getKey().intValue() == this.getId().intValue())
-//            return this.predecessor;
-
         // send request to successor.getValue() (InetSocketAddress) for its predecessor
         // build pair and return it
         this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
@@ -309,6 +312,21 @@ public class ChordNode {
      */
     public void setFingerTableEntry(int finger, NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(finger, node);
+    }
+
+    /**
+     * @return the peer associated to this node
+     */
+    public Peer getPeer() {
+        return peer;
+    }
+
+    /**
+     * Set peer that will be used to process and store this node's files
+     * @param peer the peer to be used
+     */
+    public void setPeer(Peer peer) {
+        this.peer = peer;
     }
 
     /**
@@ -330,42 +348,27 @@ public class ChordNode {
      */
     protected synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
 
-//        System.out.println("REQUEST ORIGIN");
-//        System.out.println(requestOrigin.getHostString());
-//        System.out.println(requestOrigin.getPort());
-//        System.out.println("ID");
-//        System.out.println(id);
-//        System.out.println("SUCCESSOR ID");
-//        System.out.println(this.getSuccessorId());
-//        System.out.println("THIS.ID");
-//        System.out.println(this.getId());
-//        System.out.println("m");
-//        System.out.println(this.m);
-        System.out.println("========== FINDING SUCCESSOR ==========");
-
         // TODO: Check predecessor?
+        // TODO: delete TODO?
         int successorId = this.getSuccessorId();
 
         if (successorId == this.getId()) {
-            System.out.println(">>>>>> SAO IGUAIS");
             return this.channel.createSuccessorFoundMessage(id, this.getId(), this.getAddress()).split(" ");
         }
         else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
             if (!requestOrigin.equals(this.getAddress())) {
-                System.out.println("INSIDE FIND SUCCESSOR -> " + id);
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
             }
-            else {
-                System.out.println(">>>>>> NAO E PRECISO ENVIAR");
-                return this.channel.createSuccessorFoundMessage(id, successorId, this.getSuccessor().getValue()).split(" ");
-            }
+            else
+                return this.channel.createSuccessorFoundMessage(
+                        id, successorId, this.getSuccessor().getValue()).split(" ");
         }
         else {
-            System.out.println(">>>>>> ELSE");
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
             return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
         }
+
     }
 
     /**
