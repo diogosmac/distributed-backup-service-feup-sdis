@@ -72,7 +72,7 @@ public class ChordNode {
      * @throws UnknownHostException If unable to get localhost
      */
     public ChordNode(Integer id, int m) throws UnknownHostException {
-        this(id, m, new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 5000 + id));
+        this(id, m, new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 30000 + id));
     }
 
     /**
@@ -290,21 +290,15 @@ public class ChordNode {
     /**
      * @return chord node's successor's predecessor
      */
-    public NodePair<Integer, InetSocketAddress> getSuccessorsPredecessor() {
+    public void getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
-        // successor may be this node
-        if (successor.getKey().intValue() == this.getId().intValue())
-            return this.predecessor;
+//        // successor may be this node
+//        if (successor.getKey().intValue() == this.getId().intValue())
+//            return this.predecessor;
+
         // send request to successor.getValue() (InetSocketAddress) for its predecessor
         // build pair and return it
-        String [] reply = this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
-
-        if (reply == null || reply[1].equals("NULL"))
-            return null;
-
-        int predecessorId = Integer.parseInt(reply[1]);
-        InetSocketAddress predecessorInfo = new InetSocketAddress(reply[2], Integer.parseInt(reply[3]));
-        return new NodePair<>(predecessorId, predecessorInfo);
+        this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
     }
 
     /**
@@ -334,7 +328,7 @@ public class ChordNode {
     /**
      * Finds the successor node of id
      */
-    protected String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
+    protected synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
 
 //        System.out.println("REQUEST ORIGIN");
 //        System.out.println(requestOrigin.getHostString());
@@ -375,7 +369,7 @@ public class ChordNode {
      * does this if it knows of no closer predecessor than 'n'.
      * @param node possible new predecessor
      */
-    protected void notify(NodePair<Integer, InetSocketAddress> node) {
+    protected synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
         NodePair<Integer, InetSocketAddress> predecessor = this.getPredecessor();
         // if predecessor is null then it means that 'checkPredecessor' method
         // has determined that 'chord's predecessor has failed

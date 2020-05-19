@@ -207,11 +207,30 @@ public class ChordChannel implements Runnable {
 
             case "PREDECESSOR": {
                 System.out.println("[PREDECESSOR]");
+
                 synchronized (this.parent) {
-                    InetSocketAddress sfAddress = getAddress(socket);
-                    messageQueue.add(new Message(sfAddress, message));
-                    this.parent.notify();
+                    // get 'chord's successor's predecessor
+                    NodePair<Integer, InetSocketAddress> successor = this.parent.getSuccessor();
+
+                    if (args[1].equals("NULL")) {
+                        this.sendNotifyMessage(this.parent.getId(), this.parent.getAddress(), successor.getValue());
+                        return;
+                    }
+
+                    int predecessorId = Integer.parseInt(args[1]);
+                    InetSocketAddress predecessorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+
+                    NodePair<Integer, InetSocketAddress> successorsPredecessor = new NodePair<>(predecessorId, predecessorInfo);
+
+                    // check if successor's predecessor ID is between 'chord' and 'chords's successor
+                    // if so, then successorsPredecessor is our new successor
+                    if (Utils.inBetween(successorsPredecessor.getKey(), this.parent.getId(), successor.getKey(), this.parent.getM()))
+                        this.parent.setSuccessor(successorsPredecessor);
+
+                    // notify 'chord's successor of 'chord's existance
+                    this.sendNotifyMessage(this.parent.getId(), this.parent.getAddress(), successor.getValue());
                 }
+
                 break;
             }
 
@@ -411,26 +430,9 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    protected String[] sendGetPredecessorMessage(InetSocketAddress origin, InetSocketAddress destination) {
+    protected void sendGetPredecessorMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = this.createGetPredecessorMessage(origin);
         this.sendMessage(destination, message);
-
-        synchronized (this.parent) {
-            try {
-                this.parent.wait(this.timeout*2);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            for (Message currentMessage : this.messageQueue) {
-                String [] messageReceived = currentMessage.getArguments();
-                if (messageReceived[0].equals("PREDECESSOR")) { // Answer to request made
-                    this.messageQueue.remove(currentMessage);
-                    return messageReceived;
-                }
-            }
-        }
-
-        return null;
     }
 
     private String createPredecessorMessage(int predecessorId, InetSocketAddress predecessorAddress) {
