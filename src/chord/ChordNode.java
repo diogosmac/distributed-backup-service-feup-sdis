@@ -289,6 +289,16 @@ public class ChordNode {
     }
 
     /**
+     * Set 'node' as node's new successor
+     * 
+     * @param node new chord's successor
+     */
+    public void addSuccessor(NodePair<Integer, InetSocketAddress> node) {
+        if (this.successorList.size() < r)
+            this.successorList.add(node);
+    }
+
+    /**
      * Set entry in finger table given finger (index) and entry (node)
      * 
      * @param finger the finger table index

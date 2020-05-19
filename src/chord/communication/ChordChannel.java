@@ -6,12 +6,14 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import chord.ChordNode;
+import chord.NodePair;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ChordChannel implements Runnable {
@@ -341,6 +343,41 @@ public class ChordChannel implements Runnable {
 
     public void sendPongMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createPongMessage(origin);
+        this.sendMessage(destination, message);
+    }
+
+    private String createFindSuccessorListMessage(InetSocketAddress origin) {
+        // Message format: FINDSUCCESSORLIST <originIP> <originPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("FINDSUCCESSORLIST").append(" ");
+        sb.append(origin.getHostString()).append(" ");
+        sb.append(origin.getPort());
+        return sb.toString();
+    }
+
+    public void sendFindSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createFindSuccessorListMessage(origin);
+        this.sendMessage(destination, message);
+    }
+
+    private String createSuccessorListMessage(InetSocketAddress origin, ArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
+        // Message format: SUCCESSORLIST <originIP> <originPort> <successorList>
+        StringBuilder sb = new StringBuilder();
+        sb.append("SUCCESSORLIST").append(" ");
+        sb.append(origin.getHostString()).append(" ");
+        sb.append(origin.getPort()).append(" ");
+        
+        for (NodePair<Integer, InetSocketAddress> successor : successorList) {
+            sb.append(successor.getKey()).append(" ");
+            sb.append(successor.getValue().getHostString()).append(" ");
+            sb.append(successor.getValue().getPort()).append(" ");
+        }
+
+        return sb.toString();
+    }
+
+    public void sendSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination, ArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
+        String message = createSuccessorListMessage(origin, successorList);
         this.sendMessage(destination, message);
     }
 
