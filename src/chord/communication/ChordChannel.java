@@ -125,6 +125,9 @@ public class ChordChannel implements Runnable {
                 // error in communication, maybe successor stopped working
                 // see type of message -> only if FINDSUCCESSOR
                 e.printStackTrace();
+                System.out.println("Unreachable " + address.getAddress() + ":" + address.getPort());
+                // this.parent.getFingerTable().remove(/*address*/);
+                // this.parent.getSuccessorList().remove(/*address*/);
             }
     }
 
