@@ -60,8 +60,10 @@ public class ChordMaintainer implements Runnable {
         Integer nodeID = (chord.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
         // find node's successor
         String[] reply = this.chord.findSuccessor(nodeID);
-        if (reply == null)
+        if (reply == null) {
             System.out.println("=========== FODA-SE ===========");
+            return;
+        }
         // build reply node
         int replyNodeId = Integer.parseInt(reply[2]);
         InetSocketAddress replyNodeInfo = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));

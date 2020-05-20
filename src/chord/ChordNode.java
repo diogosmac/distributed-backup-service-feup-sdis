@@ -263,7 +263,12 @@ public class ChordNode {
      * element of 'fingerTable'
      */
     public NodePair<Integer, InetSocketAddress> getSuccessor() {
-        return this.fingerTable.getFirstNode();
+        for (NodePair<Integer, InetSocketAddress> successor : this.successorList) {
+            if (successor != null)
+                return successor;
+        }
+
+        return new NodePair<Integer, InetSocketAddress>(this.getId(), this.getAddress());
     }
 
     /**
@@ -311,6 +316,23 @@ public class ChordNode {
      */
     public void setFingerTableEntry(int finger, NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(finger, node);
+    }
+
+    public void removeNode(InetSocketAddress address) {
+        NodePair<Integer, InetSocketAddress> pair = new NodePair<>(this.id, this.address);
+        this.fingerTable.removeNode(address, pair);
+
+        ArrayList<NodePair<Integer, InetSocketAddress>> toRemove = new ArrayList<>();
+
+        for (NodePair<Integer, InetSocketAddress> entry : this.successorList) {
+            if (entry.getValue() != null && entry.getValue().equals(address)) {
+                toRemove.add(entry);
+            }
+        }
+
+        for (NodePair<Integer, InetSocketAddress> entry : toRemove) {
+            this.successorList.remove(entry);
+        }
     }
 
     /**

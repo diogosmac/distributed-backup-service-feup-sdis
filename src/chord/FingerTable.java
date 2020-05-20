@@ -68,6 +68,30 @@ public class FingerTable {
         return getFirstNode();
     }
 
+    public void removeNode(InetSocketAddress address, NodePair<Integer, InetSocketAddress> pair) {
+        for (int i = 0; i < this.table.size(); i++) {
+            if (this.table.get(i).getValue().equals(address)) {
+                this.table.get(i).setKey(null);
+                this.table.get(i).setValue(null);
+            }
+        }
+
+        if (this.table.get(0) == null) {
+            int i;
+
+            for (i = 0; i < this.table.size(); i++) {
+                if (this.table.get(i) != null) {
+                    this.table.set(0, new NodePair<>(this.table.get(i)));
+                    break;
+                }
+            }
+            
+            if (i == this.table.size())
+                this.table.set(0, new NodePair<>(pair.getKey(), pair.getValue()));
+        }
+          
+    }
+
     @Override
     public String toString() {
         return this.table.isEmpty()

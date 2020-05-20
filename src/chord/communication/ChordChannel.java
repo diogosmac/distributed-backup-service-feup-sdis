@@ -78,6 +78,7 @@ public class ChordChannel implements Runnable {
     public void run() {
 
         while (true) {
+            System.out.println("QUALQUER COISA DISTINTA");
 
             try {
                 SSLSocket socket = (SSLSocket) serverSocket.accept();
@@ -88,6 +89,7 @@ public class ChordChannel implements Runnable {
                 handleMessage(socket, message);
                 socket.close();
             } catch (Exception e) {
+                System.out.println("======== PENIS =======");
                 e.printStackTrace();
             }
 
@@ -124,10 +126,8 @@ public class ChordChannel implements Runnable {
             } catch (Exception e) {
                 // error in communication, maybe successor stopped working
                 // see type of message -> only if FINDSUCCESSOR
-                e.printStackTrace();
                 System.out.println("Unreachable " + address.getAddress() + ":" + address.getPort());
-                // this.parent.getFingerTable().remove(/*address*/);
-                // this.parent.getSuccessorList().remove(/*address*/);
+                this.parent.removeNode(address);
             }
     }
 
