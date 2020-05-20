@@ -483,6 +483,9 @@ public class ChordNode {
         ArrayList<Chunk> fileChunks = sf.getChunks();
         String fileID = sf.getId();
 
+        this.peer.getFileOccurrences().addFile(fileID, filePath, replicationDegree);
+
+        int currentChunk = 0;
         for (Chunk chunk : fileChunks) {
             // ChunkID => id on chord
             Integer chunkID = Utils.hash(fileID + ":" + chunk.getNum());
@@ -492,6 +495,7 @@ public class ChordNode {
             String hash = MyUtils.sha256(this.getAddress() + "-" + succAddress + "-" + System.currentTimeMillis());
             this.channel.sendPutchunkMessage(chunk.getFileID(), chunk.getNum(), replicationDegree, hash, chunk.getData(),
                     this.getAddress(), succAddress, succAddress);
+            this.peer.getFileOccurrences().addChunkSlot(fileID, currentChunk++);
         }
 
     }
@@ -521,7 +525,9 @@ public class ChordNode {
 //        TODO: IMPROVE
         if (!this.peer.getChunkStorage().deleteFile(fileID)) {
             System.out.println("Error deleting file with ID " + fileID);
+            return;
         }
+        this.peer.getFileOccurrences().deleteFile(fileID);
 
     }
 
