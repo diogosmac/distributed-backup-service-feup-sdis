@@ -201,7 +201,7 @@ public class ChunkStorage {
 
                 System.out.println("Deleted chunk backup initiated by:");
                 for (InetSocketAddress initiator : initiators) {
-                    // sendMessage(removedMessage, initiator);
+                    this.peer.getNode().sendMessage(initiator, removedMessage);
                     System.out.println("\t" + initiator.getHostName() + ":" + initiator.getPort());
                 }
 

@@ -239,6 +239,76 @@ public class MessageHandler extends Thread {
                 }
             }
 
+            case "REMOVED": {
+                // Message format: REMOVED <fileID> <chunkNumber>
+                String fileID = args[1];
+                int chunkNumber = Integer.parseInt(args[2]);
+
+                // TODO: Mecanismo p/ impedir backup de ficheiro apagado com reclaim
+                this.node.getPeer().getFileOccurrences().incrementReplicationDegree(fileID, chunkNumber, -1);
+
+                if (!this.node.getPeer().getFileOccurrences().isReplicationDegreeMet(fileID, chunkNumber)) {
+                    Integer chunkID = Utils.hash(fileID + ":" + chunkNumber);
+                    String[] reply = this.node.findSuccessor(chunkID);
+                    InetSocketAddress succAddress = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
+                    this.channel.sendEnsureRDMessage(succAddress, fileID, chunkNumber, succAddress);
+                }
+            }
+
+            case "ENSURERD": {
+                // Message format: ENSURERD <originIP> <originPort> <hash> <fileID> <chunkNumber>
+                InetSocketAddress initiatorAdd = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+                String hash = args[3];
+                String fileID = args[4];
+                int chunkNumber = Integer.parseInt(args[5]);
+
+                if (this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
+                    Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
+                    this.channel.sendSaveChunkMessage(fileID, chunkNumber, this.node.getAddress(), ck.getData(), this.node.getSuccessorAddress());
+                }
+                else {
+                    if (initiatorAdd.equals(this.node.getAddress())) {
+                        if (this.node.hitWall(hash)) {
+                            // Message has cycled, and came back => It wasnt possible to keep RD
+                            System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID + ":");
+                            System.out.println("No nodes with chunk stored were found");
+                            break;
+                        } else {
+                            this.node.placeWall(hash);
+                        }
+                    }
+
+                    this.channel.sendEnsureRDMessage(initiatorAdd, fileID, chunkNumber, this.node.getSuccessorAddress());
+                }
+            }
+
+            case "SAVECHUNK": {
+                // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <data>
+                String fileID = args[1];
+                int chunkNumber = Integer.parseInt(args[2]);
+                InetSocketAddress initiatorAddress = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
+
+                if (!this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
+                    byte [] data = MyUtils.convertStringToByteArray(args[6]);
+                    Chunk ck = new Chunk(fileID, chunkNumber, data, data.length);
+                    this.node.getPeer().getChunkStorage().addChunk(ck, initiatorAddress);
+                } else {
+                    String hash = args[3];
+                    if (initiatorAddress.equals(this.node.getAddress())) {
+                        if (this.node.hitWall(hash)) {
+                            // Message has cycled, and came back => It wasnt possible to keep RD
+                            System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID  + ":");
+                            System.out.println("No nodes available to store chunk");
+                            break;
+                        } else {
+                            this.node.placeWall(hash);
+                        }
+                    }
+
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                }
+            }
+
         }
 
     }

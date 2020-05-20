@@ -400,6 +400,12 @@ public class ChordNode {
         return channel;
     }
 
+    public void initiateChunkBackup(String fileID, int chunkNumber, int replicationDegree, String hash, InetSocketAddress succAddress, byte[] data) {
+        this.channel.sendPutchunkMessage(fileID, chunkNumber, replicationDegree, hash, data,
+                this.getAddress(), succAddress, succAddress);
+        this.peer.getFileOccurrences().addChunkSlot(fileID, chunkNumber);
+    }
+
     public void initiateBackup(String filePath, int replicationDegree) {
 
         System.out.print("\nBACKUP PROTOCOL\n" +
@@ -414,7 +420,6 @@ public class ChordNode {
 
         this.peer.getFileOccurrences().addFile(fileID, filePath, replicationDegree);
 
-        int currentChunk = 0;
         for (Chunk chunk : fileChunks) {
             // ChunkID => id on chord
             Integer chunkID = Utils.hash(fileID + ":" + chunk.getNum());
@@ -422,9 +427,7 @@ public class ChordNode {
             // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
             InetSocketAddress succAddress = new InetSocketAddress(succ[3], Integer.parseInt(succ[4]));
             String hash = MyUtils.sha256(this.getAddress() + "-" + succAddress + "-" + System.currentTimeMillis());
-            this.channel.sendPutchunkMessage(chunk.getFileID(), chunk.getNum(), replicationDegree, hash, chunk.getData(),
-                    this.getAddress(), succAddress, succAddress);
-            this.peer.getFileOccurrences().addChunkSlot(fileID, currentChunk++);
+            this.initiateChunkBackup(fileID, chunk.getNum(), replicationDegree, hash, succAddress, chunk.getData());
         }
 
     }
@@ -447,6 +450,7 @@ public class ChordNode {
     public void initiateDelete(String filePath) {
         SavedFile sf = new SavedFile(filePath);
         String fileID = sf.getId();
+        deleteFile(fileID);
         this.channel.sendDeleteMessage(this.getAddress(), fileID, this.getSuccessorAddress());
     }
 
@@ -471,6 +475,15 @@ public class ChordNode {
         }
         this.protocolPropagationWall.add(hash);
         return false;
+    }
+
+    public void initiateReclaim(int space) {
+//        TODO: IMPROVE
+        this.peer.getChunkStorage().reclaimSpace(space);
+    }
+
+    public void sendMessage(InetSocketAddress destination, String message) {
+        this.channel.sendMessage(destination, message);
     }
 
 }
