@@ -76,7 +76,7 @@ public class FingerTable {
             }
         }
 
-        if (this.table.get(0) == null) {
+        if (this.table.get(0).getKey() == null) {
             int i;
 
             for (i = 0; i < this.table.size(); i++) {

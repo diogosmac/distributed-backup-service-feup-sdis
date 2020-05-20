@@ -136,7 +136,7 @@ public class ChordNode {
      */
     private void create() {
         // no predecessor
-        this.setPredecessor(null);
+        this.setPredecessor(new NodePair<>(null, null));
         // successor is itself
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
         NodePair<Integer, InetSocketAddress> successor = new NodePair<>(this.getId(), this.getAddress());
@@ -154,7 +154,7 @@ public class ChordNode {
      */
     protected void join(InetSocketAddress node) {
         // no predecessor
-        this.setPredecessor(null);
+        this.setPredecessor(new NodePair<>(null, null));
         // set successor list to empty
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
         successorList.add(new NodePair<>(null, null));
@@ -264,7 +264,7 @@ public class ChordNode {
      */
     public NodePair<Integer, InetSocketAddress> getSuccessor() {
         for (NodePair<Integer, InetSocketAddress> successor : this.successorList) {
-            if (successor != null)
+            if (successor.getKey() != null)
                 return successor;
         }
 
@@ -319,9 +319,11 @@ public class ChordNode {
     }
 
     public void removeNode(InetSocketAddress address) {
+        System.out.println("Inside remove node for" + address.getPort());
         NodePair<Integer, InetSocketAddress> pair = new NodePair<>(this.id, this.address);
+        
         this.fingerTable.removeNode(address, pair);
-
+        
         ArrayList<NodePair<Integer, InetSocketAddress>> toRemove = new ArrayList<>();
 
         for (NodePair<Integer, InetSocketAddress> entry : this.successorList) {
@@ -330,9 +332,8 @@ public class ChordNode {
             }
         }
 
-        for (NodePair<Integer, InetSocketAddress> entry : toRemove) {
-            this.successorList.remove(entry);
-        }
+        System.out.println("REMOVED node with: " + address.getPort());
+        this.successorList.removeAll(toRemove);
     }
 
     /**
@@ -396,7 +397,7 @@ public class ChordNode {
         NodePair<Integer, InetSocketAddress> predecessor = this.getPredecessor();
         // if predecessor is null then it means that 'checkPredecessor' method
         // has determined that 'chord's predecessor has failed
-        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getId(), this.getM()))
+        if (predecessor.getKey() == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getId(), this.getM()))
             this.setPredecessor(node);
     }
 

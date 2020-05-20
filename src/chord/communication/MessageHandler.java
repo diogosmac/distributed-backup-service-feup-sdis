@@ -83,7 +83,7 @@ public class MessageHandler extends Thread {
                 NodePair<Integer, InetSocketAddress> predecessor = this.node.getPredecessor();
                 InetSocketAddress destination = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
 
-                if (predecessor == null)
+                if (predecessor.getKey() == null)
                     this.ch.sendNullPredecessorMessage(destination);
                 else
                     this.ch.sendPredecessorMessage(predecessor.getKey(), predecessor.getValue(), destination);

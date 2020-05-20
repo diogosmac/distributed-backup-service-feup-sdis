@@ -60,6 +60,7 @@ public class ChordMaintainer implements Runnable {
         Integer nodeID = (chord.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
         // find node's successor
         String[] reply = this.chord.findSuccessor(nodeID);
+        // if successor fails let the handler deal with it
         if (reply == null) {
             System.out.println("=========== FODA-SE ===========");
             return;
@@ -79,14 +80,14 @@ public class ChordMaintainer implements Runnable {
      */
     private void checkPredecessor() {
         // node may not have a predecessor yet
-        if (chord.getPredecessor() == null)
+        if (chord.getPredecessor().getKey() == null)
             return;
         // send message to predecessor
         boolean online = chord.getChannel().sendPingMessage(this.chord.getAddress(),
                 this.chord.getPredecessor().getValue());
         // if he does not respond set it as failed (null)
         if (!online)
-            chord.setPredecessor(null);
+            chord.setPredecessor(new NodePair<>(null, null));
     }
 
     /**
