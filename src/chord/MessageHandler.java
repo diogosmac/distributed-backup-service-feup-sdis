@@ -186,6 +186,7 @@ public class MessageHandler extends Thread {
                         int desiredRD = ck.getReplicationDegree();
                         int realRD = desiredRD - replicationDegree;
 
+                        // Updates RD of stored chunk
                         ck.setCurrReplDegree(realRD);
 
                         this.channel.sendUpdateFileReplicationDegree(fileID, chunkNumber, realRD, this.node.getSuccessorAddress());
@@ -205,6 +206,18 @@ public class MessageHandler extends Thread {
                     ck.setCurrReplDegree(realRD);
 
                     this.channel.sendUpdateFileReplicationDegree(fileID, chunkNumber, realRD, this.node.getSuccessorAddress());
+                }
+            }
+            case "DELETE": {
+                // Message format: DELETE <originIP> <originPort> <fileID>
+                InetSocketAddress origin = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+
+                // If is stored, deletes the file
+                this.node.deleteFile(args[3]);
+
+                // If the message reaches the originPeer => chain is broken
+                if (!origin.equals(this.node.getAddress())) {
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
             }
 

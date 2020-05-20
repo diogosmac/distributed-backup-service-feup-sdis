@@ -388,4 +388,17 @@ public class ChordChannel implements Runnable {
         String message = createUpdateFileReplicationDegreeMessage(fileID, chunkNumber, realRD);
         this.sendMessage(destination, message);
     }
+
+    private String createDeleteMessage(InetSocketAddress origin, String fileID) {
+        // Message format: DELETE <originIP> <originPort> <fileID>
+        return "DELETE" + " " +
+                origin.getHostString() + " " +
+                origin.getPort() + " " +
+                fileID;
+    }
+
+    public void sendDeleteMessage(InetSocketAddress origin, String fileID, InetSocketAddress destination) {
+        String message = this.createDeleteMessage(this.parent.getAddress(), fileID);
+        this.sendMessage(destination, message);
+    }
 }
