@@ -3,9 +3,9 @@ package chord;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChordNodeTest {
 
@@ -67,7 +67,7 @@ class ChordNodePrinter extends TimerTask {
         System.out.println(node.getFingerTable());
         //
         System.out.println("\nSUCCESSOR LIST");
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = node.getSuccessorList();
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = node.getSuccessorList();
         for (NodePair<Integer, InetSocketAddress> successor : successorList)
             System.out.println(successor);
         //

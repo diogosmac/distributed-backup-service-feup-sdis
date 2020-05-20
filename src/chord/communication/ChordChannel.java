@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChordChannel implements Runnable {
 
@@ -134,7 +135,7 @@ public class ChordChannel implements Runnable {
      * @param requestedId Id that the origin Node requested
      * @return Message to be sent, delegating the findSuccessor work to other node
      */
-    private synchronized String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
+    private String createFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId) {
         // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("FINDSUCCESSOR").append(" "); // Header
@@ -151,7 +152,7 @@ public class ChordChannel implements Runnable {
      * @param requestedId Id that the origin Node requested
      * @param destination Contains the IP and Port of the ChordNode that will be receiving the request
      */
-    public synchronized String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
+    public String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
                                             InetSocketAddress destination) {
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
@@ -185,7 +186,7 @@ public class ChordChannel implements Runnable {
      * @param successorNodeInfo
      * @return
      */
-    public synchronized String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+    public String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
         // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORFOUND").append(" ");
@@ -202,7 +203,7 @@ public class ChordChannel implements Runnable {
      * @param requestedId
      * @param successorNodeInfo
      */
-    public synchronized void sendSuccessorFound(InetSocketAddress requestOrigin, int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+    public void sendSuccessorFound(InetSocketAddress requestOrigin, int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
         String message = this.createSuccessorFoundMessage(requestedId, successorId, successorNodeInfo);
         this.sendMessage(requestOrigin, message);
     }
@@ -348,7 +349,7 @@ public class ChordChannel implements Runnable {
         this.sendMessage(destination, message);
     }
 
-    private synchronized String createFindSuccessorListMessage(InetSocketAddress origin) {
+    private String createFindSuccessorListMessage(InetSocketAddress origin) {
         // Message format: FINDSUCCESSORLIST <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
         sb.append("FINDSUCCESSORLIST").append(" ");
@@ -357,13 +358,13 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    public synchronized void sendFindSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
+    public void sendFindSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createFindSuccessorListMessage(origin);
         this.sendMessage(destination, message);
     }
 
-    private synchronized String createSuccessorListMessage(InetSocketAddress origin) {
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = this.parent.getSuccessorList();
+    private String createSuccessorListMessage(InetSocketAddress origin) {
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = this.parent.getSuccessorList();
         // Message format: SUCCESSORLIST <successorList>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORLIST").append(" ");
@@ -379,7 +380,7 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    public synchronized void sendSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
+    public void sendSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createSuccessorListMessage(origin);
         this.sendMessage(destination, message);
     }

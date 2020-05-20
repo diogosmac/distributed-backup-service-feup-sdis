@@ -3,7 +3,7 @@ package chord;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +54,7 @@ public class ChordNode {
     /**
 	 * The list of its successors, size r
 	 */
-    private ArrayList<NodePair<Integer, InetSocketAddress>> successorList;
+    private CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList;
 
     /**
      * Thread Executor used for chord maintainer
@@ -138,7 +138,7 @@ public class ChordNode {
         // no predecessor
         this.setPredecessor(new NodePair<>(null, null));
         // successor is itself
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = new CopyOnWriteArrayList<>();
         NodePair<Integer, InetSocketAddress> successor = new NodePair<>(this.getId(), this.getAddress());
         successorList.add(successor);
         this.setSuccessorList(successorList);
@@ -156,7 +156,7 @@ public class ChordNode {
         // no predecessor
         this.setPredecessor(new NodePair<>(null, null));
         // set successor list to empty
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = new CopyOnWriteArrayList<>();
         successorList.add(new NodePair<>(null, null));
         this.setSuccessorList(successorList);
         // successor is found by 'node'
@@ -211,14 +211,14 @@ public class ChordNode {
     /**
      * @return the successorList
      */
-    public ArrayList<NodePair<Integer, InetSocketAddress>> getSuccessorList() {
+    public CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> getSuccessorList() {
         return successorList;
     }
 
     /**
      * @param successorList the successorList to set
      */
-    public void setSuccessorList(ArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
+    public void setSuccessorList(CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
         this.successorList = successorList;
     }
 
@@ -319,12 +319,11 @@ public class ChordNode {
     }
 
     public void removeNode(InetSocketAddress address) {
-        System.out.println("Inside remove node for" + address.getPort());
         NodePair<Integer, InetSocketAddress> pair = new NodePair<>(this.id, this.address);
         
         this.fingerTable.removeNode(address, pair);
         
-        ArrayList<NodePair<Integer, InetSocketAddress>> toRemove = new ArrayList<>();
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> toRemove = new CopyOnWriteArrayList<>();
 
         for (NodePair<Integer, InetSocketAddress> entry : this.successorList) {
             if (entry.getValue() != null && entry.getValue().equals(address)) {
@@ -332,7 +331,6 @@ public class ChordNode {
             }
         }
 
-        System.out.println("REMOVED node with: " + address.getPort());
         this.successorList.removeAll(toRemove);
     }
 

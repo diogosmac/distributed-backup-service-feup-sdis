@@ -1,7 +1,7 @@
 package chord;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 
@@ -16,14 +16,14 @@ public class FingerTable {
      * List of NodePairs containing nodes' hashed ID as keys, and
      * Socket Address (IP and Port) as values
      */
-    private ArrayList<NodePair<Integer, InetSocketAddress>> table;
+    private CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> table;
 
     /**
      * Constructor
      * @param size maximum size of finger table
      */
     public FingerTable(int size) {
-        this.table = new ArrayList<>();
+        this.table = new CopyOnWriteArrayList<>();
         this.MAX_SIZE = size;
         for (int i = 0; i < size; i++) {
             this.table.add(i, new NodePair<>(null, null));
@@ -70,7 +70,7 @@ public class FingerTable {
 
     public void removeNode(InetSocketAddress address, NodePair<Integer, InetSocketAddress> pair) {
         for (int i = 0; i < this.table.size(); i++) {
-            if (this.table.get(i).getValue().equals(address)) {
+            if (this.table.get(i).getKey() != null && table.get(i).getValue().equals(address)) {
                 this.table.get(i).setKey(null);
                 this.table.get(i).setValue(null);
             }
@@ -88,8 +88,7 @@ public class FingerTable {
             
             if (i == this.table.size())
                 this.table.set(0, new NodePair<>(pair.getKey(), pair.getValue()));
-        }
-          
+        }          
     }
 
     @Override
