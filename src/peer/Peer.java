@@ -75,6 +75,8 @@ public class Peer implements PeerActionsInterface {
 
     public int getPeerId() { return this.peerId; }
 
+    public ChordNode getNode() { return this.node; }
+
 //    public String getProtocolVersion() { return this.protocolVersion; }
 
     public boolean isDoingOperation(Operation op) { return this.operations.contains(op); }

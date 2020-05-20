@@ -3,11 +3,15 @@ package chord;
 import peer.Peer;
 import storage.Chunk;
 import storage.SavedFile;
+import utils.MyUtils;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +78,8 @@ public class ChordNode {
      */
     private Peer peer;
 
+    private List<String> protocolPropagationWall;
+
     /**
      * Constructor without IP address
      * @param id Chord Node identifier
@@ -97,6 +103,7 @@ public class ChordNode {
         this.fingerTable = new FingerTable(m);
         this.address = address;
 //        this.peer = new Peer()
+        this.protocolPropagationWall = Collections.synchronizedList(new ArrayList<>());
 
         // create the chord ring
         this.create();
@@ -124,6 +131,8 @@ public class ChordNode {
         this.m = m;
         this.fingerTable = new FingerTable(m);
         this.address = address;
+//        this.peer = new Peer()
+        this.protocolPropagationWall = Collections.synchronizedList(new ArrayList<>());
 
         // creates the ChordNode's scheduled thread executor
         this.createExecutor();
@@ -146,7 +155,7 @@ public class ChordNode {
         this.setPredecessor(null);
         // successor is itself
         ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
-        NodePair<Integer, InetSocketAddress> successor = new NodePair<>(this.getId(), this.getAddress());
+        NodePair<Integer, InetSocketAddress> successor = new NodePair<>(this.getID(), this.getAddress());
         successorList.add(successor);
         this.setSuccessorList(successorList);
         this.fingerTable.setNodePair(0, successor);
@@ -232,7 +241,7 @@ public class ChordNode {
     /**
      * @return the id
      */
-    public Integer getId() {
+    public Integer getID() {
         return id;
     }
 
@@ -335,7 +344,7 @@ public class ChordNode {
      * Gets closest preceding node address
      */
     protected InetSocketAddress getClosestPreceding(int id) {
-        return this.fingerTable.lookup(this.getId(), id);
+        return this.fingerTable.lookup(this.getID(), id);
     }
 
     /**
@@ -354,10 +363,10 @@ public class ChordNode {
         // TODO: delete TODO?
         int successorId = this.getSuccessorId();
 
-        if (successorId == this.getId()) {
-            return this.channel.createSuccessorFoundMessage(id, this.getId(), this.getAddress()).split(" ");
+        if (successorId == this.getID()) {
+            return this.channel.createSuccessorFoundMessage(id, this.getID(), this.getAddress()).split(" ");
         }
-        else if (Utils.inBetween(id, this.getId(), successorId, this.m)) {
+        else if (Utils.inBetween(id, this.getID(), successorId, this.m)) {
             if (!requestOrigin.equals(this.getAddress())) {
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
@@ -383,7 +392,7 @@ public class ChordNode {
         NodePair<Integer, InetSocketAddress> predecessor = this.getPredecessor();
         // if predecessor is null then it means that 'checkPredecessor' method
         // has determined that 'chord's predecessor has failed
-        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getId(), this.getM()))
+        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getID(), this.getM()))
             this.setPredecessor(node);
     }
 
@@ -409,14 +418,16 @@ public class ChordNode {
             String[] succ = this.findSuccessor(chunkID);
             // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
             InetSocketAddress succAddress = new InetSocketAddress(succ[3], Integer.parseInt(succ[4]));
-            this.channel.sendPutchunkMessage(chunk.getFileID(), chunk.getNum(), replicationDegree, chunk.getData(), this.address, succAddress);
+            String hash = MyUtils.sha256(this.getAddress() + "-" + succAddress + "-" + System.currentTimeMillis());
+            this.channel.sendPutchunkMessage(chunk.getFileID(), chunk.getNum(), replicationDegree, hash, chunk.getData(),
+                    this.getAddress(), succAddress, succAddress);
         }
 
     }
 
-    protected int storeChunk(String fileID, int chunkNumber, byte[] data, int size, int replicationDegree) {
+    protected int storeChunk(String fileID, int chunkNumber, byte[] data, int size, InetSocketAddress initiator) {
 //        TODO: IMPROVE
-        return this.peer.getChunkStorage().addChunk(new Chunk(fileID, chunkNumber, data, size, replicationDegree));
+        return this.peer.getChunkStorage().addChunk(new Chunk(fileID, chunkNumber, data, size), initiator);
     }
 
     protected boolean isChunkStored(String fileID, int chunkNumber) {
@@ -437,6 +448,23 @@ public class ChordNode {
 
     public void deleteFile(String fileID) {
 //        TODO: IMPROVE
-        this.peer.getChunkStorage().deleteFile(fileID);
+        if (!this.peer.getChunkStorage().deleteFile(fileID)) {
+            System.out.println("Error deleting file with ID " + fileID);
+        }
+
     }
+
+    public void placeWall(String hash) {
+        this.protocolPropagationWall.add(hash);
+    }
+
+    public boolean hitWall(String hash) {
+        if (this.protocolPropagationWall.contains(hash)) {
+            this.protocolPropagationWall.remove(hash);
+            return true;
+        }
+        this.protocolPropagationWall.add(hash);
+        return false;
+    }
+
 }

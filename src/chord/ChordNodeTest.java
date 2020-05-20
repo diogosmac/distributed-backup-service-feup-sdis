@@ -3,7 +3,6 @@ package chord;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -43,7 +42,7 @@ public class ChordNodeTest {
         }
 
         System.out.println("Started chord node");
-        System.out.println("\tID: " + node.getId());
+        System.out.println("\tID: " + node.getID());
         System.out.println("\tAddress: " + node.getAddress());
 
         Timer timer = new Timer(); 
