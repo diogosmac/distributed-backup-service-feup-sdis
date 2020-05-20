@@ -481,9 +481,24 @@ public class ChordNode {
             String[] succ = this.findSuccessor(chunkID);
             // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
             InetSocketAddress succAddress = new InetSocketAddress(succ[3], Integer.parseInt(succ[4]));
-            this.channel.sendPutchunkMessage(chunkID, replicationDegree, chunk.getData(), this.address, succAddress);
+            this.channel.sendPutchunkMessage(chunk.getFileID(), chunk.getNum(), replicationDegree, chunk.getData(), this.address, succAddress);
         }
 
+    }
+
+    protected int storeChunk(String fileID, int chunkNumber, byte[] data, int size, int replicationDegree) {
+//        TODO: IMPROVE
+        return this.peer.getChunkStorage().addChunk(new Chunk(fileID, chunkNumber, data, size, replicationDegree));
+    }
+
+    protected boolean isChunkStored(String fileID, int chunkNumber) {
+//        TODO: IMPROVE
+        return this.peer.getChunkStorage().hasChunk(fileID, chunkNumber);
+    }
+
+    protected Chunk getStoredChunk(String fileID, int chunkNumber) {
+//        TODO: IMPROVE
+        return this.peer.getChunkStorage().getChunk(fileID, chunkNumber);
     }
 
 }

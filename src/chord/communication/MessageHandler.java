@@ -1,5 +1,6 @@
 package chord.communication;
 
+import storage.Chunk;
 import utils.MyUtils;
 
 import javax.net.ssl.SSLSocket;
@@ -202,31 +203,65 @@ public class MessageHandler extends Thread {
             }
             case "PUTCHUNK": {
                 System.out.println("[PUTCHUNK]");
-                // PUTCHUNK <chunk-id> <replication-degree> <origin-ip> <origin-port> <data>
-                InetSocketAddress senderAddress = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
+                // PUTCHUNK <fileID> <chunkNumber> <replication-degree> <origin-ip> <origin-port> <data>
+                InetSocketAddress senderAddress = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
+
+                // If the request origin == this node => Send same message to successor
                 if (senderAddress.equals(this.node.getAddress())) {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                    break;
                 }
                 else {
-                    Integer chunkID = Integer.parseInt(args[1]);
-                    int replicationDegree = Integer.parseInt(args[2]);
-                    byte[] data = MyUtils.convertStringToByteArray(args[5]);
+                    String fileID = args[1];
+                    int chunkNumber = Integer.parseInt(args[2]);
+                    int replicationDegree = Integer.parseInt(args[3]);
+                    byte[] data = MyUtils.convertStringToByteArray(args[6]);
 
-                    // TODO: check if chunk is not yet stored
+                    if (!this.node.isChunkStored(fileID, chunkNumber)) {
+                        // Stores chunk and saves return to be handled
+                        int storeReply = this.node.storeChunk(fileID, chunkNumber, data, data.length, replicationDegree);
+                        if (storeReply == 1 || storeReply == 2) {
+                            // storeReply == 1 => Not Enough Memory
+                            // storeReply == 2 => Error Writing file
+                            this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                            break;
+                        }
 
-                    // TODO: store chunk
-                    //
-                    //      this is the part where we store the chunk
-                    //
-                    // chunk is now stored
+                        // Updates RD and continues the chain
+                        if (replicationDegree > 1) {
+                            this.channel.sendPutchunkMessage(fileID, chunkNumber, replicationDegree - 1, data,
+                                    this.node.getAddress(), this.node.getSuccessorAddress());
+                        }
+                    }
+                    else {
+                        // Chunk Already Stored => This was the node where the request started
+                        //  => Replication Degree wasn't met => Update file replication degree protocol
 
-                    if (replicationDegree > 1) {
-                        this.channel.sendPutchunkMessage(chunkID, replicationDegree - 1, data,
-                                this.node.getAddress(), this.node.getSuccessorAddress());
+                        Chunk ck = this.node.getStoredChunk(fileID, chunkNumber);
+
+                        int desiredRD = ck.getReplicationDegree();
+                        int realRD = desiredRD - replicationDegree;
+
+                        ck.setCurrReplDegree(realRD);
+
+                        this.channel.sendUpdateFileReplicationDegree(fileID, chunkNumber, realRD, this.node.getSuccessorAddress());
                     }
                 }
                 break;
+            }
+            case "UPDATERD": {
+                // Message format: UPDATERD <fileID> <chunkNumber> <realRD>
+                String fileID = args[1];
+                int chunkNumber = Integer.parseInt(args[2]);
 
+                // In case the chunk isnt stored => All peers updated => Chain is broken
+                if (this.node.isChunkStored(fileID, chunkNumber)) {
+                    int realRD = Integer.parseInt(args[3]);
+                    Chunk ck = this.node.getStoredChunk(fileID, chunkNumber);
+                    ck.setCurrReplDegree(realRD);
+
+                    this.channel.sendUpdateFileReplicationDegree(fileID, chunkNumber, realRD, this.node.getSuccessorAddress());
+                }
             }
 
         }
