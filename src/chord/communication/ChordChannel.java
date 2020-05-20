@@ -529,4 +529,39 @@ public class ChordChannel implements Runnable {
         String message = this.createDeleteMessage(this.parent.getAddress(), fileID);
         this.sendMessage(destination, message);
     }
+
+    private String createEnsureRDMessage(InetSocketAddress origin, String fileID, int chunkNumber) {
+        // Message format: ENSURERD <originIP> <originPort> <hash> <fileID> <chunkNumber>
+        String hash = MyUtils.sha256(origin.getHostString() + fileID + chunkNumber + System.currentTimeMillis());
+        return "ENSURERD" + " " +
+                origin.getHostString() + " " +
+                origin.getPort() + " " +
+                hash + " " +
+                fileID + " " +
+                chunkNumber;
+    }
+
+    public void sendEnsureRDMessage(InetSocketAddress firstSuccessor, String fileID, int chunkNumber, InetSocketAddress destination) {
+        String message = this.createEnsureRDMessage(firstSuccessor, fileID, chunkNumber);
+        this.sendMessage(destination, message);
+    }
+
+    private String createSaveChunkMessage(String fileID, int chunkNumber,
+                                          InetSocketAddress initiator, byte[] data) {
+        // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <data>
+        Integer hash = Utils.hash("Savechunk" + fileID + chunkNumber + System.currentTimeMillis());
+        return "SAVECHUNK" + " " +
+                fileID + " " +
+                chunkNumber + " " +
+                hash + " " +
+                initiator.getHostString() + " " +
+                initiator.getPort() + " " +
+                MyUtils.convertByteArrayToString(data);
+    }
+
+    public void sendSaveChunkMessage(String fileID, int chunkNumber, InetSocketAddress initiator,
+                                     byte[] data, InetSocketAddress destination) {
+        String message = this.createSaveChunkMessage(fileID, chunkNumber, initiator, data);
+        this.sendMessage(destination, message);
+    }
 }

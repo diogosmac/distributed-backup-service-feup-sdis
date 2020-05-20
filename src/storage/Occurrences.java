@@ -52,6 +52,16 @@ public class Occurrences {
             this.perceivedReplicationDegrees.set(chunkNumber, perceived);
         }
 
+        private void incrementPerceivedReplicationDegree(int chunkNumber, int delta) {
+            int newDegree = this.perceivedReplicationDegrees.get(chunkNumber) + delta;
+            this.perceivedReplicationDegrees.set(chunkNumber, newDegree);
+        }
+
+        private boolean isReplicationDegreeMet(int chunkNumber) {
+            int desired = this.getDesiredReplicationDegree();
+            return this.getPerceivedReplicationDegrees().get(chunkNumber) >= desired;
+        }
+
     }
 
     private final String statusFilePath;
@@ -170,6 +180,16 @@ public class Occurrences {
 
     public void resetFile(String fileID, int desiredReplicationDegree) {
         this.occurrenceTable.get(fileID).reset(desiredReplicationDegree);
+    }
+
+    public void incrementReplicationDegree(String fileID, int chunkNumber, int delta) {
+        OccurrenceInfo oi = this.occurrenceTable.get(fileID);
+        oi.incrementPerceivedReplicationDegree(chunkNumber, delta);
+    }
+
+    public boolean isReplicationDegreeMet(String fileID, int chunkNumber) {
+        OccurrenceInfo oi = this.occurrenceTable.get(fileID);
+        return oi.isReplicationDegreeMet(chunkNumber);
     }
 
     public String getOccurrencesInfo() {
