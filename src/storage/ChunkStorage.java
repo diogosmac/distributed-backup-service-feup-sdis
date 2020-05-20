@@ -29,30 +29,30 @@ public class ChunkStorage {
     }
 
     private void loadChunks() {
-        int i = 0;
-        File dir = new File(dirPath);
-        File[] dirListing = dir.listFiles();
-        if (dirListing != null) {
-            for (File file : dirListing) {
-                String fileName = file.getName();
-                String fileId = fileName.substring(0, fileName.lastIndexOf("_"));
-
-                this.availableMemory -= file.length();
-
-                if (!this.chunkStorage.containsKey(fileId))
-                    this.chunkStorage.put(fileId, new ArrayList<>());
-                this.chunkStorage.get(fileId).add(file.getName());
-                i++;
-            }
-        }
-
-        if (i != 0)
-            System.out.println("\n\tFound " + i + " files in memory!\n");
-        else System.out.println("\n\tNo files found in memory!\n");
-
-        if (this.availableMemory < 0) {
-            System.out.println("\tWARNING: Using " + (-0.001*this.availableMemory) + " KB over the memory limit!\n");
-        }
+//        int i = 0;
+//        File dir = new File(dirPath);
+//        File[] dirListing = dir.listFiles();
+//        if (dirListing != null) {
+//            for (File file : dirListing) {
+//                String fileName = file.getName();
+//                String fileId = fileName.substring(0, fileName.lastIndexOf("_"));
+//
+//                this.availableMemory -= file.length();
+//
+//                if (!this.chunkStorage.containsKey(fileId))
+//                    this.chunkStorage.put(fileId, new ArrayList<>());
+//                this.chunkStorage.get(fileId).add(file.getName());
+//                i++;
+//            }
+//        }
+//
+//        if (i != 0)
+//            System.out.println("\n\tFound " + i + " files in memory!\n");
+//        else System.out.println("\n\tNo files found in memory!\n");
+//
+//        if (this.availableMemory < 0) {
+//            System.out.println("\tWARNING: Using " + (-0.001*this.availableMemory) + " KB over the memory limit!\n");
+//        }
     }
 
     public int addChunk(Chunk chunk) {
@@ -131,72 +131,74 @@ public class ChunkStorage {
     }
 
     public void deleteFile(String fileId) {
-        List<String> chunkPaths = this.chunkStorage.get(fileId);
-        int numberDeletesFailed = 0;
-
-        if(chunkPaths != null)
-            for (String fileName : chunkPaths) {
-
-                String path = MyUtils.getBackupPath(this.peer);
-                File file = new File(path+fileName);
-
-                long fileSize = file.length();
-
-                if (file.delete())
-                    this.availableMemory += fileSize;
-                else
-                    numberDeletesFailed++;
-            }
-
-        if (numberDeletesFailed > 0)
-            System.out.println("Failed to delete " + numberDeletesFailed + " chunks.");
-
-        this.chunkStorage.remove(fileId);
+//        List<String> chunkPaths = this.chunkStorage.get(fileId);
+//        int numberDeletesFailed = 0;
+//
+//        if(chunkPaths != null)
+//            for (String fileName : chunkPaths) {
+//
+//                String path = MyUtils.getBackupPath(this.peer);
+//                File file = new File(path+fileName);
+//
+//                long fileSize = file.length();
+//
+//                if (file.delete())
+//                    this.availableMemory += fileSize;
+//                else
+//                    numberDeletesFailed++;
+//            }
+//
+//        if (numberDeletesFailed > 0)
+//            System.out.println("Failed to delete " + numberDeletesFailed + " chunks.");
+//
+//        this.chunkStorage.remove(fileId);
     }
 
     private String buildRemovedMessage(String fileId, int chunkNumber) {
-        // <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-        return String.join(" ", peer.getProtocolVersion(), "REMOVED",
-                Integer.toString(peer.getPeerId()), fileId, Integer.toString(chunkNumber), MyUtils.CRLF + MyUtils.CRLF);
+//        // <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+//        return String.join(" ", peer.getProtocolVersion(), "REMOVED",
+//                Integer.toString(peer.getPeerId()), fileId, Integer.toString(chunkNumber), MyUtils.CRLF + MyUtils.CRLF);
+        return " ";
     }
 
     public int reclaimSpace(int amountOfSpace) {
+//
+//        int spaceInBytes = amountOfSpace * 1000;
+//
+//        int freedSpace = 0;
+//
+//        List<List<String>> chunksOfFiles = new ArrayList<>(chunkStorage.values());
+//        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory > spaceInBytes) {
+//            for (List<String> chunks : chunksOfFiles) {
+//                for (int j = 0; j < chunks.size(); j++) {
+//                    String path = chunks.get(j);
+//                    File file = new File(MyUtils.getBackupPath(this.peer) + path);
+//                    long fileSize = file.length();
+//                    String fileId = path.substring(0, path.lastIndexOf("_"));
+//                    int chunkNumber = Integer.parseInt(path.substring(
+//                            path.lastIndexOf("_") + 1,
+//                            path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
+//                    String removedMessage = buildRemovedMessage(fileId, chunkNumber);
+//                    if (file.delete()) {
+//                        this.chunkStorage.get(fileId).remove(path);
+//                        this.availableMemory += fileSize;
+//                        freedSpace += fileSize;
+//                        peer.executeThread(new MessageSender(
+//                                MyUtils.convertStringToByteArray(removedMessage),
+//                                peer.getMulticastControlChannel()));
+//
+//                        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory <= spaceInBytes)
+//                            return freedSpace;
+//
+//                        j--;
+//                    }
+//                }
+//            }
+//        }
+//
+//        return freedSpace;
 
-        int spaceInBytes = amountOfSpace * 1000;
-
-        int freedSpace = 0;
-
-        List<List<String>> chunksOfFiles = new ArrayList<>(chunkStorage.values());
-        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory > spaceInBytes) {
-            for (List<String> chunks : chunksOfFiles) {
-                for (int j = 0; j < chunks.size(); j++) {
-                    String path = chunks.get(j);
-                    File file = new File(MyUtils.getBackupPath(this.peer) + path);
-                    long fileSize = file.length();
-                    String fileId = path.substring(0, path.lastIndexOf("_"));
-                    int chunkNumber = Integer.parseInt(path.substring(
-                            path.lastIndexOf("_") + 1,
-                            path.indexOf(MyUtils.CHUNK_FILE_EXTENSION)));
-                    String removedMessage = buildRemovedMessage(fileId, chunkNumber);
-                    if (file.delete()) {
-                        this.chunkStorage.get(fileId).remove(path);
-                        this.availableMemory += fileSize;
-                        freedSpace += fileSize;
-                        peer.executeThread(new MessageSender(
-                                MyUtils.convertStringToByteArray(removedMessage),
-                                peer.getMulticastControlChannel()));
-
-                        if (MyUtils.PEER_MAX_MEMORY_USE - this.availableMemory <= spaceInBytes)
-                            return freedSpace;
-
-                        j--;
-                    }
-                }
-            }
-        }
-
-        return freedSpace;
-
+        return -1;
     }
 
     public String getMemoryInfo() {
@@ -252,6 +254,5 @@ public class ChunkStorage {
         }
 
         return sectionHeader + infoBody + sectionFooter + "\n\n";
-
     }
 }

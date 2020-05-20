@@ -360,19 +360,32 @@ public class ChordChannel implements Runnable {
         this.messageQueue.add(message);
     }
 
-    protected void sendPutchunkMessage(Integer chunkID, int replicationDegree, byte[] data,
+    protected void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, byte[] data,
                                        InetSocketAddress origin, InetSocketAddress destination) {
-        String message = createPutchunkMessage(chunkID, replicationDegree, origin, data);
+        String message = createPutchunkMessage(fileID, chunkNumber, replicationDegree, origin, data);
         this.sendMessage(destination, message);
     }
 
-    private String createPutchunkMessage(Integer chunkID, int replicationDegree, InetSocketAddress origin, byte[] data) {
+    private String createPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, InetSocketAddress origin, byte[] data) {
         return "PUTCHUNK" + " " +
-                chunkID + " " +
+                fileID + " " +
+                chunkNumber + " " +
                 replicationDegree + " " +
                 origin.getHostName() + " " +
                 origin.getPort() + " " +
                 MyUtils.convertByteArrayToString(data);
     }
 
+    private String createUpdateFileReplicationDegreeMessage(String fileID, int chunkNumber, int realRD) {
+        // Message format: UPDATERD <fileID> <chunkNumber> <realRD>
+        return "UPDATERD" + " " +
+                fileID + " " +
+                chunkNumber + " " +
+                realRD;
+    }
+
+    protected void sendUpdateFileReplicationDegree(String fileID, int chunkNumber, int realRD, InetSocketAddress destination) {
+        String message = createUpdateFileReplicationDegreeMessage(fileID, chunkNumber, realRD);
+        this.sendMessage(destination, message);
+    }
 }

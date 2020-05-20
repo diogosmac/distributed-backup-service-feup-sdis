@@ -6,16 +6,16 @@ public class Chunk {
     private final byte[] data;
     private final String fileID;
     private final int replicationDegree;
-    private int currReplDegree = 0;
+    private int currReplDegree;
     private final int size;
 
-    public Chunk(String fileID, int num, byte[] data, int size, int replicationDegree) {
-        this.num = num;
+    public Chunk(String fileID, int chunkNumber, byte[] data, int size, int replicationDegree) {
         this.data = data;
         this.size = size;
         this.fileID = fileID;
+        this.num = chunkNumber;
         this.replicationDegree = replicationDegree;
-        this.currReplDegree = 1;
+        this.currReplDegree = replicationDegree;
     }
 
     public int getNum() {
@@ -27,7 +27,7 @@ public class Chunk {
     }
 
     public String getFileID() {
-        return fileID;
+        return this.fileID;
     }
 
     public int getReplicationDegree() {
