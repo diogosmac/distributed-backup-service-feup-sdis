@@ -3,7 +3,6 @@ package chord;
 import peer.Peer;
 import storage.Chunk;
 import storage.SavedFile;
-import utils.MyUtils;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -477,6 +476,7 @@ public class ChordNode {
         String fileID = sf.getId();
 
         for (Chunk chunk : fileChunks) {
+            // ChunkID => id on chord
             Integer chunkID = Utils.hash(fileID + ":" + chunk.getNum());
             String[] succ = this.findSuccessor(chunkID);
             // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
@@ -501,4 +501,14 @@ public class ChordNode {
         return this.peer.getChunkStorage().getChunk(fileID, chunkNumber);
     }
 
+    public void initiateDelete(String filePath) {
+        SavedFile sf = new SavedFile(filePath);
+        String fileID = sf.getId();
+        this.channel.sendDeleteMessage(this.getAddress(), fileID, this.getSuccessorAddress());
+    }
+
+    public void deleteFile(String fileID) {
+//        TODO: IMPROVE
+        this.peer.getChunkStorage().deleteFile(fileID);
+    }
 }
