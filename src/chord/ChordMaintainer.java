@@ -59,7 +59,7 @@ public class ChordMaintainer implements Runnable {
         finger = (finger + 1) % this.node.getM();
         node.setFinger(finger);
         // calculate new node ID
-        Integer nodeID = (node.getId() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.node.getM());
+        Integer nodeID = (node.getID() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.node.getM());
         // find node's successor
         String[] reply = this.node.findSuccessor(nodeID);
         // if successor fails let the handler deal with it

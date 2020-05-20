@@ -46,7 +46,7 @@ public class ChordNodeTest {
         }
 
         System.out.println("Started chord node");
-        System.out.println("\tID: " + node.getId());
+        System.out.println("\tID: " + node.getID());
         System.out.println("\tAddress: " + node.getAddress());
 
         Timer timer = new Timer(); 

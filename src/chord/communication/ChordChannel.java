@@ -59,7 +59,7 @@ public class ChordChannel implements Runnable {
      */
     public void open(int port) {
         // Keystore
-        System.setProperty("javax.net.ssl.keyStore", "../keys/keystore" + (this.parent.getId() % 3 + 1));
+        System.setProperty("javax.net.ssl.keyStore", "../keys/keystore" + (this.parent.getID() % 3 + 1));
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
 
         // Truststore
@@ -224,7 +224,7 @@ public class ChordChannel implements Runnable {
         // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
         StringBuilder sb = new StringBuilder();
         sb.append("JOINING").append(" ");
-        sb.append(this.parent.getId()).append(" ");
+        sb.append(this.parent.getID()).append(" ");
         sb.append(this.parent.getAddress().getHostString()).append(" ");
         sb.append(this.parent.getAddress().getPort());
         return sb.toString();
@@ -483,19 +483,24 @@ public class ChordChannel implements Runnable {
         this.messageQueue.add(message);
     }
 
-    protected void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, byte[] data,
-                                       InetSocketAddress origin, InetSocketAddress destination) {
-        String message = createPutchunkMessage(fileID, chunkNumber, replicationDegree, origin, data);
+    protected void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, String hash, byte[] data,
+                                       InetSocketAddress initiator, InetSocketAddress firstSuccessor,
+                                       InetSocketAddress destination) {
+        String message = createPutchunkMessage(fileID, chunkNumber, replicationDegree, hash, initiator, firstSuccessor, data);
         this.sendMessage(destination, message);
     }
 
-    private String createPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, InetSocketAddress origin, byte[] data) {
+    private String createPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, String hash,
+                                         InetSocketAddress initiator, InetSocketAddress firstSuccessor, byte[] data) {
         return "PUTCHUNK" + " " +
                 fileID + " " +
                 chunkNumber + " " +
                 replicationDegree + " " +
-                origin.getHostName() + " " +
-                origin.getPort() + " " +
+                initiator.getHostName() + " " +
+                initiator.getPort() + " " +
+                firstSuccessor.getHostName() + " " +
+                firstSuccessor.getPort() + " " +
+                hash + " " +
                 MyUtils.convertByteArrayToString(data);
     }
 
@@ -507,8 +512,8 @@ public class ChordChannel implements Runnable {
                 realRD;
     }
 
-    protected void sendUpdateFileReplicationDegree(String fileID, int chunkNumber, int realRD, InetSocketAddress destination) {
-        String message = createUpdateFileReplicationDegreeMessage(fileID, chunkNumber, realRD);
+    protected void sendUpdateFileReplicationDegree(String fileID, int chunkNumber, int missingReplicas, InetSocketAddress destination) {
+        String message = createUpdateFileReplicationDegreeMessage(fileID, chunkNumber, missingReplicas);
         this.sendMessage(destination, message);
     }
 
