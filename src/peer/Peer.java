@@ -8,81 +8,54 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class Peer implements PeerActionsInterface {
 
-    public enum Operation {
-        BACKUP,
-        RESTORE,
-        DELETE,
-        RECLAIM,
-        STATE
-    }
-
-//    private final String protocolVersion;
     private final int peerId;
     private final ChordNode node;
 
-    private final OccurrencesStorage chunkOccurrences;
     private final ChunkStorage chunkStorage;
+    private final Occurrences fileOccurrences;
 
-    // key = fileId:chunkNumber
-    // value = time of read
+    // key    :     fileId:chunkNumber
+    // value  :     time of read
     private final ConcurrentHashMap<String, Long> receivedChunks;
 
-    // key = fileId:chunkNumber
-    // value = time of read
+    // key    :     fileId:chunkNumber
+    // value  :     time of read
     private final ConcurrentHashMap<String, Long> putChunkMessagesReclaim;
 
     private final FileRestorer fileRestorer;
 
-    private final List<Operation> operations;
-
     // elements are the IDs of the files to be deleted
     private final List<String> scheduledDeletes;
 
-    public Peer(int peerId, ChordNode node) throws IOException {
-//    public Peer(String protocolVersion, int peerId, InetSocketAddress address) throws IOException {
+    public Peer(ChordNode node) throws IOException {
 
-//        this.protocolVersion = protocolVersion;
-        this.peerId = peerId;
+        this.peerId = node.getID();
         this.node = node;
         this.node.setPeer(this);
 
-        this.chunkOccurrences = new OccurrencesStorage(this);
         this.chunkStorage = new ChunkStorage(this);
+        this.fileOccurrences = new Occurrences(this);
         this.receivedChunks = new ConcurrentHashMap<>();
         this.putChunkMessagesReclaim = new ConcurrentHashMap<>();
         this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this));
-
-        this.operations = new ArrayList<>();
 
         this.scheduledDeletes = new ArrayList<>();
         this.loadScheduledDeletes(this.scheduledDeletes);
 
     }
 
-//    public void executeThread(Runnable thread) {
-//        scheduler.execute(thread);
-//    }
-//
-//    public void scheduleThread(Runnable thread, int interval, TimeUnit timeUnit) {
-//        scheduler.schedule(thread, interval, timeUnit);
-//    }
-
     public int getPeerId() { return this.peerId; }
 
     public ChordNode getNode() { return this.node; }
 
-//    public String getProtocolVersion() { return this.protocolVersion; }
-
-    public boolean isDoingOperation(Operation op) { return this.operations.contains(op); }
-
     @Override
     public void backup(String filePath, int replicationDegree) throws Exception {
+
+        this.node.initiateBackup(filePath, replicationDegree);
+
 //
 //        this.operations.add(Operation.BACKUP);
 //
@@ -185,6 +158,9 @@ public class Peer implements PeerActionsInterface {
 
     @Override
     public void delete(String filePath) throws Exception {
+
+        this.node.initiateDelete(filePath);
+
 //        this.operations.add(Operation.DELETE);
 //        System.out.println("\nDelete > File: " + filePath);
 //        SavedFile sf = new SavedFile(filePath);
@@ -206,21 +182,19 @@ public class Peer implements PeerActionsInterface {
 
     @Override
     public void reclaim(int amountOfSpace) throws Exception {
-        this.operations.add(Operation.RECLAIM);
-        System.out.println("\nReclaim > Amount of Space: " + amountOfSpace);
-        int freed = this.chunkStorage.reclaimSpace(amountOfSpace);
-        System.out.println("\tFreed " + freed * 0.001 + " KB of disk space");
-        this.operations.remove(Operation.RECLAIM);
+//        this.operations.add(Operation.RECLAIM);
+//        System.out.println("\nReclaim > Amount of Space: " + amountOfSpace);
+//        int freed = this.chunkStorage.reclaimSpace(amountOfSpace);
+//        System.out.println("\tFreed " + freed * 0.001 + " KB of disk space");
+//        this.operations.remove(Operation.RECLAIM);
     }
 
     @Override
     public String state() throws Exception {
-        this.operations.add(Operation.STATE);
-        String header = "\nSTATE: peer.Peer " + this.getPeerId() + "\n\n";
+        String header = "\nSTATE: Node " + this.node.getID() + "\n\n";
         String peerMemoryInfo = this.chunkStorage.getMemoryInfo();
-        String backupFilesInfo = this.chunkOccurrences.getOccurrencesInfo();
+        String backupFilesInfo = this.fileOccurrences.getOccurrencesInfo();
         String storedChunksInfo = this.chunkStorage.getChunkInfo();
-        this.operations.remove(Operation.STATE);
         return header + peerMemoryInfo + backupFilesInfo + storedChunksInfo;
     }
 
@@ -250,7 +224,7 @@ public class Peer implements PeerActionsInterface {
 
     public ChunkStorage getChunkStorage() { return this.chunkStorage; }
 
-    public OccurrencesStorage getChunkOccurrences() { return this.chunkOccurrences; }
+    public Occurrences getFileOccurrences() { return this.fileOccurrences; }
 
     public FileRestorer getFileRestorer() { return this.fileRestorer; }
 

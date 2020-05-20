@@ -215,15 +215,16 @@ public class MessageHandler extends Thread {
                 // Message format: UPDATERD <file-id> <chunk-number> <missing-replicas>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
+                int missing = Integer.parseInt(args[3]);
 
-                // In case the chunk isnt stored => All peers updated => Chain is broken
-                if (this.node.isChunkStored(fileID, chunkNumber)) {
-                    int realRD = Integer.parseInt(args[3]);
-                    Chunk ck = this.node.getStoredChunk(fileID, chunkNumber);
-                    ck.setCurrReplDegree(realRD);
-
-                    this.channel.sendUpdateFileReplicationDegree(fileID, chunkNumber, realRD, this.node.getSuccessorAddress());
+                if (!this.node.getPeer().getFileOccurrences().hasFile(fileID)) {
+                    System.out.println("ERROR: File with ID " + fileID + " has not been backed up by node #" + this.node.getID());
+                    break;
                 }
+
+                this.node.getPeer().getFileOccurrences().updateFileChunk(fileID, chunkNumber, missing);
+                break;
+
             }
             case "DELETE": {
                 // Message format: DELETE <origin-ip> <origin-port> <file-id>
