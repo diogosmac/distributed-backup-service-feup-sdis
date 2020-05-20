@@ -287,7 +287,10 @@ public class ChordNode {
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(0, node);
-        this.successorList.set(0, node);
+        this.successorList.add(0, node);
+
+        if (this.successorList.size() > this.r)
+            this.successorList.remove(this.r);
     }
 
     /**
@@ -313,15 +316,17 @@ public class ChordNode {
     /**
      * Gets closest preceding node address
      */
-    public InetSocketAddress getClosestPreceding(int id) {
+    public synchronized InetSocketAddress getClosestPreceding(Integer id) {
         NodePair<Integer, InetSocketAddress> lookup = this.fingerTable.lookup(this.getId(), id);
 
         Integer key = lookup.getKey();
 
         for (int i = this.successorList.size() - 1; i >= 0; i--) {
             NodePair<Integer, InetSocketAddress> succ = this.successorList.get(i);
+
+            Integer succKey = succ.getKey();
             
-            if (Utils.inBetween(succ.getKey(), key, id, this.m))
+            if (Utils.inBetween(succKey, key, id, this.m) && id != succKey)
                 return succ.getValue();
         }
 
