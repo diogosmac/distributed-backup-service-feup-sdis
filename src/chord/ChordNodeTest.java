@@ -7,6 +7,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Chord Node Test
+ * 
+ * Helper class to run a chord node instance
+ */
 public class ChordNodeTest {
 
     public static void main(String[] args) {
@@ -53,6 +58,12 @@ public class ChordNodeTest {
 
 }
 
+/**
+ * Chord Node Printer
+ * 
+ * Helper class to print chord node's information
+ * about periodically
+ */
 class ChordNodePrinter extends TimerTask {
 
     private ChordNode node;

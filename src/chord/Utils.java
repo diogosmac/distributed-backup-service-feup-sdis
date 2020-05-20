@@ -4,15 +4,21 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Chord Util Methods
+ * 
+ * This Class contains useful methods to be used during regular
+ * chord maintaining operations
+ */
 public class Utils {
     
     /**
      * This method checks if an integer number is between in interval
      * 
      * @param target wanted file's ID
-     * @param lowerBound
-     * @param upperBound
-     * @return true if 'target' is between 'lowerBound' and 'upperBound'
+     * @param lowerBound interval's lower bound
+     * @param upperBound interval's upper bound (inclusive)
+     * @return true if 'target' is between 'lowerBound' and 'upperBound', this last on is inclusive
      */
     public static boolean inBetween(Integer target, Integer lowerBound, Integer upperBound, int m) {
         // calculate max nodes in the chord
@@ -31,15 +37,19 @@ public class Utils {
 
     /**
      * 
-     * @param str
-     * @return
+     * @param str String to hash
+     * @return Integer number of hashed value using SHA1 algorithm
      */
     public static Integer hash(String str) {
         ByteBuffer wrapped = ByteBuffer.wrap(sha1(str));
 		return wrapped.getInt();
     }
 
-    /** */
+    /**
+     * 
+     * @param str String to hash
+     * @return byte array of hashed string using SHA1 algorithm
+     */
     private static byte[] sha1(String str) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
@@ -48,7 +58,5 @@ public class Utils {
             e.printStackTrace();
             return null;
         }
-        
-
     }
 }

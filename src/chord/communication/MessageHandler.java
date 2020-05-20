@@ -8,13 +8,45 @@ import chord.Utils;
 
 import java.net.InetSocketAddress;
 
+/**
+ * Message Handler
+ * 
+ * This class is used by Chord Communication Channels to
+ * delegate message request actions by creating an instance
+ * of this class.
+ * This is a working thread, that performs actions in a chord's
+ * node information to update it based on incoming messages
+ */
 public class MessageHandler extends Thread {
 
+    /**
+     * Incoming Message
+     */
     private final String message;
+
+    /**
+     * Origin Socket
+     */
     private final SSLSocket socket;
+
+    /**
+     * Node's Communication Channel
+     */
     private final ChordChannel ch;
+
+    /**
+     * Chord's Node
+     */
     private final ChordNode node;
 
+    /**
+     * Default Constructor
+     * 
+     * @param sk Socket
+     * @param message Message
+     * @param ch Channel
+     * @param node Node
+     */
     MessageHandler(SSLSocket sk, String message, ChordChannel ch, ChordNode node) {
         this.socket = sk;
         this.message = message;
@@ -22,10 +54,18 @@ public class MessageHandler extends Thread {
         this.node = node;
     }
 
+    /**
+     * Getter method for address
+     * @param socket
+     * @return
+     */
     private InetSocketAddress getAddress(SSLSocket socket) {
         return (socket == null ? this.node.getAddress() : (InetSocketAddress) socket.getRemoteSocketAddress());
     }
 
+    /**
+     * Method performed by MessageHandler thread
+     */
     @Override
     public void run() {
         // Handles a message received by the ChordChannel

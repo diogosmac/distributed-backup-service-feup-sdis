@@ -260,7 +260,9 @@ public class ChordNode {
     /**
      * @return chord node's sucessor, which happens to be
      * the first element of 'successorList' and also the first
-     * element of 'fingerTable'
+     * element of 'fingerTable'. In case of failure and node's successor is
+     * 'null', we get the next sucessor. In the rare case that there are none
+     * we return the current node.
      */
     public NodePair<Integer, InetSocketAddress> getSuccessor() {
         for (NodePair<Integer, InetSocketAddress> successor : this.successorList) {
@@ -318,6 +320,14 @@ public class ChordNode {
         this.fingerTable.setNodePair(finger, node);
     }
 
+    /**
+     * Remove all nodes from the Finger Table and Successor List with IP
+     * address equal to 'address'. This method is called when node at
+     * 'address' has failed.
+     * 
+     * @param address Address on failed node to be removed from Finger Table
+     * and Successor List
+     */
     public void removeNode(InetSocketAddress address) {
         NodePair<Integer, InetSocketAddress> pair = new NodePair<>(this.id, this.address);
         
@@ -334,8 +344,15 @@ public class ChordNode {
         this.successorList.removeAll(toRemove);
     }
 
+    
     /**
-     * Gets closest preceding node address
+     * Given a node identifier, retrieve the closest preceding node, i.e. the
+     * node with the greatest identifier that is lower than 'id'. This is achieved
+     * by an enhancement of the original method, i.e. cross referencing the finger
+     * table with the successor list.
+     * 
+     * @param id Identifier of the wanted node's closest preceding node
+     * @return Address of the wanted node's closest preceding node
      */
     public synchronized InetSocketAddress getClosestPreceding(Integer id) {
         NodePair<Integer, InetSocketAddress> lookup = this.fingerTable.lookup(this.getId(), id);
@@ -356,6 +373,9 @@ public class ChordNode {
 
     /**
      * Finds the successor node of id
+     *
+     * @param id Identifier of known node
+     * @return Chord's reply
      */
     public String[] findSuccessor(int id) {
         return this.findSuccessor(this.getAddress(), id);
@@ -363,6 +383,10 @@ public class ChordNode {
 
     /**
      * Finds the successor node of id
+     * 
+     * @param requestOrigin Original requesting node's address
+     * @param id Identifier of known node
+     * @return Chord's reply
      */
     public synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         int successorId = this.getSuccessorId();
@@ -389,6 +413,7 @@ public class ChordNode {
      * This method notifies node 'n's successor of 'n's existence, giving the
      * successor the chance to change its predecessor to 'n'. The successor only
      * does this if it knows of no closer predecessor than 'n'.
+     * 
      * @param node possible new predecessor
      */
     public synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
@@ -399,19 +424,11 @@ public class ChordNode {
             this.setPredecessor(node);
     }
 
+    /**
+     * 
+     * @return node's communication channel
+     */
     public ChordChannel getChannel() {
         return channel;
     }
-
-	public void receiveSuccessorListMessage(String[] args) {
-        NodePair<Integer, InetSocketAddress> successor = this.getSuccessor();
-        this.successorList.clear();
-        this.addSuccessor(successor);
-
-        for (int i = 1; i < args.length; i += 3) {
-            NodePair<Integer, InetSocketAddress> node = new NodePair<>(Integer.parseInt(args[i]), new InetSocketAddress(args[i+1], Integer.parseInt(args[i+2])));
-
-            this.addSuccessor(node);
-        }
-	}
 }

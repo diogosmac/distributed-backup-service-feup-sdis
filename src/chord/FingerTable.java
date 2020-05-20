@@ -5,6 +5,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 
+/**
+ * Finger Table
+ * 
+ * This class represents the finger table in chord's
+ * protocol.
+ */
 public class FingerTable {
 
     /**
@@ -91,6 +97,9 @@ public class FingerTable {
         }          
     }
 
+    /**
+     * Overriden toString method
+     */
     @Override
     public String toString() {
         return this.table.isEmpty()

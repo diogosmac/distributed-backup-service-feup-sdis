@@ -3,6 +3,8 @@ package chord.communication;
 import java.net.InetSocketAddress;
 
 /**
+ * Message
+ * 
  * Auxiliary class that stores a received message
  */
 public class Message {
