@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -504,17 +505,17 @@ public class ChordNode {
 
     }
 
-    protected int storeChunk(String fileID, int chunkNumber, byte[] data, int size, InetSocketAddress initiator) {
+    public int storeChunk(String fileID, int chunkNumber, byte[] data, int size, InetSocketAddress initiator) {
 //        TODO: IMPROVE
         return this.peer.getChunkStorage().addChunk(new Chunk(fileID, chunkNumber, data, size), initiator);
     }
 
-    protected boolean isChunkStored(String fileID, int chunkNumber) {
+    public boolean isChunkStored(String fileID, int chunkNumber) {
 //        TODO: IMPROVE
         return this.peer.getChunkStorage().hasChunk(fileID, chunkNumber);
     }
 
-    protected Chunk getStoredChunk(String fileID, int chunkNumber) {
+    public Chunk getStoredChunk(String fileID, int chunkNumber) {
 //        TODO: IMPROVE
         return this.peer.getChunkStorage().getChunk(fileID, chunkNumber);
     }

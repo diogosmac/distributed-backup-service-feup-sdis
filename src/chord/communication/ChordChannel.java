@@ -9,6 +9,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import chord.ChordNode;
 import chord.NodePair;
+import chord.Utils;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -483,7 +484,7 @@ public class ChordChannel implements Runnable {
         this.messageQueue.add(message);
     }
 
-    protected void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, String hash, byte[] data,
+    public void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, String hash, byte[] data,
                                        InetSocketAddress initiator, InetSocketAddress firstSuccessor,
                                        InetSocketAddress destination) {
         String message = createPutchunkMessage(fileID, chunkNumber, replicationDegree, hash, initiator, firstSuccessor, data);
