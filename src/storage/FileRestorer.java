@@ -7,19 +7,26 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 public class FileRestorer {
 
     String path;
     private final ConcurrentHashMap<String, List<byte []>> fileData;
+    private final ConcurrentHashMap<String, CountDownLatch> fileRestorationStatus;
 
     public FileRestorer (String path) {
         this.path = path;
         this.fileData = new ConcurrentHashMap<>();
+        this.fileRestorationStatus = new ConcurrentHashMap<>();
     }
 
-    public void addFile(String fileId) {
+    public void addFile(String fileId, int numberChunks) {
         this.fileData.put(fileId, new ArrayList<>());
+        for (int i = 0; i < numberChunks; i++) {
+            addSlot(fileId);
+        }
+        this.fileRestorationStatus.put(fileId, new CountDownLatch(numberChunks));
     }
 
     public void addSlot(String fileId) {
@@ -32,6 +39,11 @@ public class FileRestorer {
 
     public void saveRestoredChunk(String fileId, int chunkNumber, byte[] data) {
         this.fileData.get(fileId).set(chunkNumber, data);
+        this.fileRestorationStatus.get(fileId).countDown();
+    }
+
+    public CountDownLatch getFileRestorationStatus(String fileID) {
+        return this.fileRestorationStatus.get(fileID);
     }
 
     public boolean restoreFile(String fileId, String fileName) {
@@ -58,7 +70,10 @@ public class FileRestorer {
             FileOutputStream fos = new FileOutputStream(file, false);
             fos.write(concatData);
             fos.close();
-        } catch (Exception e) { System.out.println("\tError while writing file!"); }
+        } catch (Exception e) {
+            System.out.println("\tError while writing file!");
+            return false;
+        }
 
         return true;
     }

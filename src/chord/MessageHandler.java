@@ -278,7 +278,7 @@ public class MessageHandler extends Thread {
                         }
                     }
 
-                    this.channel.sendEnsureRDMessage(initiatorAdd, fileID, chunkNumber, this.node.getSuccessorAddress());
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
             }
 
@@ -308,6 +308,46 @@ public class MessageHandler extends Thread {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
             }
+
+            case "GETCHUNK": {
+                // Message format: GETCHUNK <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <fileID> <chunkNumber> <hash>
+                InetSocketAddress firstSuccessor = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
+                String fileID = args[5];
+                int chunkNumber = Integer.parseInt(args[6]);
+
+                // If ha chunk stored, sends it to the initiator; Ends chain of GetChunk
+                if (this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
+                    InetSocketAddress initiator = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+                    Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
+
+                    this.channel.sendChunkMessage(fileID, chunkNumber, ck.getData(), initiator);
+                }
+                else {
+                    if (firstSuccessor.equals(this.node.getAddress())) {
+                        String hash = args[7];
+
+                        if (this.node.hitWall(hash)) {
+                            // Message has cycled, and came back => Chunk doesn't exist => End of chain
+                            System.out.println("Couldnt get chunk #" + chunkNumber + " of file with id=" + fileID);
+                            break;
+                        } else {
+                            this.node.placeWall(hash);
+                        }
+                    }
+
+                    // Continues chain
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                }
+            }
+
+            case "CHUNK": {
+                // Message format: CHUNK <fileID> <chunkNumber> <data>
+                String fileID = args[1];
+                int chunkNumber = Integer.parseInt(args[2]);
+                byte[] data = MyUtils.convertStringToByteArray(args[3]);
+                this.node.getPeer().getFileRestorer().saveRestoredChunk(fileID, chunkNumber, data);
+            }
+
 
         }
 

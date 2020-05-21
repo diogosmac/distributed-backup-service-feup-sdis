@@ -441,4 +441,35 @@ public class ChordChannel implements Runnable {
         String message = this.createSaveChunkMessage(fileID, chunkNumber, initiator, data);
         this.sendMessage(destination, message);
     }
+
+    private String createGetChunkMessage(InetSocketAddress initiator, InetSocketAddress firstSuccessor, String fileID, int chunkNumber) {
+        // Message format: GETCHUNK <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <fileID> <chunkNumber> <hash>
+        Integer hash = Utils.hash("Getchunk" + fileID + chunkNumber + System.currentTimeMillis());
+        return "GETCHUNK" + " " +
+                initiator.getHostString() + " " +
+                initiator.getPort() + " " +
+                firstSuccessor.getHostString() + " " +
+                firstSuccessor.getPort() + " " +
+                fileID + " " +
+                chunkNumber + " " +
+                hash;
+    }
+
+    public void sendGetChunkMessage(InetSocketAddress initiator, InetSocketAddress firstSuccessor, String fileID, int chunkNumber, InetSocketAddress destination) {
+        String message = this.createGetChunkMessage(initiator, firstSuccessor, fileID, chunkNumber);
+        this.sendMessage(destination, message);
+    }
+
+    private String createChunkMessage(String fileID, int chunkNumber, byte[] data) {
+        // Message format: CHUNK <fileID> <chunkNumber> <data>
+        return "CHUNK" + " " +
+                fileID + " " +
+                chunkNumber + " " +
+                MyUtils.convertByteArrayToString(data);
+    }
+
+    public void sendChunkMessage(String fileID, int chunkNumber, byte[] data, InetSocketAddress destination) {
+        String message = this.createChunkMessage(fileID, chunkNumber, data);
+        this.sendMessage(destination, message);
+    }
 }

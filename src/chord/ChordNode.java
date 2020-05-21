@@ -5,6 +5,7 @@ import storage.Chunk;
 import storage.SavedFile;
 import utils.MyUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -484,6 +485,39 @@ public class ChordNode {
 
     public void sendMessage(InetSocketAddress destination, String message) {
         this.channel.sendMessage(destination, message);
+    }
+
+    public void initiateRestore(String filePath) {
+        SavedFile sf = new SavedFile(filePath, 0);
+        int numberChunks = sf.getChunks().size();
+
+        String fileName = MyUtils.fileNameFromPath(filePath);
+        String fileID = sf.getId();
+        this.getPeer().getFileRestorer().addFile(fileID, numberChunks);
+
+        for (int currentChunk = 0; currentChunk < numberChunks; currentChunk++) {
+            Integer chunkID = Utils.hash(fileID + ":" + currentChunk);
+            String[] reply = this.findSuccessor(chunkID);
+
+            // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
+            InetSocketAddress succAddress = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
+
+            this.channel.sendGetChunkMessage(this.getAddress(), succAddress, fileID, currentChunk, succAddress);
+        }
+
+        try {
+            // If the file isnt ready to be restored (still missing chunks), waits (max 8 seconds) for it to finish
+            this.getPeer().getFileRestorer().getFileRestorationStatus(fileID).await(8, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            System.out.println("Restoration was interrupted by another Thread. Restoration failed");
+            e.printStackTrace();
+        }
+
+        // Tries to restore
+        if (this.getPeer().getFileRestorer().restoreFile(fileID, fileName))
+            System.out.println("File successfully restored");
+        else
+            System.out.println("Error restoring file");
     }
 
 }
