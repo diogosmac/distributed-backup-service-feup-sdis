@@ -16,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import chord.communication.ChordChannel;
 
 /**
  * Chord Node
@@ -32,7 +33,7 @@ public class ChordNode {
     /**
      * Number of bits of the addressing space
      */
-    private final int m;
+    private final int m = Utils.m;
 
     /**
      * The successorList's size, r < m
@@ -62,7 +63,7 @@ public class ChordNode {
     /**
 	 * The list of its successors, size r
 	 */
-    private ArrayList<NodePair<Integer, InetSocketAddress>> successorList;
+    private CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList;
 
     /**
      * Thread Executor used for chord maintainer
@@ -87,8 +88,8 @@ public class ChordNode {
      * @param m Number of bits of the addressing space
      * @throws UnknownHostException If unable to get localhost
      */
-    public ChordNode(Integer id, int m) throws UnknownHostException {
-        this(id, m, new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 30000 + id));
+    public ChordNode(int port) throws UnknownHostException {
+        this(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), port));
     }
 
     /**
@@ -97,10 +98,9 @@ public class ChordNode {
      * @param m Number of bits of the addressing space
      * @param address IP address to join the Chord 'network'
      */
-    public ChordNode(Integer id, int m, InetSocketAddress address) {
-
-        this.id = id;
-        this.m = m;
+    public ChordNode(InetSocketAddress address) {
+        this.id = Utils.hash(address.getHostString() + ":" + address.getPort());
+        this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
 //        this.peer = new Peer()
@@ -126,10 +126,10 @@ public class ChordNode {
      * @param address IP address of this Chord node
      * @param knownAddress IP address of a node on the Chord 'network' to be joined
      */
-    public ChordNode(Integer id, int m, InetSocketAddress address, InetSocketAddress knownAddress) {
+    public ChordNode(InetSocketAddress address, InetSocketAddress knownAddress) {
 
-        this.id = id;
-        this.m = m;
+        this.id = Utils.hash(address.getHostString() + ":" + address.getPort());
+        this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
 //        this.peer = new Peer()
@@ -153,9 +153,9 @@ public class ChordNode {
      */
     private void create() {
         // no predecessor
-        this.setPredecessor(null);
+        this.setPredecessor(new NodePair<>(null, null));
         // successor is itself
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = new CopyOnWriteArrayList<>();
         NodePair<Integer, InetSocketAddress> successor = new NodePair<>(this.getID(), this.getAddress());
         successorList.add(successor);
         this.setSuccessorList(successorList);
@@ -171,9 +171,9 @@ public class ChordNode {
      */
     protected void join(InetSocketAddress node) {
         // no predecessor
-        this.setPredecessor(null);
+        this.setPredecessor(new NodePair<>(null, null));
         // set successor list to empty
-        ArrayList<NodePair<Integer, InetSocketAddress>> successorList = new ArrayList<>();
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = new CopyOnWriteArrayList<>();
         successorList.add(new NodePair<>(null, null));
         this.setSuccessorList(successorList);
         // successor is found by 'node'
@@ -228,14 +228,14 @@ public class ChordNode {
     /**
      * @return the successorList
      */
-    public ArrayList<NodePair<Integer, InetSocketAddress>> getSuccessorList() {
+    public CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> getSuccessorList() {
         return successorList;
     }
 
     /**
      * @param successorList the successorList to set
      */
-    public void setSuccessorList(ArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
+    public void setSuccessorList(CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList) {
         this.successorList = successorList;
     }
 
@@ -277,23 +277,30 @@ public class ChordNode {
     /**
      * @return chord node's successor, which happens to be
      * the first element of 'successorList' and also the first
-     * element of 'fingerTable'
+     * element of 'fingerTable'. In case of failure and node's successor is
+     * 'null', we get the next sucessor. In the rare case that there are none
+     * we return the current node.
      */
     public NodePair<Integer, InetSocketAddress> getSuccessor() {
-        return this.fingerTable.getFirstNode();
+        for (NodePair<Integer, InetSocketAddress> successor : this.successorList) {
+            if (successor.getKey() != null)
+                return successor;
+        }
+
+        return new NodePair<Integer, InetSocketAddress>(this.getID(), this.getAddress());
     }
 
     /**
      * Gets node's successor id
      */
-    protected int getSuccessorId() {
+    public int getSuccessorId() {
         return this.getSuccessor().getKey();
     }
 
     /**
      * Gets node's successor address
      */
-    protected InetSocketAddress getSuccessorAddress() {
+    public InetSocketAddress getSuccessorAddress() {
         return this.getSuccessor().getValue();
     }
 
@@ -303,11 +310,29 @@ public class ChordNode {
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(0, node);
-        this.successorList.set(0, node);
+        this.successorList.add(0, node);
+
+        if (this.successorList.size() > this.r)
+            this.successorList.remove(this.r);
     }
 
     /**
-     * Gets chord node's successor's predecessor
+     * Set 'node' as node's new successor
+     * 
+     * @param node new chord's successor
+     */
+    public void addSuccessor(NodePair<Integer, InetSocketAddress> node) {
+        if (this.successorList.size() < r)
+            this.successorList.add(node);
+    }
+
+    /**
+     * Given a node identifier, retrieve the closest preceding node, i.e. the
+     * node with the greatest identifier that is lower than 'id'. This is achieved
+     * by an enhancement of the original method, i.e. cross referencing the finger
+     * table with the successor list.
+     * 
+     * @param id Identifier of the wanted node's closest preceding node
      */
     public void getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
@@ -327,6 +352,31 @@ public class ChordNode {
     }
 
     /**
+     * Remove all nodes from the Finger Table and Successor List with IP
+     * address equal to 'address'. This method is called when node at
+     * 'address' has failed.
+     * 
+     * @param address Address on failed node to be removed from Finger Table
+     * and Successor List
+     */
+    public void removeNode(InetSocketAddress address) {
+        NodePair<Integer, InetSocketAddress> pair = new NodePair<>(this.id, this.address);
+        
+        this.fingerTable.removeNode(address, pair);
+        
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> toRemove = new CopyOnWriteArrayList<>();
+
+        for (NodePair<Integer, InetSocketAddress> entry : this.successorList) {
+            if (entry.getValue() != null && entry.getValue().equals(address)) {
+                toRemove.add(entry);
+            }
+        }
+
+        this.successorList.removeAll(toRemove);
+    }
+
+    
+    /**
      * @return the peer associated to this node
      */
     public Peer getPeer() {
@@ -344,24 +394,41 @@ public class ChordNode {
     /**
      * Gets closest preceding node address
      */
-    protected InetSocketAddress getClosestPreceding(int id) {
-        return this.fingerTable.lookup(this.getID(), id);
+    public synchronized InetSocketAddress getClosestPreceding(Integer id) {
+        NodePair<Integer, InetSocketAddress> lookup = this.fingerTable.lookup(this.getID(), id);
+
+        Integer key = lookup.getKey();
+
+        for (int i = this.successorList.size() - 1; i >= 0; i--) {
+            NodePair<Integer, InetSocketAddress> succ = this.successorList.get(i);
+
+            Integer succKey = succ.getKey();
+            
+            if (Utils.inBetween(succKey, key, id, this.m) && id != succKey)
+                return succ.getValue();
+        }
+
+        return lookup.getValue();
     }
 
     /**
      * Finds the successor node of id
+     *
+     * @param id Identifier of known node
+     * @return Chord's reply
      */
-    protected String[] findSuccessor(int id) {
+    public String[] findSuccessor(int id) {
         return this.findSuccessor(this.getAddress(), id);
     }
 
     /**
      * Finds the successor node of id
+     * 
+     * @param requestOrigin Original requesting node's address
+     * @param id Identifier of known node
+     * @return Chord's reply
      */
-    protected synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
-
-        // TODO: Check predecessor?
-        // TODO: delete TODO?
+    public synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
         int successorId = this.getSuccessorId();
 
         if (successorId == this.getID()) {
@@ -372,9 +439,9 @@ public class ChordNode {
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
             }
-            else
-                return this.channel.createSuccessorFoundMessage(
-                        id, successorId, this.getSuccessor().getValue()).split(" ");
+            else {
+                return this.channel.createSuccessorFoundMessage(id, successorId, this.getSuccessor().getValue()).split(" ");
+            }
         }
         else {
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
@@ -387,17 +454,22 @@ public class ChordNode {
      * This method notifies node 'n's successor of 'n's existence, giving the
      * successor the chance to change its predecessor to 'n'. The successor only
      * does this if it knows of no closer predecessor than 'n'.
+     * 
      * @param node possible new predecessor
      */
-    protected synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
+    public synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
         NodePair<Integer, InetSocketAddress> predecessor = this.getPredecessor();
         // if predecessor is null then it means that 'checkPredecessor' method
         // has determined that 'chord's predecessor has failed
-        if (predecessor == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getID(), this.getM()))
+        if (predecessor.getKey() == null || Utils.inBetween(node.getKey(), predecessor.getKey(), this.getID(), this.getM()))
             this.setPredecessor(node);
     }
 
-    protected ChordChannel getChannel() {
+    /**
+     * 
+     * @return node's communication channel
+     */
+    public ChordChannel getChannel() {
         return channel;
     }
 
@@ -433,17 +505,17 @@ public class ChordNode {
 
     }
 
-    protected int storeChunk(String fileID, int chunkNumber, byte[] data, int size, InetSocketAddress initiator) {
+    public int storeChunk(String fileID, int chunkNumber, byte[] data, int size, InetSocketAddress initiator) {
 //        TODO: IMPROVE
         return this.peer.getChunkStorage().addChunk(new Chunk(fileID, chunkNumber, data, size), initiator);
     }
 
-    protected boolean isChunkStored(String fileID, int chunkNumber) {
+    public boolean isChunkStored(String fileID, int chunkNumber) {
 //        TODO: IMPROVE
         return this.peer.getChunkStorage().hasChunk(fileID, chunkNumber);
     }
 
-    protected Chunk getStoredChunk(String fileID, int chunkNumber) {
+    public Chunk getStoredChunk(String fileID, int chunkNumber) {
 //        TODO: IMPROVE
         return this.peer.getChunkStorage().getChunk(fileID, chunkNumber);
     }

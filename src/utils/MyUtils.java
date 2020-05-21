@@ -34,7 +34,7 @@ public class MyUtils {
 
     public final static String CHUNK_FILE_EXTENSION = ".chk";
 
-    public static String getPeerPath(Peer peer) { return "./peer" + peer.getPeerId(); }
+    public static String getPeerPath(Peer peer) { return "./peer_" + peer.getPeerId(); }
     public static String getRestorePath(Peer peer) { return getPeerPath(peer) + DEFAULT_RESTORE_PATH; }
     public static String getBackupPath(Peer peer) { return getPeerPath(peer) + DEFAULT_BACKUP_PATH; }
     public static String getStatusPath(Peer peer) { return getPeerPath(peer) + DEFAULT_STATUS_PATH; }

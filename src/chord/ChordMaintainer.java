@@ -17,7 +17,7 @@ public class ChordMaintainer implements Runnable {
     /**
      * Node in Chord network
      */
-    private final ChordNode chord;
+    private final ChordNode node;
 
     /**
      * Default Constructor
@@ -25,7 +25,7 @@ public class ChordMaintainer implements Runnable {
      * @param chord node in chord network
      */
     public ChordMaintainer(ChordNode chord) {
-		this.chord = chord;
+		this.node = chord;
     }
 
     /**
@@ -37,9 +37,14 @@ public class ChordMaintainer implements Runnable {
      * In addition, this method notifies node 'n's successor of 'n's existence, giving
      * the successor the chance to change its predecessor to 'n'. The successor only
      * does this if it knows of no closer predecessor than 'n'.
+     * Most of this work in handled by MessageHandler class (@see MessageHandler) after
+     * receiving get predecessor.
      */
     private void stabilize() {
-        this.chord.getSuccessorsPredecessor();
+        // send message to node's successor asking for its predecessor
+        // message handler will take care of the rest
+        NodePair<Integer, InetSocketAddress> successor = this.node.getSuccessor();
+        this.node.getChannel().sendGetPredecessorMessage(this.node.getAddress(), successor.getValue());
     }
 
     /**
@@ -51,25 +56,22 @@ public class ChordMaintainer implements Runnable {
     private void fixFingers() {
 
         // get, update and set finger
-        int finger = this.chord.getFinger();
-        finger = (finger + 1) % this.chord.getM();
-        chord.setFinger(finger);
-
+        int finger = this.node.getFinger();
+        finger = (finger + 1) % this.node.getM();
+        node.setFinger(finger);
         // calculate new node ID
-        int nodeID = (chord.getID() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.chord.getM());
-        
-        String[] reply = this.chord.findSuccessor(nodeID);
+        Integer nodeID = (node.getID() + (int) Math.pow(2, finger)) % (int) Math.pow(2, this.node.getM());
+        // find node's successor
+        String[] reply = this.node.findSuccessor(nodeID);
+        // if successor fails let the handler deal with it
         if (reply == null)
             return;
-
+        // build reply node
         int replyNodeId = Integer.parseInt(reply[2]);
         InetSocketAddress replyNodeInfo = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
-
-        NodePair<Integer, InetSocketAddress> node = new NodePair<>(replyNodeId, replyNodeInfo);
-
+        NodePair<Integer, InetSocketAddress> replyNode = new NodePair<>(replyNodeId, replyNodeInfo);
         // update entry in finger table with index 'finger'
-        chord.setFingerTableEntry(finger, node);
-
+        node.setFingerTableEntry(finger, replyNode);
     }
 
     /**
@@ -79,31 +81,23 @@ public class ChordMaintainer implements Runnable {
      */
     private void checkPredecessor() {
         // node may not have a predecessor yet
-        if (chord.getPredecessor() == null)
+        if (node.getPredecessor().getKey() == null)
             return;
-        /*
-        boolean online = chord.getChannel().sendPingMessage(this.chord.getAddress(),
-                this.chord.getPredecessor().getValue());
-
+        // send message to predecessor
+        boolean online = node.getChannel().sendPingMessage(this.node.getAddress(),
+                this.node.getPredecessor().getValue());
         // if he does not respond set it as failed (null)
-        if (!online) {
-            System.out.println("PREDECESSOR SET NULL =======================================================");
-            chord.setPredecessor(null);
-        }
-        */
+        if (!online)
+            node.setPredecessor(new NodePair<>(null, null));
     }
 
     /**
      * Thread to maintain dynamic operations and failure resistance in chord node
-     * 
      */
     @Override
     public void run() {
-        System.out.println(" ---- STABLE");
         this.stabilize();
-        System.out.println(" ---- FIX FINGERS");
         this.fixFingers();
-        System.out.println(" ---- CHECK PREDECESSOR");
         this.checkPredecessor();
     }
 }

@@ -1,4 +1,6 @@
-package chord;
+package chord.communication;
+
+import utils.MyUtils;
 
 import utils.MyUtils;
 
@@ -6,12 +8,18 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import chord.ChordNode;
+import chord.NodePair;
+import chord.Utils;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChordChannel implements Runnable {
 
@@ -37,6 +45,7 @@ public class ChordChannel implements Runnable {
 
     /**
      * Constructor for the ChordChannel
+     * 
      * @param parent ChordNode that this channel is linked to
      */
     public ChordChannel(ChordNode parent) {
@@ -48,9 +57,10 @@ public class ChordChannel implements Runnable {
     /**
      * Opens the SSLServerSocket through which the ChordChannel will
      * function
+     * 
      * @param port Number of the port in which the socket will be opened
      */
-    protected void open(int port) {
+    public void open(int port) {
         // Keystore
         System.setProperty("javax.net.ssl.keyStore", "../keys/keystore" + (this.parent.getID() % 3 + 1));
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
@@ -75,7 +85,6 @@ public class ChordChannel implements Runnable {
     public void run() {
 
         while (true) {
-
             try {
                 SSLSocket socket = (SSLSocket) serverSocket.accept();
                 ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
@@ -85,14 +94,19 @@ public class ChordChannel implements Runnable {
                 handleMessage(socket, message);
                 socket.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Node disconnected while reading from socket");
             }
 
         }
 
     }
 
-    protected void handleMessage(SSLSocket socket, String message) {
+    /**
+     * 
+     * @param socket
+     * @param message
+     */
+    public void handleMessage(SSLSocket socket, String message) {
         new MessageHandler(socket, message, this, this.parent).start();
     }
 
@@ -101,7 +115,7 @@ public class ChordChannel implements Runnable {
      * @param address Address to which the message should be sent
      * @param message Message to be sent
      */
-    protected void sendMessage(InetSocketAddress address, String message) {
+    public void sendMessage(InetSocketAddress address, String message) {
 
             if (address.equals(this.parent.getAddress())) {
                 handleMessage(null, message);
@@ -119,7 +133,10 @@ public class ChordChannel implements Runnable {
                 socket.close();
 
             } catch (Exception e) {
-                e.printStackTrace();
+                // error in communication, maybe successor stopped working
+                // see type of message -> only if FINDSUCCESSOR
+                System.out.println("Unreachable " + address.getAddress() + ":" + address.getPort());
+                this.parent.removeNode(address);
             }
     }
 
@@ -146,7 +163,7 @@ public class ChordChannel implements Runnable {
      * @param requestedId Id that the origin Node requested
      * @param destination Contains the IP and Port of the ChordNode that will be receiving the request
      */
-    protected String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
+    public String[] sendFindSuccessorMessage(InetSocketAddress requestOrigin, int requestedId,
                                             InetSocketAddress destination) {
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
@@ -179,9 +196,9 @@ public class ChordChannel implements Runnable {
      * @param requestedId
      * @param successorId
      * @param successorNodeInfo
-     * @return
+     * @return Built message
      */
-    protected String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
+    public String createSuccessorFoundMessage(int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
         // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
         StringBuilder sb = new StringBuilder();
         sb.append("SUCCESSORFOUND").append(" ");
@@ -198,18 +215,16 @@ public class ChordChannel implements Runnable {
      * @param requestedId
      * @param successorNodeInfo
      */
-    protected void sendSuccessorFound(InetSocketAddress requestOrigin, int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
-        System.out.println("INSIDE sendSuccessorFound -> " + requestedId);
+    public void sendSuccessorFound(InetSocketAddress requestOrigin, int requestedId, int successorId, InetSocketAddress successorNodeInfo) {
         String message = this.createSuccessorFoundMessage(requestedId, successorId, successorNodeInfo);
         this.sendMessage(requestOrigin, message);
-        System.out.println(message + " -> " + requestOrigin.getHostString() + ":" + requestOrigin.getPort());
     }
 
     /**
      * Builds the joining message, used when a peer joins the chord
      * @return
      */
-    private String createJoiningMessage() {
+    public String createJoiningMessage() {
         // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
         StringBuilder sb = new StringBuilder();
         sb.append("JOINING").append(" ");
@@ -223,7 +238,7 @@ public class ChordChannel implements Runnable {
      * Creates and sends a joining message to the known node
      * @param knownNode
      */
-    protected void sendJoiningMessage(InetSocketAddress knownNode) {
+    public void sendJoiningMessage(InetSocketAddress knownNode) {
         String message = this.createJoiningMessage();
         this.sendMessage(knownNode, message);
     }
@@ -244,13 +259,21 @@ public class ChordChannel implements Runnable {
     }
 
     /**
-     *
+     * 
+     * @param newNode
+     * @param successorId
+     * @param successor
      */
-    protected void sendWelcomeMessage(InetSocketAddress newNode, int successorId, InetSocketAddress successor) {
+    public void sendWelcomeMessage(InetSocketAddress newNode, int successorId, InetSocketAddress successor) {
         String message = this.createWelcomeMessage(successorId, successor);
         this.sendMessage(newNode, message);
     }
 
+    /**
+     * 
+     * @param originInfo
+     * @return
+     */
     private String createGetPredecessorMessage(InetSocketAddress originInfo) {
         // Message format: GETPREDECESSOR <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
@@ -260,11 +283,22 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    protected void sendGetPredecessorMessage(InetSocketAddress origin, InetSocketAddress destination) {
+    /**
+     * 
+     * @param origin
+     * @param destination
+     */
+    public void sendGetPredecessorMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = this.createGetPredecessorMessage(origin);
         this.sendMessage(destination, message);
     }
 
+    /**
+     * 
+     * @param predecessorId
+     * @param predecessorAddress
+     * @return
+     */
     private String createPredecessorMessage(int predecessorId, InetSocketAddress predecessorAddress) {
         // Message format: PREDECESSOR <predecessorId> <predecessorIP> <predecessorPort>
         StringBuilder sb = new StringBuilder();
@@ -275,16 +309,32 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    protected void sendPredecessorMessage(int predecessorId, InetSocketAddress predecessorAddress, InetSocketAddress destination) {
+    /**
+     * 
+     * @param predecessorId
+     * @param predecessorAddress
+     * @param destination
+     */
+    public void sendPredecessorMessage(int predecessorId, InetSocketAddress predecessorAddress, InetSocketAddress destination) {
         String message = this.createPredecessorMessage(predecessorId, predecessorAddress);
         this.sendMessage(destination, message);
     }
 
-    protected void sendNullPredecessorMessage(InetSocketAddress destination) {
+    /**
+     * 
+     * @param destination
+     */
+    public void sendNullPredecessorMessage(InetSocketAddress destination) {
         String message = "PREDECESSOR NULL";
         this.sendMessage(destination, message);
     }
 
+    /**
+     * 
+     * @param originId
+     * @param origin
+     * @return
+     */
     private String createNotifyMessage(int originId, InetSocketAddress origin) {
         // Message format: NOTIFY <originId> <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
@@ -295,13 +345,22 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
-    protected void sendNotifyMessage(int originId, InetSocketAddress origin, InetSocketAddress destination) {
+    /**
+     * 
+     * @param originId
+     * @param origin
+     * @param destination
+     */
+    public void sendNotifyMessage(int originId, InetSocketAddress origin, InetSocketAddress destination) {
         String message = this.createNotifyMessage(originId, origin);
         this.sendMessage(destination, message);
-        System.out.println("NOTIFY SENT to:");
-        System.out.println(destination);
     }
 
+    /**
+     * 
+     * @param origin
+     * @return
+     */
     private String createPingMessage(InetSocketAddress origin) {
         // Message format: PING <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
@@ -311,12 +370,15 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
+    /**
+     * 
+     * @param origin
+     * @param destination
+     * @return
+     */
     public boolean sendPingMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createPingMessage(origin);
         this.sendMessage(destination, message);
-        System.out.println("============================ PING SENT");
-        System.out.println(destination);
-        System.out.println(this.messageQueue.size());
 
         synchronized (this.parent) {
             try {
@@ -337,6 +399,11 @@ public class ChordChannel implements Runnable {
         }
     }
 
+    /**
+     * 
+     * @param origin
+     * @return
+     */
     private String createPongMessage(InetSocketAddress origin) {
         // Message format: PONG <originIP> <originPort>
         StringBuilder sb = new StringBuilder();
@@ -346,21 +413,81 @@ public class ChordChannel implements Runnable {
         return sb.toString();
     }
 
+    /**
+     * 
+     * @param origin
+     * @param destination
+     */
     public void sendPongMessage(InetSocketAddress origin, InetSocketAddress destination) {
         String message = createPongMessage(origin);
         this.sendMessage(destination, message);
-
-        System.out.println("PONG SENT ===============================================================");
-        System.out.println(message);
-        System.out.println(destination);
-        System.out.println(this.messageQueue.size());
     }
 
+    /**
+     * 
+     * @param origin
+     * @return
+     */
+    private String createFindSuccessorListMessage(InetSocketAddress origin) {
+        // Message format: FINDSUCCESSORLIST <originIP> <originPort>
+        StringBuilder sb = new StringBuilder();
+        sb.append("FINDSUCCESSORLIST").append(" ");
+        sb.append(origin.getHostString()).append(" ");
+        sb.append(origin.getPort());
+        return sb.toString();
+    }
+
+    /**
+     * 
+     * @param origin
+     * @param destination
+     */
+    public void sendFindSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createFindSuccessorListMessage(origin);
+        this.sendMessage(destination, message);
+    }
+
+    /**
+     * 
+     * @param origin
+     * @return
+     */
+    private String createSuccessorListMessage(InetSocketAddress origin) {
+        CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList = this.parent.getSuccessorList();
+        // Message format: SUCCESSORLIST <successorList>
+        StringBuilder sb = new StringBuilder();
+        sb.append("SUCCESSORLIST").append(" ");
+        
+        for (NodePair<Integer, InetSocketAddress> successor : successorList) {
+            if (successor.getKey() == null)
+                continue;
+            sb.append(successor.getKey()).append(" ");
+            sb.append(successor.getValue().getHostString()).append(" ");
+            sb.append(successor.getValue().getPort()).append(" ");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 
+     * @param origin
+     * @param destination
+     */
+    public void sendSuccessorListMessage(InetSocketAddress origin, InetSocketAddress destination) {
+        String message = createSuccessorListMessage(origin);
+        this.sendMessage(destination, message);
+    }
+
+    /**
+     * 
+     * @param message
+     */
     public synchronized void addMessageQueue(Message message) {
         this.messageQueue.add(message);
     }
 
-    protected void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, String hash, byte[] data,
+    public void sendPutchunkMessage(String fileID, int chunkNumber, int replicationDegree, String hash, byte[] data,
                                        InetSocketAddress initiator, InetSocketAddress firstSuccessor,
                                        InetSocketAddress destination) {
         String message = createPutchunkMessage(fileID, chunkNumber, replicationDegree, hash, initiator, firstSuccessor, data);
