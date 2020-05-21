@@ -15,7 +15,7 @@ public class Application {
         String subProtocol = args[1];
 
         try {
-                Registry registry = LocateRegistry.getRegistry(null);
+                Registry registry = LocateRegistry.getRegistry("localhost");
                 PeerActionsInterface peer = (PeerActionsInterface) registry.lookup(peerAccessPoint);
 
                 String filePath;

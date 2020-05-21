@@ -82,22 +82,10 @@ public class ChordNode {
 
     private List<String> protocolPropagationWall;
 
-    /**
-     * Constructor without IP address
-     * @param id Chord Node identifier
-     * @param m Number of bits of the addressing space
-     * @throws UnknownHostException If unable to get localhost
-     */
     public ChordNode(int port) throws UnknownHostException {
         this(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), port));
     }
 
-    /**
-     * Constructor with IP address
-     * @param id Chord Node identifier
-     * @param m Number of bits of the addressing space
-     * @param address IP address to join the Chord 'network'
-     */
     public ChordNode(InetSocketAddress address) {
         this.id = Utils.hash(address.getHostString() + ":" + address.getPort());
         this.r = (int) Math.ceil(this.m / 3.0);
@@ -121,8 +109,6 @@ public class ChordNode {
 
     /**
      * Constructor with IP address
-     * @param id Chord Node identifier
-     * @param m Number of bits of the addressing space
      * @param address IP address of this Chord node
      * @param knownAddress IP address of a node on the Chord 'network' to be joined
      */
@@ -132,7 +118,7 @@ public class ChordNode {
         this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
-//        this.peer = new Peer()
+        this.peer = new Peer(this);
         this.protocolPropagationWall = Collections.synchronizedList(new ArrayList<>());
 
         // creates the ChordNode's scheduled thread executor
@@ -331,8 +317,6 @@ public class ChordNode {
      * node with the greatest identifier that is lower than 'id'. This is achieved
      * by an enhancement of the original method, i.e. cross referencing the finger
      * table with the successor list.
-     * 
-     * @param id Identifier of the wanted node's closest preceding node
      */
     public void getSuccessorsPredecessor() {
         NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
