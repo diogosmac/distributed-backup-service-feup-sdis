@@ -58,8 +58,8 @@ public class SavedFile implements java.io.Serializable {
             while ((numBytes = bis.read(buffer, 0, MyUtils.CHUNK_SIZE)) > 0) {
                 byte[] body = Arrays.copyOf(buffer, numBytes);
 
-                chunkCounter++;
                 Chunk chunk = new Chunk(this.id, chunkCounter, body, numBytes);
+                chunkCounter++;
                 this.chunks.add(chunk);
                 buffer = new byte[MyUtils.CHUNK_SIZE];
             }
