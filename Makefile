@@ -2,7 +2,7 @@ JC = javac
 OUT_DIR := build/
 
 all: mkdir
-	$(JC) -d $(OUT_DIR) src/*.java src/*/*.java
+	$(JC) -d $(OUT_DIR) src/*.java src/*/*.java src/*/*/*.java
 
 mkdir:
 	@mkdir -p $(OUT_DIR)
