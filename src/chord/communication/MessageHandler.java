@@ -215,12 +215,8 @@ public class MessageHandler extends Thread {
                 InetSocketAddress initiatorAdd = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
                 InetSocketAddress firstSuccAdd = new InetSocketAddress(args[6], Integer.parseInt(args[7]));
                 String hash = args[8];
-                byte[] data = MyUtils.convertStringToByteArray(args[9]);
-
-                System.out.println("\n\n\n\n");
-                System.out.println("<<< PUTCHUNK Handler >>>");
-                System.out.println("Received data size: " + data.length);
-                System.out.println("\n\n\n\n");
+                String dataStr = message.substring(message.indexOf(args[9]));
+                byte[] data = MyUtils.convertStringToByteArray(dataStr);
 
                 // If the request origin == this node => Send same message to successor
                 if (initiatorAdd.equals(this.node.getAddress())) {

@@ -98,10 +98,9 @@ public class ChordChannel implements Runnable {
 //                String message = (String) ois.readObject();
 //                ois.close();
 
-                BufferedInputStream bis = new BufferedInputStream(is);
-                byte[] messageBytes = bis.readAllBytes();
-                String message = MyUtils.convertByteArrayToString(messageBytes);
-                bis.close();
+                DataInputStream dis = new DataInputStream(is);
+                String message = dis.readUTF();
+                dis.close();
 
                 handleMessage(socket, message);
                 socket.close();
@@ -154,11 +153,10 @@ public class ChordChannel implements Runnable {
 //                oos.flush();
 //                oos.close();
 
-                BufferedOutputStream bos = new BufferedOutputStream(os);
-                byte[] messageBytes = MyUtils.convertStringToByteArray(message);
-                bos.write(messageBytes, 0, messageBytes.length);
-                bos.flush();
-                bos.close();
+                DataOutputStream dos = new DataOutputStream(os);
+                dos.writeUTF(message);
+                dos.flush();
+                dos.close();
 
                 socket.close();
 
