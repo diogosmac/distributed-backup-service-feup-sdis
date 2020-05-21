@@ -24,7 +24,7 @@ public class ChordNode {
     /**
      * Number of bits of the addressing space
      */
-    private final int m;
+    private final int m = Utils.m;
 
     /**
      * The successorList's size, r < m
@@ -72,8 +72,8 @@ public class ChordNode {
      * @param m Number of bits of the addressing space
      * @throws UnknownHostException If unable to get localhost
      */
-    public ChordNode(Integer id, int m) throws UnknownHostException {
-        this(id, m, new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), 30000 + id));
+    public ChordNode(int port) throws UnknownHostException {
+        this(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), port));
     }
 
     /**
@@ -82,10 +82,8 @@ public class ChordNode {
      * @param m Number of bits of the addressing space
      * @param address IP address to join the Chord 'network'
      */
-    public ChordNode(Integer id, int m, InetSocketAddress address) {
-
-        this.id = id;
-        this.m = m;
+    public ChordNode(InetSocketAddress address) {
+        this.id = Utils.hash(address.getHostString() + ":" + address.getPort());
         this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
@@ -110,10 +108,9 @@ public class ChordNode {
      * @param address IP address to join the Chord 'network'
      * @param knownAddress 
      */
-    public ChordNode(Integer id, int m, InetSocketAddress address, InetSocketAddress knownAddress) {
+    public ChordNode(InetSocketAddress address, InetSocketAddress knownAddress) {
 
-        this.id = id;
-        this.m = m;
+        this.id = Utils.hash(address.getHostString() + ":" + address.getPort());
         this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;

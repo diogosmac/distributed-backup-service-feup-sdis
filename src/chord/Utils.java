@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
  * chord maintaining operations
  */
 public class Utils {
+
+    public static final int m = 16;
     
     /**
      * This method checks if an integer number is between in interval
@@ -42,7 +44,7 @@ public class Utils {
      */
     public static Integer hash(String str) {
         ByteBuffer wrapped = ByteBuffer.wrap(sha1(str));
-		return wrapped.getInt();
+		return Math.floorMod(wrapped.getInt(), (int) Math.pow(2, m));
     }
 
     /**

@@ -72,7 +72,6 @@ public class MessageHandler extends Thread {
         String[] args = message.split(" ");
         switch (args[0]) {
             case "FINDSUCCESSOR": {
-                System.out.println("[FINDSUCCESSOR]");
                 // Message format: FINDSUCCESSOR <requestedId> <originIP> <originPort>
                 int id = Integer.parseInt(args[1]);
                 InetSocketAddress fsAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
@@ -81,7 +80,6 @@ public class MessageHandler extends Thread {
             }
 
             case "SUCCESSORFOUND": {
-                System.out.println("[SUCCESSORFOUND]");
                 synchronized (this.node) {
                     InetSocketAddress sfAddress = getAddress(socket);
                     this.ch.addMessageQueue(new Message(sfAddress, message));
@@ -91,7 +89,6 @@ public class MessageHandler extends Thread {
             }
 
             case "JOINING": {
-                System.out.println("[JOINING]");
                 // Message format: JOINING <newNodeId> <newNodeIp> <newNodePort>
                 int newNodeId = Integer.parseInt(args[1]);
                 // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp>
@@ -107,8 +104,6 @@ public class MessageHandler extends Thread {
             }
 
             case "WELCOME": {
-                System.out.println("[WELCOME]");
-
                 // Message format: WELCOME <successorId> <successorIP> <successorPort>
                 int successorId = Integer.parseInt(args[1]);
                 InetSocketAddress successorInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
@@ -119,7 +114,6 @@ public class MessageHandler extends Thread {
             }
 
             case "GETPREDECESSOR": {
-                System.out.println("[GETPREDECESSOR]");
                 NodePair<Integer, InetSocketAddress> predecessor = this.node.getPredecessor();
                 InetSocketAddress destination = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
 
@@ -131,8 +125,6 @@ public class MessageHandler extends Thread {
             }
 
             case "PREDECESSOR": {
-                System.out.println("[PREDECESSOR]");
-
                 synchronized (this.node) {
                     // get 'chord's successor's predecessor
                     NodePair<Integer, InetSocketAddress> successor = this.node.getSuccessor();
@@ -165,7 +157,6 @@ public class MessageHandler extends Thread {
             }
 
             case "NOTIFY": {
-                System.out.println("[NOTIFY]");
                 int originId = Integer.parseInt(args[1]);
                 InetSocketAddress originInfo = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 this.node.notify(new NodePair<>(originId, originInfo));
@@ -173,14 +164,12 @@ public class MessageHandler extends Thread {
             }
 
             case "PING": {
-                System.out.println("[PING]");
                 InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
                 this.ch.sendPongMessage(this.node.getAddress(), originInfo);
                 break;
             }
 
             case "PONG": {
-                System.out.println("[PONG]");
                 synchronized (this.node) {
                     InetSocketAddress sfAddress = getAddress(socket);
                     this.ch.addMessageQueue(new Message(sfAddress, message));
@@ -190,14 +179,12 @@ public class MessageHandler extends Thread {
             }
 
             case "FINDSUCCESSORLIST": {
-                System.out.println("[FINDSUCCESSORLIST]");
                 InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
                 this.ch.sendSuccessorListMessage(this.node.getAddress(), originInfo);
                 break;
             }
 
             case "SUCCESSORLIST": {
-                System.out.println("[SUCCESSORLIST]");
                 NodePair<Integer, InetSocketAddress> successor = this.node.getSuccessor();
                 this.node.getSuccessorList().clear();
                 this.node.addSuccessor(successor);
