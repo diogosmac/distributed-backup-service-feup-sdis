@@ -279,6 +279,7 @@ public class MessageHandler extends Thread {
 
             }
             case "DELETE": {
+                System.out.println("[DELETE]");
                 // Message format: DELETE <origin-ip> <origin-port> <file-id>
                 InetSocketAddress origin = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
 
@@ -292,6 +293,7 @@ public class MessageHandler extends Thread {
             }
 
             case "REMOVED": {
+                System.out.println("[REMOVED]");
                 // Message format: REMOVED <fileID> <chunkNumber>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
@@ -308,6 +310,7 @@ public class MessageHandler extends Thread {
             }
 
             case "ENSURERD": {
+                System.out.println("[ENSURERD]");
                 // Message format: ENSURERD <originIP> <originPort> <hash> <fileID> <chunkNumber>
                 InetSocketAddress initiatorAdd = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
                 String hash = args[3];
@@ -335,6 +338,7 @@ public class MessageHandler extends Thread {
             }
 
             case "SAVECHUNK": {
+                System.out.println("[SAVECHUNK]");
                 // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <data>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
@@ -362,6 +366,7 @@ public class MessageHandler extends Thread {
             }
 
             case "GETCHUNK": {
+                System.out.println("[GETCHUNK]");
                 // Message format: GETCHUNK <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <fileID> <chunkNumber> <hash>
                 InetSocketAddress firstSuccessor = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
                 String fileID = args[5];
@@ -393,10 +398,12 @@ public class MessageHandler extends Thread {
             }
 
             case "CHUNK": {
+                System.out.println("[CHUNK]");
                 // Message format: CHUNK <fileID> <chunkNumber> <data>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
-                byte[] data = MyUtils.convertStringToByteArray(args[3]);
+                String dataStr = message.substring(message.indexOf(args[3]));
+                byte[] data = MyUtils.convertStringToByteArray(dataStr);
                 this.node.getPeer().getFileRestorer().saveRestoredChunk(fileID, chunkNumber, data);
             }
 

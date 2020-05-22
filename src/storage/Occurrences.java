@@ -161,16 +161,16 @@ public class Occurrences {
         return this.occurrenceTable.containsKey(fileID);
     }
 
-    public void addFile(String fileID, String fileName, int desiredReplicationDegree) {
+    public synchronized void addFile(String fileID, String fileName, int desiredReplicationDegree) {
         this.occurrenceTable.put(fileID, new OccurrenceInfo(fileName, desiredReplicationDegree));
     }
 
-    public void updateFileChunk(String fileID, int chunkNumber, int missing) {
+    public synchronized void updateFileChunk(String fileID, int chunkNumber, int missing) {
         addChunkSlot(fileID, chunkNumber);
         this.occurrenceTable.get(fileID).updateReplicationDegree(chunkNumber, missing);
     }
 
-    public void addChunkSlot(String fileID, int chunkNumber) {
+    public synchronized void addChunkSlot(String fileID, int chunkNumber) {
         this.occurrenceTable.get(fileID).addChunkSlot(chunkNumber);
     }
 

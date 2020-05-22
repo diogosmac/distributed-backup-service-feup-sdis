@@ -506,6 +506,12 @@ public class ChordNode {
     public void initiateDelete(String filePath) {
         SavedFile sf = new SavedFile(filePath);
         String fileID = sf.getId();
+
+        if (fileID == null) {
+            System.out.println("File does not exist.");
+            return;
+        }
+
         deleteFile(fileID);
         this.channel.sendDeleteMessage(this.getAddress(), fileID, this.getSuccessorAddress());
     }
@@ -517,7 +523,6 @@ public class ChordNode {
             return;
         }
         this.peer.getFileOccurrences().deleteFile(fileID);
-
     }
 
     public void placeWall(String hash) {

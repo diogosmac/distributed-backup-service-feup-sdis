@@ -62,7 +62,7 @@ public class ChunkStorage {
 //        }
     }
 
-    public int addChunk(Chunk chunk, InetSocketAddress initiator) {
+    public synchronized int addChunk(Chunk chunk, InetSocketAddress initiator) {
         if (chunk.getSize() > this.availableMemory)
             return 1;
 
@@ -109,7 +109,7 @@ public class ChunkStorage {
         return 0;
     }
 
-    public Chunk getChunk(String fileID, int chunkNumber) {
+    public synchronized Chunk getChunk(String fileID, int chunkNumber) {
 
         String chunkKey = buildChunkKey(fileID, chunkNumber);
         if (!this.chunkStorage.containsKey(chunkKey))
@@ -130,12 +130,12 @@ public class ChunkStorage {
 
     }
 
-    public boolean hasChunk(String fileID, int chunkNumber) {
+    public synchronized boolean hasChunk(String fileID, int chunkNumber) {
         String chunkKey = buildChunkKey(fileID, chunkNumber);
         return this.chunkStorage.containsKey(chunkKey);
     }
 
-    public void deleteChunk(String fileID, int chunkNumber) {
+    public synchronized void deleteChunk(String fileID, int chunkNumber, boolean cleanDataStructure) {
 
         String chunkKey = buildChunkKey(fileID, chunkNumber);
         String filePath = chunkKey + MyUtils.CHUNK_FILE_EXTENSION;
@@ -147,7 +147,9 @@ public class ChunkStorage {
         if (file.delete()) {
             this.availableMemory += fileSize;
             this.chunkStorage.remove(chunkKey);
-            this.fileChunks.get(fileID).remove((Integer) chunkNumber);
+            if (cleanDataStructure) {
+                this.fileChunks.get(fileID).remove((Integer) chunkNumber);
+            }
         }
         else {
             System.out.println("ERROR: Couldn't delete chunk #" + chunkNumber + " of file with ID " + fileID);
@@ -155,22 +157,18 @@ public class ChunkStorage {
 
     }
 
-    public boolean deleteFile(String fileID) {
+    public synchronized boolean deleteFile(String fileID) {
 
         if (!this.fileChunks.containsKey(fileID))
             return true;
 
-        for (int chunkNum : this.fileChunks.get(fileID)) {
-            deleteChunk(fileID, chunkNum);
+        List<Integer> listChunks = this.fileChunks.get(fileID);
+        for (int chunkNum : listChunks) {
+            deleteChunk(fileID, chunkNum, false);
         }
 
-        if (this.fileChunks.get(fileID).isEmpty()) {
-            this.fileChunks.remove(fileID);
-            return true;
-        }
-
-        return false;
-
+        this.fileChunks.remove(fileID);
+        return true;
     }
 
     private String buildRemovedMessage(String fileID, int chunkNumber) {
@@ -178,7 +176,7 @@ public class ChunkStorage {
         return String.join(" ", "REMOVED", fileID, Integer.toString(chunkNumber));
     }
 
-    public int reclaimSpace(int amountOfSpace) {
+    public synchronized int reclaimSpace(int amountOfSpace) {
 
         int spaceInBytes = amountOfSpace * 1000;
 

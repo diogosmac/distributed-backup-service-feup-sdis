@@ -84,11 +84,11 @@ public class Peer implements PeerActionsInterface {
         return header + peerMemoryInfo + backupFilesInfo + storedChunksInfo;
     }
 
-    public ChunkStorage getChunkStorage() { return this.chunkStorage; }
+    public synchronized ChunkStorage getChunkStorage() { return this.chunkStorage; }
 
-    public Occurrences getFileOccurrences() { return this.fileOccurrences; }
+    public synchronized Occurrences getFileOccurrences() { return this.fileOccurrences; }
 
-    public FileRestorer getFileRestorer() { return this.fileRestorer; }
+    public synchronized FileRestorer getFileRestorer() { return this.fileRestorer; }
 
 //    public void saveReceivedChunkTime(String fileId, int chunkNumber) {
 //        String key = String.join(":", fileId, Integer.toString(chunkNumber));

@@ -73,7 +73,6 @@ public class MyUtils {
             return MyUtils.sha256(fileName + "-" + lastModified + "-" + owner);
 
         } catch (IOException e) {
-            e.printStackTrace();
             return null;
         }
 
