@@ -11,11 +11,9 @@ import chord.ChordNode;
 import chord.NodePair;
 import chord.Utils;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -83,15 +81,32 @@ public class ChordChannel implements Runnable {
     public void run() {
 
         while (true) {
-            try {
-                SSLSocket socket = (SSLSocket) serverSocket.accept();
-                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 
-                String message = (String) ois.readObject();
-                ois.close();
+            try {
+
+                SSLSocket socket = (SSLSocket) serverSocket.accept();
+                InputStream is = socket.getInputStream();
+
+//                DataInputStream dis = new DataInputStream(is);
+//                int length = dis.readInt();
+//                byte[] messageBytes = new byte[length];
+//                dis.readFully(messageBytes, 0, messageBytes.length);
+//                String message = MyUtils.convertByteArrayToString(messageBytes);
+//                dis.close();
+
+//                ObjectInputStream ois = new ObjectInputStream(is);
+//                String message = (String) ois.readObject();
+//                ois.close();
+
+                DataInputStream dis = new DataInputStream(is);
+                String message = dis.readUTF();
+                dis.close();
+
                 handleMessage(socket, message);
                 socket.close();
+
             } catch (Exception e) {
+                e.printStackTrace();
                 System.err.println("Node disconnected while reading from socket");
             }
 
@@ -121,12 +136,27 @@ public class ChordChannel implements Runnable {
             }
 
             try {
+
                 SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
                 socket.connect(address, timeout);
-
                 OutputStream os = socket.getOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(os);
-                oos.writeObject(message);
+
+//                DataOutputStream dos = new DataOutputStream(os);
+//                byte[] messageBytes = MyUtils.convertStringToByteArray(message);
+//                dos.writeInt(messageBytes.length);
+//                dos.write(messageBytes, 0, messageBytes.length);
+//                dos.flush();
+//                dos.close();
+
+//                ObjectOutputStream oos = new ObjectOutputStream(os);
+//                oos.writeObject(message);
+//                oos.flush();
+//                oos.close();
+
+                DataOutputStream dos = new DataOutputStream(os);
+                dos.writeUTF(message);
+                dos.flush();
+                dos.close();
 
                 socket.close();
 

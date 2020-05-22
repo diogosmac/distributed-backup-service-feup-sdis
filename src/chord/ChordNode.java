@@ -5,7 +5,6 @@ import storage.Chunk;
 import storage.SavedFile;
 import utils.MyUtils;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -91,7 +90,7 @@ public class ChordNode {
         this.r = (int) Math.ceil(this.m / 3.0);
         this.fingerTable = new FingerTable(m);
         this.address = address;
-//        this.peer = new Peer()
+        this.peer = new Peer(this);
         this.protocolPropagationWall = Collections.synchronizedList(new ArrayList<>());
 
         // create the chord ring
