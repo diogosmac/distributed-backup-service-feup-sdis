@@ -379,9 +379,11 @@ public class MessageHandler extends Thread {
                 // If ha chunk stored, sends it to the initiator; Ends chain of GetChunk
                 if (this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
                     InetSocketAddress initiator = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                    Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
 
-                    this.channel.sendChunkMessage(fileID, chunkNumber, ck.getData(), initiator);
+                    Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
+                    byte [] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
+
+                    this.channel.sendChunkMessage(fileID, chunkNumber, data, initiator);
                 }
                 else {
                     if (firstSuccessor.equals(this.node.getAddress())) {
