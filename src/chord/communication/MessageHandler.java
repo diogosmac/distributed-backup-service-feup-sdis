@@ -321,7 +321,9 @@ public class MessageHandler extends Thread {
 
                 if (this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
                     Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
-                    this.channel.sendSaveChunkMessage(fileID, chunkNumber, this.node.getAddress(), ck.getData(), this.node.getSuccessorAddress());
+                    byte [] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
+
+                    this.channel.sendSaveChunkMessage(fileID, chunkNumber, this.node.getAddress(), data, this.node.getSuccessorAddress());
                 }
                 else {
                     if (initiatorAdd.equals(this.node.getAddress())) {
@@ -348,7 +350,8 @@ public class MessageHandler extends Thread {
                 InetSocketAddress initiatorAddress = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
 
                 if (!this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
-                    byte [] data = MyUtils.convertStringToByteArray(args[6]);
+                    String dataStr = message.substring(message.indexOf(args[6]));
+                    byte[] data = MyUtils.convertStringToByteArray(dataStr);
                     Chunk ck = new Chunk(fileID, chunkNumber, data, data.length);
                     this.node.getPeer().getChunkStorage().addChunk(ck, initiatorAddress);
                 } else {

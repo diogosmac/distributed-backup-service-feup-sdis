@@ -17,7 +17,7 @@ public class MyUtils {
     public final static int BASE_PORT = 1904;
 
     public final static int CHUNK_SIZE = 15 * 1000;
-    public final static long PEER_MAX_MEMORY_USE = CHUNK_SIZE * 10;
+    public final static long PEER_MAX_MEMORY_USE = CHUNK_SIZE * 50;
     // allows for 1000 bytes of header (exaggeration for safety)
     public final static int MESSAGE_SIZE = CHUNK_SIZE + 1000;
 
