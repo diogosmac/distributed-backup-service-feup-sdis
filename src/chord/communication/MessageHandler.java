@@ -290,6 +290,7 @@ public class MessageHandler extends Thread {
                 if (!origin.equals(this.node.getAddress())) {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
+                break;
             }
 
             case "REMOVED": {
@@ -307,6 +308,7 @@ public class MessageHandler extends Thread {
                     InetSocketAddress succAddress = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
                     this.channel.sendEnsureRDMessage(succAddress, fileID, chunkNumber, succAddress);
                 }
+                break;
             }
 
             case "ENSURERD": {
@@ -335,6 +337,7 @@ public class MessageHandler extends Thread {
 
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
+                break;
             }
 
             case "SAVECHUNK": {
@@ -363,6 +366,7 @@ public class MessageHandler extends Thread {
 
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
+                break;
             }
 
             case "GETCHUNK": {
@@ -395,6 +399,7 @@ public class MessageHandler extends Thread {
                     // Continues chain
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
+                break;
             }
 
             case "CHUNK": {
@@ -405,6 +410,7 @@ public class MessageHandler extends Thread {
                 String dataStr = message.substring(message.indexOf(args[3]));
                 byte[] data = MyUtils.convertStringToByteArray(dataStr);
                 this.node.getPeer().getFileRestorer().saveRestoredChunk(fileID, chunkNumber, data);
+                break;
             }
 
 

@@ -522,6 +522,7 @@ public class ChordNode {
             System.out.println("Error deleting file with ID " + fileID);
             return;
         }
+        System.out.println("File with id=" + fileID + " was removed!");
         this.peer.getFileOccurrences().deleteFile(fileID);
     }
 

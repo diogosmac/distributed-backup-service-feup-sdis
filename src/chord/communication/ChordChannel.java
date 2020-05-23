@@ -528,9 +528,9 @@ public class ChordChannel implements Runnable {
                 fileID + " " +
                 chunkNumber + " " +
                 replicationDegree + " " +
-                initiator.getHostName() + " " +
+                initiator.getHostString() + " " +
                 initiator.getPort() + " " +
-                firstSuccessor.getHostName() + " " +
+                firstSuccessor.getHostString() + " " +
                 firstSuccessor.getPort() + " " +
                 hash + " " +
                 MyUtils.convertByteArrayToString(data);

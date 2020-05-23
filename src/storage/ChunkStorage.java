@@ -70,7 +70,8 @@ public class ChunkStorage {
         int chunkNumber = chunk.getNum();
 
         if (!this.fileChunks.containsKey(fileID)) {
-            this.fileChunks.put(fileID, new ArrayList<>(chunkNumber));
+            this.fileChunks.put(fileID, new ArrayList<>());
+            this.fileChunks.get(fileID).add(chunkNumber);
         }
         else {
             List<Integer> presentChunks = this.fileChunks.get(fileID);
@@ -137,14 +138,19 @@ public class ChunkStorage {
 
     public synchronized void deleteChunk(String fileID, int chunkNumber, boolean cleanDataStructure) {
 
+        System.out.println("Trying to delete file with id=" + fileID + ", chunk #" + chunkNumber);
+
         String chunkKey = buildChunkKey(fileID, chunkNumber);
         String filePath = chunkKey + MyUtils.CHUNK_FILE_EXTENSION;
 
         File file = new File(dirPath + filePath);
 
+        System.out.println("File Path: " + dirPath + filePath);
+
         long fileSize = file.length();
 
         if (file.delete()) {
+            System.out.println("Chunk Deleted");
             this.availableMemory += fileSize;
             this.chunkStorage.remove(chunkKey);
             if (cleanDataStructure) {
@@ -159,10 +165,15 @@ public class ChunkStorage {
 
     public synchronized boolean deleteFile(String fileID) {
 
-        if (!this.fileChunks.containsKey(fileID))
+        if (!this.fileChunks.containsKey(fileID)) {
+            System.out.println("I DONT HAVE IT");
             return true;
+        }
 
         List<Integer> listChunks = this.fileChunks.get(fileID);
+        System.out.println("Number chunks to delete:" + listChunks.size());
+        System.out.println(listChunks);
+
         for (int chunkNum : listChunks) {
             deleteChunk(fileID, chunkNum, false);
         }
@@ -200,7 +211,7 @@ public class ChunkStorage {
                 System.out.println("Deleted chunk backup initiated by:");
                 for (InetSocketAddress initiator : initiators) {
                     this.peer.getNode().sendMessage(initiator, removedMessage);
-                    System.out.println("\t" + initiator.getHostName() + ":" + initiator.getPort());
+                    System.out.println("\t" + initiator.getHostString() + ":" + initiator.getPort());
                 }
 
                 this.chunkStorage.remove(chunkKey);
@@ -266,7 +277,7 @@ public class ChunkStorage {
                     "Backup Initiators:"));
 
             for (InetSocketAddress initiator : initiators) {
-                chunkInfo.append("\n|\t\t").append(initiator.getHostName()).append(':').append(initiator.getPort());
+                chunkInfo.append("\n|\t\t").append(initiator.getHostString()).append(':').append(initiator.getPort());
             }
 
             infoBody.append(chunkInfo).append('\n');
