@@ -562,25 +562,27 @@ public class ChordChannel implements Runnable {
         this.sendMessage(destination, message);
     }
 
-    private String createEnsureRDMessage(InetSocketAddress origin, String fileID, int chunkNumber) {
-        // Message format: ENSURERD <originIP> <originPort> <hash> <fileID> <chunkNumber>
-        String hash = MyUtils.sha256(origin.getHostString() + fileID + chunkNumber + System.currentTimeMillis());
+    private String createEnsureRDMessage(InetSocketAddress initiator, InetSocketAddress firstSuccessor, String fileID, int chunkNumber) {
+        // Message format: ENSURERD <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <hash> <fileID> <chunkNumber>
+        String hash = MyUtils.sha256(firstSuccessor.getHostString() + fileID + chunkNumber + System.currentTimeMillis());
         return "ENSURERD" + " " +
-                origin.getHostString() + " " +
-                origin.getPort() + " " +
+                initiator.getHostString() + " " +
+                initiator.getPort() + " " +
+                firstSuccessor.getHostString() + " " +
+                firstSuccessor.getPort() + " " +
                 hash + " " +
                 fileID + " " +
                 chunkNumber;
     }
 
-    public void sendEnsureRDMessage(InetSocketAddress firstSuccessor, String fileID, int chunkNumber, InetSocketAddress destination) {
-        String message = this.createEnsureRDMessage(firstSuccessor, fileID, chunkNumber);
+    public void sendEnsureRDMessage(InetSocketAddress initiator, InetSocketAddress firstSuccessor, String fileID, int chunkNumber, InetSocketAddress destination) {
+        String message = this.createEnsureRDMessage(initiator, firstSuccessor, fileID, chunkNumber);
         this.sendMessage(destination, message);
     }
 
     private String createSaveChunkMessage(String fileID, int chunkNumber,
-                                          InetSocketAddress initiator, byte[] data) {
-        // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <data>
+                                          InetSocketAddress initiator, InetSocketAddress firstSuccessor, byte[] data) {
+        // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <data>
         Integer hash = Utils.hash("Savechunk" + fileID + chunkNumber + System.currentTimeMillis());
         return "SAVECHUNK" + " " +
                 fileID + " " +
@@ -588,12 +590,14 @@ public class ChordChannel implements Runnable {
                 hash + " " +
                 initiator.getHostString() + " " +
                 initiator.getPort() + " " +
+                firstSuccessor.getHostString() + " " +
+                firstSuccessor.getPort() + " " +
                 MyUtils.convertByteArrayToString(data);
     }
 
-    public void sendSaveChunkMessage(String fileID, int chunkNumber, InetSocketAddress initiator,
+    public void sendSaveChunkMessage(String fileID, int chunkNumber, InetSocketAddress initiator, InetSocketAddress firstSuccessor,
                                      byte[] data, InetSocketAddress destination) {
-        String message = this.createSaveChunkMessage(fileID, chunkNumber, initiator, data);
+        String message = this.createSaveChunkMessage(fileID, chunkNumber, initiator, firstSuccessor, data);
         this.sendMessage(destination, message);
     }
 
@@ -626,5 +630,17 @@ public class ChordChannel implements Runnable {
     public void sendChunkMessage(String fileID, int chunkNumber, byte[] data, InetSocketAddress destination) {
         String message = this.createChunkMessage(fileID, chunkNumber, data);
         this.sendMessage(destination, message);
+    }
+
+    private String createChunkSavedMessage(String fileID, int chunkNumber) {
+        // Message format: CHUNKSAVED <fileID> <chunkNumber>
+        return "CHUNKSAVED" + " " +
+                fileID + " " +
+                chunkNumber;
+    }
+
+    public void sendChunkSavedMessage(String fileID, int chunkNumber, InetSocketAddress initiatorAddress) {
+        String message = this.createChunkSavedMessage(fileID, chunkNumber);
+        this.sendMessage(initiatorAddress, message);
     }
 }

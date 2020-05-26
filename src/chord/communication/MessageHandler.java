@@ -306,27 +306,28 @@ public class MessageHandler extends Thread {
                     Integer chunkID = Utils.hash(fileID + ":" + chunkNumber);
                     String[] reply = this.node.findSuccessor(chunkID);
                     InetSocketAddress succAddress = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
-                    this.channel.sendEnsureRDMessage(succAddress, fileID, chunkNumber, succAddress);
+                    this.channel.sendEnsureRDMessage(this.node.getAddress(), succAddress, fileID, chunkNumber, succAddress);
                 }
                 break;
             }
 
             case "ENSURERD": {
                 System.out.println("[ENSURERD]");
-                // Message format: ENSURERD <originIP> <originPort> <hash> <fileID> <chunkNumber>
+                // Message format: ENSURERD <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <hash> <fileID> <chunkNumber>
                 InetSocketAddress initiatorAdd = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                String hash = args[3];
-                String fileID = args[4];
-                int chunkNumber = Integer.parseInt(args[5]);
+                InetSocketAddress firstSuccessorAdd = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
+                String hash = args[5];
+                String fileID = args[6];
+                int chunkNumber = Integer.parseInt(args[7]);
 
                 if (this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
                     Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
                     byte [] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
 
-                    this.channel.sendSaveChunkMessage(fileID, chunkNumber, this.node.getAddress(), data, this.node.getSuccessorAddress());
+                    this.channel.sendSaveChunkMessage(fileID, chunkNumber, initiatorAdd, this.node.getSuccessorAddress(), data, this.node.getSuccessorAddress());
                 }
                 else {
-                    if (initiatorAdd.equals(this.node.getAddress())) {
+                    if (firstSuccessorAdd.equals(this.node.getAddress())) {
                         if (this.node.hitWall(hash)) {
                             // Message has cycled, and came back => It wasnt possible to keep RD
                             System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID + ":");
@@ -344,19 +345,21 @@ public class MessageHandler extends Thread {
 
             case "SAVECHUNK": {
                 System.out.println("[SAVECHUNK]");
-                // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <data>
+                // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <data>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
                 InetSocketAddress initiatorAddress = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
+                InetSocketAddress firstSuccessor = new InetSocketAddress(args[6], Integer.parseInt(args[7]));
 
                 if (!this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
-                    String dataStr = message.substring(message.indexOf(args[6]));
+                    String dataStr = message.substring(message.indexOf(args[8]));
                     byte[] data = MyUtils.convertStringToByteArray(dataStr);
                     Chunk ck = new Chunk(fileID, chunkNumber, data, data.length);
                     this.node.getPeer().getChunkStorage().addChunk(ck, initiatorAddress);
+                    this.channel.sendChunkSavedMessage(fileID, chunkNumber, initiatorAddress);
                 } else {
                     String hash = args[3];
-                    if (initiatorAddress.equals(this.node.getAddress())) {
+                    if (firstSuccessor.equals(this.node.getAddress())) {
                         if (this.node.hitWall(hash)) {
                             // Message has cycled, and came back => It wasnt possible to keep RD
                             System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID  + ":");
@@ -415,6 +418,16 @@ public class MessageHandler extends Thread {
                 String dataStr = message.substring(message.indexOf(args[3]));
                 byte[] data = MyUtils.convertStringToByteArray(dataStr);
                 this.node.getPeer().getFileRestorer().saveRestoredChunk(fileID, chunkNumber, data);
+                break;
+            }
+
+            case "CHUNKSAVED": {
+                System.out.println("[CHUNKSAVED]");
+                // Message format: CHUNKSAVED <fileID> <chunkNumber>
+                String fileID = args[1];
+                int chunkNumber = Integer.parseInt(args[2]);
+
+                this.node.getPeer().getFileOccurrences().incrementReplicationDegree(fileID, chunkNumber, 1);
                 break;
             }
 
