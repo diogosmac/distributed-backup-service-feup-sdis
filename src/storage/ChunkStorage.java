@@ -3,11 +3,10 @@ package storage;
 import peer.Peer;
 import utils.MyUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +23,7 @@ public class ChunkStorage {
 
     private final Peer peer;
     private final String dirPath;
+    private final String infoPath;
     private long availableMemory;
 
     public ChunkStorage(Peer peer) {
@@ -32,34 +32,109 @@ public class ChunkStorage {
         this.peer = peer;
         this.availableMemory = MyUtils.PEER_MAX_MEMORY_USE;
         this.dirPath = MyUtils.getBackupPath(peer);
+        this.infoPath = MyUtils.getChunkInfoPath(peer);
         this.loadChunks();
     }
 
-    private void loadChunks() {
-//        int i = 0;
-//        File dir = new File(dirPath);
-//        File[] dirListing = dir.listFiles();
-//        if (dirListing != null) {
-//            for (File file : dirListing) {
-//                String fileName = file.getName();
-//                String fileId = fileName.substring(0, fileName.lastIndexOf("_"));
-//
-//                this.availableMemory -= file.length();
-//
-//                if (!this.chunkStorage.containsKey(fileId))
-//                    this.chunkStorage.put(fileId, new ArrayList<>());
-//                this.chunkStorage.get(fileId).add(file.getName());
-//                i++;
-//            }
-//        }
-//
-//        if (i != 0)
-//            System.out.println("\n\tFound " + i + " files in memory!\n");
-//        else System.out.println("\n\tNo files found in memory!\n");
-//
-//        if (this.availableMemory < 0) {
-//            System.out.println("\tWARNING: Using " + (-0.001*this.availableMemory) + " KB over the memory limit!\n");
-//        }
+    private synchronized void loadChunks() {
+        int i = 0;
+        File dir = new File(dirPath);
+        HashMap<String, List<InetSocketAddress>> initiators = this.loadChunkInfo();
+        File[] dirListing = dir.listFiles();
+        if (dirListing != null) {
+            for (File file : dirListing) {
+                String fileName = file.getName();
+
+                String fileId = fileName.substring(0, fileName.lastIndexOf("_"));
+                int chunkNumber = Integer.parseInt(fileName.substring(fileName.lastIndexOf("_") + 1, fileName.lastIndexOf(".")));
+                String storageKey = fileId + "_" + chunkNumber;
+
+                this.availableMemory -= file.length();
+
+                if (!this.chunkStorage.containsKey(storageKey))
+                    this.chunkStorage.put(storageKey, new ArrayList<>());
+
+                for (InetSocketAddress currentInitiator : initiators.get(storageKey))
+                    this.chunkStorage.get(storageKey).add(currentInitiator);
+
+                if (!this.fileChunks.containsKey(fileId))
+                    this.fileChunks.put(fileId, new ArrayList<>());
+
+                this.fileChunks.get(fileId).add(chunkNumber);
+                i++;
+            }
+        }
+
+        if (i != 0)
+            System.out.println("\n\tFound " + i + " files in memory!\n");
+        else System.out.println("\n\tNo files found in memory!\n");
+
+        if (this.availableMemory < 0) {
+            System.out.println("\tWARNING: Using " + (-0.001*this.availableMemory) + " KB over the memory limit!\n");
+        }
+    }
+
+    private HashMap<String, List<InetSocketAddress>> loadChunkInfo() {
+        HashMap<String, List<InetSocketAddress>> res = null;
+        File infoFile = new File(this.infoPath);
+        if (infoFile.exists()) {
+            res = new HashMap<>();
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(infoFile));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    // <fildId> <chunkNumber> <InitiatorIp> <InitiatorPort>
+                    String[] info = line.split(" ");
+                    String key = info[0] + "_" + info[1];
+
+                    if (!res.containsKey(key)) {
+                        res.put(key, new ArrayList<>());
+                    }
+
+                    InetSocketAddress initiator = new InetSocketAddress(info[2], Integer.parseInt(info[3]));
+
+                    res.get(key).add(initiator);
+                }
+
+            } catch (Exception e) {
+                System.out.println("Exception while loading chunk info from file: " + e.toString());
+            }
+        }
+
+        return res;
+    }
+
+    private void exportChunkInfo() {
+        File file = new File(infoPath);
+        if (file.getParentFile().mkdirs()) {
+            String baseDir = infoPath.substring(0, infoPath.lastIndexOf('/'));
+            System.out.println("Created new " + baseDir + " directory!");
+        }
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+                StringBuilder toWrite = new StringBuilder();
+                for (Map.Entry<String, List<Integer>> entry : fileChunks.entrySet()) {
+                    String fileID = entry.getKey();
+                    List<Integer> chunkNumbers = entry.getValue();
+                    for (Integer currentChunkNumber : chunkNumbers) {
+                        List<InetSocketAddress> initiators = this.chunkStorage.get(fileID + "_" + currentChunkNumber);
+                        for (InetSocketAddress currentInitiator : initiators) {
+                            StringBuilder sb = new StringBuilder();
+                            String address = currentInitiator.getHostString();
+                            int port = currentInitiator.getPort();
+
+                            sb.append(fileID).append(" ");
+                            sb.append(currentChunkNumber).append(" ");
+                            sb.append(address).append(" ");
+                            sb.append(port).append("\n");
+
+                            toWrite.append(sb.toString());
+                        }
+                    }
+                    bw.write(toWrite.toString());
+                }
+            bw.close();
+        } catch (Exception e) { System.out.println("Exception while exporting chunk info to file: " + e.toString()); }
     }
 
     public synchronized int addChunk(Chunk chunk, InetSocketAddress initiator) {
@@ -107,6 +182,7 @@ public class ChunkStorage {
             return 2;
         }
 
+        exportChunkInfo();
         return 0;
     }
 

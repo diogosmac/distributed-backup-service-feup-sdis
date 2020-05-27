@@ -31,6 +31,7 @@ public class MyUtils {
     public final static String DEFAULT_RESTORE_PATH = "/restored/";
     public final static String DEFAULT_STATUS_PATH = "/status.sdis";
     public final static String DEFAULT_DELETE_BACKLOG_PATH = "/deleteRequests.sdis";
+    public final static String DEFAULT_CHUNK_INFO_PATH = "/chunkInfo.sdis";
 
     public final static String CHUNK_FILE_EXTENSION = ".chk";
 
@@ -38,6 +39,7 @@ public class MyUtils {
     public static String getRestorePath(Peer peer) { return getPeerPath(peer) + DEFAULT_RESTORE_PATH; }
     public static String getBackupPath(Peer peer) { return getPeerPath(peer) + DEFAULT_BACKUP_PATH; }
     public static String getStatusPath(Peer peer) { return getPeerPath(peer) + DEFAULT_STATUS_PATH; }
+    public static String getChunkInfoPath(Peer peer) { return getPeerPath(peer) + DEFAULT_CHUNK_INFO_PATH; }
 
     public static String sha256(String str) {
 
