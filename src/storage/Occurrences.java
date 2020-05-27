@@ -72,7 +72,7 @@ public class Occurrences {
 
     public Occurrences(Peer peer) {
         this.statusFilePath = MyUtils.getStatusPath(peer);
-        this.occurrenceTable = new ConcurrentHashMap<>();
+        this.occurrenceTable = this.loadFromFile();
     }
 
     private void exportToFile() {
@@ -111,7 +111,6 @@ public class Occurrences {
         if (file.exists()) {
 
             try {
-
                 BufferedReader br = new BufferedReader(new FileReader(file));
                 String line;
                 while ((line = br.readLine()) != null) {
@@ -125,7 +124,7 @@ public class Occurrences {
                                 line.indexOf("Name: ") + 6, line.indexOf(" - Desired Replication Degree: "));
 
                         int desired = Integer.parseInt(
-                                line.substring(line.indexOf("rd: ") + 4));
+                                line.substring(line.lastIndexOf(':') + 2));
 
                         OccurrenceInfo info = new OccurrenceInfo(filePath, desired);
 
@@ -137,24 +136,20 @@ public class Occurrences {
                             int perceived = Integer.parseInt(
                                     line.substring(line.indexOf(" - ") + 3));
 
+                            System.out.println("Chunk number " + chunkNumber);
+                            System.out.println("RD " + perceived);
                             info.loadChunkInfo(chunkNumber, perceived);
-
                         }
-
                         occurrenceTable.put(fileID, info);
-
                     }
-
                 }
-
             } catch (Exception e) {
                 System.out.println("Exception while reading from file: " + e.toString());
+                e.printStackTrace();
             }
-
         }
 
         return occurrenceTable;
-
     }
 
     public boolean hasFile(String fileID) {
@@ -163,19 +158,22 @@ public class Occurrences {
 
     public synchronized void addFile(String fileID, String fileName, int desiredReplicationDegree) {
         this.occurrenceTable.put(fileID, new OccurrenceInfo(fileName, desiredReplicationDegree));
+        exportToFile();
     }
 
     public synchronized void updateFileChunk(String fileID, int chunkNumber, int missing) {
         addChunkSlot(fileID, chunkNumber);
         this.occurrenceTable.get(fileID).updateReplicationDegree(chunkNumber, missing);
+        exportToFile();
     }
 
     public synchronized void addChunkSlot(String fileID, int chunkNumber) {
         this.occurrenceTable.get(fileID).addChunkSlot(chunkNumber);
     }
 
-    public void deleteFile(String fileID) {
+    public synchronized void deleteFile(String fileID) {
         this.occurrenceTable.remove(fileID);
+        exportToFile();
     }
 
     public void resetFile(String fileID, int desiredReplicationDegree) {
@@ -185,6 +183,7 @@ public class Occurrences {
     public void incrementReplicationDegree(String fileID, int chunkNumber, int delta) {
         OccurrenceInfo oi = this.occurrenceTable.get(fileID);
         oi.incrementPerceivedReplicationDegree(chunkNumber, delta);
+        exportToFile();
     }
 
     public boolean isReplicationDegreeMet(String fileID, int chunkNumber) {

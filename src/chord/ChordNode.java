@@ -489,17 +489,14 @@ public class ChordNode {
     }
 
     public int storeChunk(String fileID, int chunkNumber, byte[] data, int size, InetSocketAddress initiator) {
-//        TODO: IMPROVE
         return this.peer.getChunkStorage().addChunk(new Chunk(fileID, chunkNumber, data, size), initiator);
     }
 
     public boolean isChunkStored(String fileID, int chunkNumber) {
-//        TODO: IMPROVE
         return this.peer.getChunkStorage().hasChunk(fileID, chunkNumber);
     }
 
     public Chunk getStoredChunk(String fileID, int chunkNumber) {
-//        TODO: IMPROVE
         return this.peer.getChunkStorage().getChunk(fileID, chunkNumber);
     }
 
@@ -517,7 +514,6 @@ public class ChordNode {
     }
 
     public void deleteFile(String fileID) {
-//        TODO: IMPROVE
         if (!this.peer.getChunkStorage().deleteFile(fileID)) {
             System.out.println("Error deleting file with ID " + fileID);
             return;
@@ -540,7 +536,6 @@ public class ChordNode {
     }
 
     public void initiateReclaim(int space) {
-//        TODO: IMPROVE
         this.peer.getChunkStorage().reclaimSpace(space);
     }
 
