@@ -350,29 +350,50 @@ public class MessageHandler extends Thread {
                 int chunkNumber = Integer.parseInt(args[2]);
                 InetSocketAddress initiatorAddress = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
                 InetSocketAddress firstSuccessor = new InetSocketAddress(args[6], Integer.parseInt(args[7]));
+                String hash = args[3];
+
+                if (firstSuccessor.equals(this.node.getAddress())) {
+                    if (this.node.hitWall(hash)) {
+                        // Message has cycled, and came back => It wasnt possible to keep RD
+                        System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID + ":");
+                        System.out.println("No nodes available to store chunk");
+                        break;
+                    }
+                    else {
+                        this.node.placeWall(hash);
+                    }
+                }
+                else if (initiatorAddress.equals(this.node.getAddress())) {
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                    break;
+                }
 
                 if (!this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
+                    Integer reclaimHash = Utils.hash(initiatorAddress.getHostString() + " " + initiatorAddress.getPort() + " " + fileID + " " + chunkNumber);
+                    // Checks if the received chunk was recently deleted due to a reclaim
+                    if (this.node.hitWall(reclaimHash.toString())) {
+                        // Continues chain; Doesn't store chunk
+                        this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                        break;
+                    }
+
                     String dataStr = message.substring(message.indexOf(args[8]));
                     byte[] data = MyUtils.convertStringToByteArray(dataStr);
                     Chunk ck = new Chunk(fileID, chunkNumber, data, data.length);
-                    this.node.getPeer().getChunkStorage().addChunk(ck, initiatorAddress);
-                    this.channel.sendChunkSavedMessage(fileID, chunkNumber, initiatorAddress);
-                } else {
-                    String hash = args[3];
-                    if (firstSuccessor.equals(this.node.getAddress())) {
-                        if (this.node.hitWall(hash)) {
-                            // Message has cycled, and came back => It wasnt possible to keep RD
-                            System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID  + ":");
-                            System.out.println("No nodes available to store chunk");
-                            break;
-                        } else {
-                            this.node.placeWall(hash);
-                        }
-                    }
 
-                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                    int addChunkResult = this.node.getPeer().getChunkStorage().addChunk(ck, initiatorAddress);
+                    if (addChunkResult == 1 || addChunkResult == 2) {
+                        this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                        break;
+                    } else {
+                        this.channel.sendChunkSavedMessage(fileID, chunkNumber, initiatorAddress);
+                        break;
+                    }
                 }
-                break;
+                else {
+                    this.channel.sendMessage(this.node.getSuccessorAddress(), message);
+                    break;
+                }
             }
 
             case "GETCHUNK": {

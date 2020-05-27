@@ -1,5 +1,6 @@
 package storage;
 
+import chord.Utils;
 import peer.Peer;
 import utils.MyUtils;
 
@@ -284,9 +285,16 @@ public class ChunkStorage {
                 int chunkNumber = Integer.parseInt(chunkKey.substring(chunkKey.lastIndexOf("_") + 1));
                 String removedMessage = buildRemovedMessage(fileID, chunkNumber);
 
+
                 System.out.println("Deleted chunk backup initiated by:");
                 for (InetSocketAddress initiator : initiators) {
                     this.peer.getNode().sendMessage(initiator, removedMessage);
+
+                    // Places a wall, so that the node doesn't store the chunk that was removed due to a reclaim
+                    // Hash: <initiatorIp> <initiatorPort> <fileID> <chunkNumber>
+                    Integer hash = Utils.hash(initiator.getHostString() + " " + initiator.getPort() + " " + fileID + " " + chunkNumber);
+                    this.peer.getNode().placeWall(hash.toString());
+
                     System.out.println("\t" + initiator.getHostString() + ":" + initiator.getPort());
                 }
 

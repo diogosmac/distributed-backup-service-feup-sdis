@@ -143,7 +143,6 @@ public class Occurrences {
                 }
             } catch (Exception e) {
                 System.out.println("Exception while reading from file: " + e.toString());
-                e.printStackTrace();
             }
         }
 
