@@ -136,8 +136,6 @@ public class Occurrences {
                             int perceived = Integer.parseInt(
                                     line.substring(line.indexOf(" - ") + 3));
 
-                            System.out.println("Chunk number " + chunkNumber);
-                            System.out.println("RD " + perceived);
                             info.loadChunkInfo(chunkNumber, perceived);
                         }
                         occurrenceTable.put(fileID, info);
