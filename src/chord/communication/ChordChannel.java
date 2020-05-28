@@ -80,38 +80,43 @@ public class ChordChannel implements Runnable {
     @Override
     public void run() {
 
-        while (true) {
-
+        boolean ended = false;
+        SSLSocket socket = null;
+        while (!ended) {
             try {
-
-                SSLSocket socket = (SSLSocket) serverSocket.accept();
+                socket = (SSLSocket) serverSocket.accept();
                 InputStream is = socket.getInputStream();
 
-//                DataInputStream dis = new DataInputStream(is);
-//                int length = dis.readInt();
-//                byte[] messageBytes = new byte[length];
-//                dis.readFully(messageBytes, 0, messageBytes.length);
-//                String message = MyUtils.convertByteArrayToString(messageBytes);
-//                dis.close();
-
-//                ObjectInputStream ois = new ObjectInputStream(is);
-//                String message = (String) ois.readObject();
-//                ois.close();
-
                 DataInputStream dis = new DataInputStream(is);
-                String message = dis.readUTF();
-                dis.close();
+                int length = dis.readInt();
+
+                System.out.println("=====================To read: ===================================");
+                System.out.println(length);
+
+                byte[] messageBytes = new byte[length];
+                dis.readFully(messageBytes, 0, messageBytes.length);
+                String message = MyUtils.convertByteArrayToString(messageBytes);
+
+                System.out.println("=====================Message size=====================");
+                System.out.println(message.length());
 
                 handleMessage(socket, message);
-                socket.close();
 
+                dis.close();
+                is.close();
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("Node disconnected while reading from socket");
+                ended = true;
             }
-
         }
 
+        try {
+            if (socket != null)
+                socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -141,25 +146,15 @@ public class ChordChannel implements Runnable {
                 socket.connect(address, timeout);
                 OutputStream os = socket.getOutputStream();
 
-//                DataOutputStream dos = new DataOutputStream(os);
-//                byte[] messageBytes = MyUtils.convertStringToByteArray(message);
-//                dos.writeInt(messageBytes.length);
-//                dos.write(messageBytes, 0, messageBytes.length);
-//                dos.flush();
-//                dos.close();
-
-//                ObjectOutputStream oos = new ObjectOutputStream(os);
-//                oos.writeObject(message);
-//                oos.flush();
-//                oos.close();
-
                 DataOutputStream dos = new DataOutputStream(os);
-                dos.writeUTF(message);
+                byte[] messageBytes = MyUtils.convertStringToByteArray(message);
+                dos.writeInt(messageBytes.length);
+                dos.write(messageBytes, 0, messageBytes.length);
                 dos.flush();
-                dos.close();
 
-                socket.close();
-
+//                dos.close();
+//                os.close();
+//                socket.close();
             } catch (Exception e) {
                 // error in communication, maybe successor stopped working
                 // see type of message -> only if FINDSUCCESSOR

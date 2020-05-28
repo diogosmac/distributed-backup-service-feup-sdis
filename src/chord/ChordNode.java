@@ -99,15 +99,10 @@ public class ChordNode {
             }
         // Other node is joining
         } else if (args.length == 3) {
-            try {
                 port = Integer.parseInt(args[0]);
-                InetSocketAddress thisAddress = new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), port);
+                InetSocketAddress thisAddress = new InetSocketAddress("94.61.206.209", port);
                 InetSocketAddress knownAddress = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
                 node = new ChordNode(thisAddress, knownAddress);
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-                return;
-            }
         // You dumbass
         } else {
             System.out.println("Usage: java ChordNode <node-id> [ <connection-address> <connection-port> ]");
@@ -124,7 +119,7 @@ public class ChordNode {
     }
     
     public ChordNode(int port) throws UnknownHostException {
-        this(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), port));
+        this(new InetSocketAddress("94.61.206.209", port));
     }
 
     public ChordNode(InetSocketAddress address) {
@@ -521,7 +516,13 @@ public class ChordNode {
         for (Chunk chunk : fileChunks) {
             // ChunkID => id on chord
             Integer chunkID = Utils.hash(fileID + ":" + chunk.getNum());
-            String[] succ = this.findSuccessor(chunkID);
+            String[] succ = this.findSuccessorMaxTries(chunkID);
+
+            if (succ == null) {
+                System.out.println("Error finding successor of chunk " + MyUtils.MAX_TRIES + " times in a row. Ending");
+                return;
+            }
+
             // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
             InetSocketAddress succAddress = new InetSocketAddress(succ[3], Integer.parseInt(succ[4]));
             String hash = MyUtils.sha256(this.getAddress() + "-" + succAddress + "-" + System.currentTimeMillis());
@@ -595,7 +596,13 @@ public class ChordNode {
 
         for (int currentChunk = 0; currentChunk < numberChunks; currentChunk++) {
             Integer chunkID = Utils.hash(fileID + ":" + currentChunk);
-            String[] reply = this.findSuccessor(chunkID);
+
+            String[] reply = this.findSuccessorMaxTries(chunkID);
+
+            if (reply == null) {
+                System.out.println("Error finding successor of chunk " + MyUtils.MAX_TRIES + " times in a row. Ending");
+                return;
+            }
 
             // Message format: SUCCESSORFOUND <requestedId> <successorId> <successorNodeIp> <successorNodePort>
             InetSocketAddress succAddress = new InetSocketAddress(reply[3], Integer.parseInt(reply[4]));
@@ -618,6 +625,22 @@ public class ChordNode {
             System.out.println("Error restoring file");
     }
 
+    String[] findSuccessorMaxTries(Integer chunkID) {
+        String[] reply;
+        int nTries = 0;
+        do {
+            reply = this.findSuccessor(chunkID);
+            if (reply == null)
+                nTries++;
+        } while (nTries < MyUtils.MAX_TRIES);
+
+        if (nTries == MyUtils.MAX_TRIES) {
+            System.out.println("Error getting successor, please try again later");
+            return null;
+        }
+
+        return reply;
+    }
 }
 
 /**
