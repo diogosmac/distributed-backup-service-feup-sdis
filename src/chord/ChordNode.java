@@ -89,23 +89,24 @@ public class ChordNode {
         ChordNode node = null;
 
         // First node is joining the network
-        if (args.length == 1) {
-            port = Integer.parseInt(args[0]);
+        if (args.length == 2) {
+            String myAddr = args[0];
+            port = Integer.parseInt(args[1]);
             try {
-                node = new ChordNode(port);
+                node = new ChordNode(myAddr, port);
             } catch (UnknownHostException e) {
                 e.printStackTrace();
                 return;
             }
         // Other node is joining
-        } else if (args.length == 3) {
-                port = Integer.parseInt(args[0]);
-                InetSocketAddress thisAddress = new InetSocketAddress("94.61.206.209", port);
-                InetSocketAddress knownAddress = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+        } else if (args.length == 4) {
+                String myAddr = args[0];
+                port = Integer.parseInt(args[1]);
+                InetSocketAddress thisAddress = new InetSocketAddress(myAddr, port);
+                InetSocketAddress knownAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
                 node = new ChordNode(thisAddress, knownAddress);
-        // You dumbass
         } else {
-            System.out.println("Usage: java ChordNode <node-id> [ <connection-address> <connection-port> ]");
+            System.out.println("Usage: java ChordNode <public-ip/localhost> <port> [ <connection-address> <connection-port> ]");
             return;
         }
 
@@ -118,8 +119,8 @@ public class ChordNode {
         timer.schedule(printer, 1000, 5000);
     }
     
-    public ChordNode(int port) throws UnknownHostException {
-        this(new InetSocketAddress("94.61.206.209", port));
+    public ChordNode(String address, int port) throws UnknownHostException {
+        this(new InetSocketAddress(address, port));
     }
 
     public ChordNode(InetSocketAddress address) {
@@ -632,6 +633,8 @@ public class ChordNode {
             reply = this.findSuccessor(chunkID);
             if (reply == null)
                 nTries++;
+            else
+                break;
         } while (nTries < MyUtils.MAX_TRIES);
 
         if (nTries == MyUtils.MAX_TRIES) {

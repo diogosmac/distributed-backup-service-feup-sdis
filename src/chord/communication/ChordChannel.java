@@ -90,15 +90,9 @@ public class ChordChannel implements Runnable {
                 DataInputStream dis = new DataInputStream(is);
                 int length = dis.readInt();
 
-                System.out.println("=====================To read: ===================================");
-                System.out.println(length);
-
                 byte[] messageBytes = new byte[length];
                 dis.readFully(messageBytes, 0, messageBytes.length);
                 String message = MyUtils.convertByteArrayToString(messageBytes);
-
-                System.out.println("=====================Message size=====================");
-                System.out.println(message.length());
 
                 handleMessage(socket, message);
 
@@ -151,10 +145,6 @@ public class ChordChannel implements Runnable {
                 dos.writeInt(messageBytes.length);
                 dos.write(messageBytes, 0, messageBytes.length);
                 dos.flush();
-
-//                dos.close();
-//                os.close();
-//                socket.close();
             } catch (Exception e) {
                 // error in communication, maybe successor stopped working
                 // see type of message -> only if FINDSUCCESSOR
@@ -190,7 +180,6 @@ public class ChordChannel implements Runnable {
                                             InetSocketAddress destination) {
         String message = this.createFindSuccessorMessage(requestOrigin, requestedId);
         this.sendMessage(destination, message);
-//        System.out.println(message + " -> " + destination.getHostString() + ":" + destination.getPort());
 
         if (!this.parent.getAddress().getHostString().equals(requestOrigin.getHostString()))  // This node didn't request the id
             return null; // Delegates work, and returns
