@@ -1,3 +1,4 @@
+# compilation
 JC = javac
 OUT_DIR := build/
 
@@ -6,9 +7,39 @@ all: mkdir
 
 mkdir:
 	@mkdir -p $(OUT_DIR)
-
-rmi:
-	rmiregistry -J-Djava.class.path=$(OUT_DIR) &
  
 clean:
 	@rm -rf build/
+
+rmi:
+	rmiregistry -J-Djava.class.path=$(OUT_DIR) &
+
+#execution
+PORT = 30001
+KNOWN_ADDR = "localhost"
+KNOWN_PORT = 30001
+AP = "ap64568"
+FILE = "text.txt"
+RD = 1
+SIZE = 100
+
+start:
+	@sh scripts/start_chord.sh $(PORT)
+
+join:
+	@sh scripts/join_chord.sh $(PORT) $(KNOWN_ADDR) $(KNOWN_PORT)
+
+backup:
+	@sh scripts/backup.sh $(AP) ../test/$(FILE) $(RD)
+
+restore:
+	@sh scripts/restore.sh $(AP) ../test/$(FILE)
+
+delete:
+	@sh scripts/delete.sh $(AP) ../test/$(FILE)
+
+reclaim:
+	@sh scripts/reclaim.sh $(AP) $(SIZE)
+
+state:
+	@sh scripts/state.sh $(AP)
