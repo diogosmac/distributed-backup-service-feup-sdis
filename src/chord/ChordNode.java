@@ -491,7 +491,7 @@ public class ChordNode {
                 "\t> RD:   " + replicationDegree + "\n");
 
         // Stores file bytes and splits it into chunks
-        SavedFile sf = new SavedFile(filePath, replicationDegree);
+        SavedFile sf = new SavedFile(filePath);
 
         ArrayList<Chunk> fileChunks = sf.getChunks();
         String fileID = sf.getId();
@@ -568,7 +568,7 @@ public class ChordNode {
     }
 
     public void initiateRestore(String filePath) {
-        SavedFile sf = new SavedFile(filePath, 0);
+        SavedFile sf = new SavedFile(filePath);
         int numberChunks = sf.getChunks().size();
 
         String fileName = MyUtils.fileNameFromPath(filePath);
