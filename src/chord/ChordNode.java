@@ -525,8 +525,7 @@ public class ChordNode {
     }
 
     public void initiateDelete(String filePath) {
-        SavedFile sf = new SavedFile(filePath);
-        String fileID = sf.getId();
+        String fileID = MyUtils.encryptFileID(filePath);
 
         if (fileID == null) {
             System.out.println("File does not exist.");
@@ -568,11 +567,10 @@ public class ChordNode {
     }
 
     public void initiateRestore(String filePath) {
-        SavedFile sf = new SavedFile(filePath);
-        int numberChunks = sf.getChunks().size();
+        int numberChunks = SavedFile.getNumChunks(filePath);
 
         String fileName = MyUtils.fileNameFromPath(filePath);
-        String fileID = sf.getId();
+        String fileID = MyUtils.encryptFileID(fileName);
         this.getPeer().getFileRestorer().addFile(fileID, numberChunks);
 
         for (int currentChunk = 0; currentChunk < numberChunks; currentChunk++) {

@@ -22,6 +22,17 @@ public class SavedFile implements java.io.Serializable {
         this.splitIntoChunks();
     }
 
+    public static int getNumChunks(String filePath) {
+        File file = new File(filePath);
+        long size = file.length();
+        int counter = 0;
+        while (size > 0) {
+            size -= MyUtils.CHUNK_SIZE;
+            counter++;
+        }
+        return counter;
+    }
+
     public String getId() {
         return id;
     }
