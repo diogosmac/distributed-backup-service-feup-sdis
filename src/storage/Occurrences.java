@@ -82,8 +82,8 @@ public class Occurrences {
                 OccurrenceInfo info = entry.getValue();
                 StringBuilder fileOutput = new StringBuilder(
                         "ID: " + fileID + " - " +
-                        "Name: " + info.filePath + " - " +
-                        "Desired Replication Degree: " + info.desiredReplicationDegree + "\n"
+                                "Name: " + info.filePath + " - " +
+                                "Desired Replication Degree: " + info.desiredReplicationDegree + "\n"
                 );
                 List<Integer> chunkOccurrences = info.getPerceivedReplicationDegrees();
                 for (int chunkNumber = 0; chunkNumber < chunkOccurrences.size(); chunkNumber++) {
@@ -93,7 +93,9 @@ public class Occurrences {
                 bw.write(fileOutput.toString());
             }
             bw.close();
-        } catch (Exception e) { System.out.println("Exception while writing occurrences to file: " + e.toString()); }
+        } catch (Exception e) {
+            System.out.println("Exception while writing occurrences to file: " + e.toString());
+        }
 
     }
 
@@ -122,7 +124,7 @@ public class Occurrences {
 
                         OccurrenceInfo info = new OccurrenceInfo(filePath, desired);
 
-                        while (!(line=br.readLine()).equals("")) {
+                        while (!(line = br.readLine()).equals("")) {
 
                             int chunkNumber = Integer.parseInt(
                                     line.substring(0, line.indexOf(" - ")));

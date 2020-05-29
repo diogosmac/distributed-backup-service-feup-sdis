@@ -11,11 +11,11 @@ import java.util.concurrent.CountDownLatch;
 
 public class FileRestorer {
 
-    String path;
-    private final ConcurrentHashMap<String, List<byte []>> fileData;
+    final String path;
+    private final ConcurrentHashMap<String, List<byte[]>> fileData;
     private final ConcurrentHashMap<String, CountDownLatch> fileRestorationStatus;
 
-    public FileRestorer (String path) {
+    public FileRestorer(String path) {
         this.path = path;
         this.fileData = new ConcurrentHashMap<>();
         this.fileRestorationStatus = new ConcurrentHashMap<>();
@@ -44,8 +44,8 @@ public class FileRestorer {
 
     public boolean restoreFile(String fileId, String fileName) {
 
-        List <byte[]> fileDataLocal = this.fileData.get(fileId);
-        byte [] concatData = fileDataLocal.get(0);
+        List<byte[]> fileDataLocal = this.fileData.get(fileId);
+        byte[] concatData = fileDataLocal.get(0);
 
         for (int currentChunk = 1; currentChunk < fileDataLocal.size(); currentChunk++) {
             byte[] currentChunkData = fileDataLocal.get(currentChunk);
@@ -57,7 +57,7 @@ public class FileRestorer {
         }
 
         try {
-            File file = new File(this.path+fileName);
+            File file = new File(this.path + fileName);
 
             if (file.getParentFile().mkdirs()) {
                 System.out.println("\tCreated missing ./restored directory.");

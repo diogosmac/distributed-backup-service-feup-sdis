@@ -1,31 +1,27 @@
 package chord;
 
+import chord.communication.ChordChannel;
 import peer.Peer;
 import storage.Chunk;
 import storage.SavedFile;
 import utils.MyUtils;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import chord.communication.ChordChannel;
 
 /**
  * Chord Node
- * 
+ * <p>
  * Class used to represent a node in the chord's network
  */
 public class ChordNode {
 
     /**
-	 * The node's unique identifier
+     * The node's unique identifier
      */
     private final Integer id;
 
@@ -60,8 +56,8 @@ public class ChordNode {
     private int finger = -1;
 
     /**
-	 * The list of its successors, size r
-	 */
+     * The list of its successors, size r
+     */
     private CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> successorList;
 
     /**
@@ -88,20 +84,20 @@ public class ChordNode {
     public static void main(String[] args) {
 
         int port;
-        ChordNode node = null;
+        ChordNode node;
 
         // First node is joining the network
         if (args.length == 2) {
             String myAddr = args[0];
             port = Integer.parseInt(args[1]);
             node = new ChordNode(myAddr, port);
-        // Other node is joining
+            // Other node is joining
         } else if (args.length == 4) {
-                String myAddr = args[0];
-                port = Integer.parseInt(args[1]);
-                InetSocketAddress thisAddress = new InetSocketAddress(myAddr, port);
-                InetSocketAddress knownAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
-                node = new ChordNode(thisAddress, knownAddress);
+            String myAddr = args[0];
+            port = Integer.parseInt(args[1]);
+            InetSocketAddress thisAddress = new InetSocketAddress(myAddr, port);
+            InetSocketAddress knownAddress = new InetSocketAddress(args[2], Integer.parseInt(args[3]));
+            node = new ChordNode(thisAddress, knownAddress);
         } else {
             System.out.println("Usage: java ChordNode <public-ip/localhost> <port> [ <connection-address> <connection-port> ]");
             return;
@@ -111,11 +107,11 @@ public class ChordNode {
         System.out.println("\tID: " + node.getID());
         System.out.println("\tAddress: " + node.getAddress());
 
-        Timer timer = new Timer(); 
+        Timer timer = new Timer();
         ChordNodePrinter printer = new ChordNodePrinter(node);
         timer.schedule(printer, 1000, 5000);
     }
-    
+
     public ChordNode(String address, int port) {
         this(new InetSocketAddress(address, port));
     }
@@ -143,7 +139,8 @@ public class ChordNode {
 
     /**
      * Constructor with IP address
-     * @param address IP address of this Chord node
+     *
+     * @param address      IP address of this Chord node
      * @param knownAddress IP address of a node on the Chord 'network' to be joined
      */
     public ChordNode(InetSocketAddress address, InetSocketAddress knownAddress) {
@@ -186,7 +183,7 @@ public class ChordNode {
      * Join a Chord ring containing any known node 'node'. This method asks 'node'
      * to find the immediate successor of the newly joined node. By itself this method
      * does not make the rest of the network aware of 'chord'
-     * 
+     *
      * @param node any know node in the chord network
      */
     protected void join(InetSocketAddress node) {
@@ -209,9 +206,9 @@ public class ChordNode {
     }
 
     /**
-	 * Starts the maintenance routine
-	 */
-	private void startMaintainer() {
+     * Starts the maintenance routine
+     */
+    private void startMaintainer() {
         // perform maintenance every half second 1.5 seconds after starting
         this.executor.scheduleWithFixedDelay(new ChordMaintainer(this), 1500, 500, TimeUnit.MILLISECONDS);
     }
@@ -230,7 +227,7 @@ public class ChordNode {
     public FingerTable getFingerTable() {
         return fingerTable;
     }
-    
+
     /**
      * @return the predecessor
      */
@@ -286,7 +283,7 @@ public class ChordNode {
     public int getFinger() {
         return finger;
     }
-    
+
     /**
      * @param finger the finger to set
      */
@@ -307,7 +304,7 @@ public class ChordNode {
                 return successor;
         }
 
-        return new NodePair<Integer, InetSocketAddress>(this.getID(), this.getAddress());
+        return new NodePair<>(this.getID(), this.getAddress());
     }
 
     /**
@@ -326,6 +323,7 @@ public class ChordNode {
 
     /**
      * Set 'node' as node's new successor
+     *
      * @param node new chord's successor
      */
     public void setSuccessor(NodePair<Integer, InetSocketAddress> node) {
@@ -338,7 +336,7 @@ public class ChordNode {
 
     /**
      * Set 'node' as node's new successor
-     * 
+     *
      * @param node new chord's successor
      */
     public void addSuccessor(NodePair<Integer, InetSocketAddress> node) {
@@ -348,9 +346,9 @@ public class ChordNode {
 
     /**
      * Set entry in finger table given finger (index) and entry (node)
-     * 
+     *
      * @param finger the finger table index
-     * @param node the information to store on the finger table
+     * @param node   the information to store on the finger table
      */
     public void setFingerTableEntry(int finger, NodePair<Integer, InetSocketAddress> node) {
         this.fingerTable.setNodePair(finger, node);
@@ -360,15 +358,15 @@ public class ChordNode {
      * Remove all nodes from the Finger Table and Successor List with IP
      * address equal to 'address'. This method is called when node at
      * 'address' has failed.
-     * 
+     *
      * @param address Address on failed node to be removed from Finger Table
-     * and Successor List
+     *                and Successor List
      */
     public void removeNode(InetSocketAddress address) {
         NodePair<Integer, InetSocketAddress> pair = new NodePair<>(this.id, this.address);
-        
+
         this.fingerTable.removeNode(address, pair);
-        
+
         CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> toRemove = new CopyOnWriteArrayList<>();
 
         for (NodePair<Integer, InetSocketAddress> entry : this.successorList) {
@@ -380,7 +378,7 @@ public class ChordNode {
         this.successorList.removeAll(toRemove);
     }
 
-    
+
     /**
      * @return the peer associated to this node
      */
@@ -390,6 +388,7 @@ public class ChordNode {
 
     /**
      * Set peer that will be used to process and store this node's files
+     *
      * @param peer the peer to be used
      */
     public void setPeer(Peer peer) {
@@ -408,7 +407,7 @@ public class ChordNode {
             NodePair<Integer, InetSocketAddress> succ = this.successorList.get(i);
 
             Integer succKey = succ.getKey();
-            
+
             if (Utils.inBetween(succKey, key, id, this.m) && !id.equals(succKey))
                 return succ.getValue();
         }
@@ -428,9 +427,9 @@ public class ChordNode {
 
     /**
      * Finds the successor node of id
-     * 
+     *
      * @param requestOrigin Original requesting node's address
-     * @param id Identifier of known node
+     * @param id            Identifier of known node
      * @return Chord's reply
      */
     public synchronized String[] findSuccessor(InetSocketAddress requestOrigin, int id) {
@@ -438,17 +437,14 @@ public class ChordNode {
 
         if (successorId == this.getID()) {
             return this.channel.createSuccessorFoundMessage(id, this.getID(), this.getAddress()).split(" ");
-        }
-        else if (Utils.inBetween(id, this.getID(), successorId, this.m)) {
+        } else if (Utils.inBetween(id, this.getID(), successorId, this.m)) {
             if (!requestOrigin.equals(this.getAddress())) {
                 this.channel.sendSuccessorFound(requestOrigin, id, this.getSuccessorId(), this.getSuccessorAddress());
                 return null;
-            }
-            else {
+            } else {
                 return this.channel.createSuccessorFoundMessage(id, successorId, this.getSuccessor().getValue()).split(" ");
             }
-        }
-        else {
+        } else {
             InetSocketAddress closestPrecedingNode = this.getClosestPreceding(id);
             return this.channel.sendFindSuccessorMessage(requestOrigin, id, closestPrecedingNode);
         }
@@ -459,7 +455,7 @@ public class ChordNode {
      * This method notifies node 'n's successor of 'n's existence, giving the
      * successor the chance to change its predecessor to 'n'. The successor only
      * does this if it knows of no closer predecessor than 'n'.
-     * 
+     *
      * @param node possible new predecessor
      */
     public synchronized void notify(NodePair<Integer, InetSocketAddress> node) {
@@ -471,7 +467,6 @@ public class ChordNode {
     }
 
     /**
-     * 
      * @return node's communication channel
      */
     public ChordChannel getChannel() {
@@ -533,14 +528,11 @@ public class ChordNode {
         }
 
         deleteFile(fileID);
-        this.channel.sendDeleteMessage(this.getAddress(), fileID, this.getSuccessorAddress());
+        this.channel.sendDeleteMessage(fileID, this.getSuccessorAddress());
     }
 
     public void deleteFile(String fileID) {
-        if (!this.peer.getChunkStorage().deleteFile(fileID)) {
-            System.out.println("Error deleting file with ID " + fileID);
-            return;
-        }
+        this.peer.getChunkStorage().deleteFile(fileID);
         System.out.println("File with id=" + fileID + " was removed!");
         this.peer.getFileOccurrences().deleteFile(fileID);
     }
@@ -626,7 +618,7 @@ public class ChordNode {
 
 /**
  * Chord Node Printer
- * 
+ * <p>
  * Helper class to print chord node's information
  * about periodically
  */

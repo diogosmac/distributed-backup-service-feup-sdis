@@ -1,19 +1,16 @@
 package chord.communication;
 
-import storage.Chunk;
-import utils.MyUtils;
-
-import javax.net.ssl.SSLSocket;
-
 import chord.ChordNode;
 import chord.NodePair;
 import chord.Utils;
+import storage.Chunk;
+import utils.MyUtils;
 
 import java.net.InetSocketAddress;
 
 /**
  * Message Handler
- * 
+ * <p>
  * This class is used by Chord Communication Channels to
  * delegate message request actions by creating an instance
  * of this class.
@@ -28,11 +25,6 @@ public class MessageHandler extends Thread {
     private final String message;
 
     /**
-     * Origin Socket
-     */
-    private final SSLSocket socket;
-
-    /**
      * Node's Communication Channel
      */
     private final ChordChannel channel;
@@ -44,31 +36,21 @@ public class MessageHandler extends Thread {
 
     /**
      * Default Constructor
-     * 
-     * @param socket Socket
+     *
      * @param message Message
      * @param channel Channel
-     * @param node Node
+     * @param node    Node
      */
-    MessageHandler(SSLSocket socket, String message, ChordChannel channel, ChordNode node) {
-        this.socket = socket;
+    MessageHandler(String message, ChordChannel channel, ChordNode node) {
         this.message = message;
         this.channel = channel;
         this.node = node;
     }
 
     /**
-     * Getter method for address
-     * @param socket the socket for which to obtain the address
-     * @return the InetSocketAddress of the socket
-     */
-    private InetSocketAddress getAddress(SSLSocket socket) {
-        return (socket == null ? this.node.getAddress() : (InetSocketAddress) socket.getRemoteSocketAddress());
-    }
-
-    /**
      * Method performed by MessageHandler thread
      */
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     @Override
     public void run() {
         // Handles a message received by the ChordChannel
@@ -85,8 +67,7 @@ public class MessageHandler extends Thread {
 
             case "SUCCESSORFOUND": {
                 synchronized (this.node) {
-                    InetSocketAddress sfAddress = getAddress(socket);
-                    this.channel.addMessageQueue(new Message(sfAddress, message));
+                    this.channel.addMessageQueue(new Message(message));
                     this.node.notify();
                 }
                 break;
@@ -179,8 +160,7 @@ public class MessageHandler extends Thread {
 
             case "PONG": {
                 synchronized (this.node) {
-                    InetSocketAddress sfAddress = getAddress(socket);
-                    this.channel.addMessageQueue(new Message(sfAddress, message));
+                    this.channel.addMessageQueue(new Message(message));
                     this.node.notify();
                 }
                 break;
@@ -188,7 +168,7 @@ public class MessageHandler extends Thread {
 
             case "FINDSUCCESSORLIST": {
                 InetSocketAddress originInfo = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
-                this.channel.sendSuccessorListMessage(this.node.getAddress(), originInfo);
+                this.channel.sendSuccessorListMessage(originInfo);
                 break;
             }
 
@@ -221,8 +201,7 @@ public class MessageHandler extends Thread {
                 if (initiatorAdd.equals(this.node.getAddress())) {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                     break;
-                }
-                else {
+                } else {
                     if (firstSuccAdd.equals(this.node.getAddress())) {
                         if (this.node.hitWall(hash)) {
                             this.channel.sendUpdateFileReplicationDegree(fileID, chunkNumber, replicationDegree, initiatorAdd);
@@ -249,8 +228,7 @@ public class MessageHandler extends Thread {
                     if (replicationDegree > 1) {
                         this.channel.sendPutchunkMessage(fileID, chunkNumber, replicationDegree - 1,
                                 hash, data, initiatorAdd, firstSuccAdd, this.node.getSuccessorAddress());
-                    }
-                    else {
+                    } else {
                         this.channel.sendUpdateFileReplicationDegree(
                                 fileID, chunkNumber, replicationDegree - 1, initiatorAdd);
                         break;
@@ -294,7 +272,7 @@ public class MessageHandler extends Thread {
 
             case "REMOVED": {
                 System.out.println("[REMOVED]");
-                // Message format: REMOVED <fileID> <chunkNumber>
+                // Message format: REMOVED <file-id> <chunk-number>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
 
@@ -311,7 +289,7 @@ public class MessageHandler extends Thread {
 
             case "ENSURERD": {
                 System.out.println("[ENSURERD]");
-                // Message format: ENSURERD <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <hash> <fileID> <chunkNumber>
+                // Message format: ENSURERD <initiator-ip> <initiator-port> <first-successor-ip> <first-successor-port> <hash> <file-id> <chunk-number>
                 InetSocketAddress initiatorAdd = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
                 InetSocketAddress firstSuccessorAdd = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
                 String hash = args[5];
@@ -320,14 +298,13 @@ public class MessageHandler extends Thread {
 
                 if (this.node.getPeer().getChunkStorage().hasChunk(fileID, chunkNumber)) {
                     Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
-                    byte [] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
+                    byte[] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
 
                     this.channel.sendSaveChunkMessage(fileID, chunkNumber, initiatorAdd, this.node.getSuccessorAddress(), data, this.node.getSuccessorAddress());
-                }
-                else {
+                } else {
                     if (firstSuccessorAdd.equals(this.node.getAddress())) {
                         if (this.node.hitWall(hash)) {
-                            // Message has cycled, and came back => It wasnt possible to keep RD
+                            // Message has cycled, and came back => It wasn't possible to keep RD
                             System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID + ":");
                             System.out.println("No nodes with chunk stored were found");
                             break;
@@ -343,7 +320,7 @@ public class MessageHandler extends Thread {
 
             case "SAVECHUNK": {
                 System.out.println("[SAVECHUNK]");
-                // Message format: SAVECHUNK <fileID> <chunkNumber> <hash> <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <data>
+                // Message format: SAVECHUNK <file-id> <chunk-number> <hash> <initiator-ip> <initiator-port> <first-successor-ip> <first-successor-port> <data>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
                 InetSocketAddress initiatorAddress = new InetSocketAddress(args[4], Integer.parseInt(args[5]));
@@ -356,12 +333,10 @@ public class MessageHandler extends Thread {
                         System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID + ":");
                         System.out.println("No nodes available to store chunk");
                         break;
-                    }
-                    else {
+                    } else {
                         this.node.placeWall(hash);
                     }
-                }
-                else if (initiatorAddress.equals(this.node.getAddress())) {
+                } else if (initiatorAddress.equals(this.node.getAddress())) {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                     break;
                 }
@@ -385,8 +360,7 @@ public class MessageHandler extends Thread {
                     } else {
                         this.channel.sendChunkSavedMessage(fileID, chunkNumber, initiatorAddress);
                     }
-                }
-                else {
+                } else {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
                 }
                 break;
@@ -395,7 +369,7 @@ public class MessageHandler extends Thread {
 
             case "GETCHUNK": {
                 System.out.println("[GETCHUNK]");
-                // Message format: GETCHUNK <initiatorIP> <initiatorPort> <firstSuccessorIP> <firstSuccessorPort> <fileID> <chunkNumber> <hash>
+                // Message format: GETCHUNK <initiator-ip> <initiator-port> <first-successor-ip> <first-successor-port> <file-id> <chunk-number> <hash>
                 InetSocketAddress firstSuccessor = new InetSocketAddress(args[3], Integer.parseInt(args[4]));
                 String fileID = args[5];
                 int chunkNumber = Integer.parseInt(args[6]);
@@ -405,11 +379,10 @@ public class MessageHandler extends Thread {
                     InetSocketAddress initiator = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
 
                     Chunk ck = this.node.getPeer().getChunkStorage().getChunk(fileID, chunkNumber);
-                    byte [] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
+                    byte[] data = MyUtils.trimMessage(ck.getData(), ck.getSize());
 
                     this.channel.sendChunkMessage(fileID, chunkNumber, data, initiator);
-                }
-                else {
+                } else {
                     if (firstSuccessor.equals(this.node.getAddress())) {
                         String hash = args[7];
 
@@ -430,7 +403,7 @@ public class MessageHandler extends Thread {
 
             case "CHUNK": {
                 System.out.println("[CHUNK]");
-                // Message format: CHUNK <fileID> <chunkNumber> <data>
+                // Message format: CHUNK <file-id> <chunk-number> <data>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
                 String dataStr = message.substring(message.indexOf(args[3]));
@@ -441,7 +414,7 @@ public class MessageHandler extends Thread {
 
             case "CHUNKSAVED": {
                 System.out.println("[CHUNKSAVED]");
-                // Message format: CHUNKSAVED <fileID> <chunkNumber>
+                // Message format: CHUNKSAVED <file-id> <chunk-number>
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
 

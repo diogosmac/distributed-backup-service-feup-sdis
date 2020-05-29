@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 /**
  * Finger Table
- * 
+ * <p>
  * This class represents the finger table in chord's
  * protocol.
  */
@@ -25,6 +25,7 @@ public class FingerTable {
 
     /**
      * Constructor
+     *
      * @param size maximum size of finger table
      */
     public FingerTable(int size) {
@@ -36,18 +37,16 @@ public class FingerTable {
     }
 
     /**
-     * 
      * @param finger Index in the finger table
-     * @param node NodePair containing node's hashed ID as keys, and
-     * Socket Address (IP and Port) as value
+     * @param node   NodePair containing node's hashed ID as keys, and
+     *               Socket Address (IP and Port) as value
      */
     public void setNodePair(int finger, NodePair<Integer, InetSocketAddress> node) {
         this.table.set(finger, node);
     }
-    
+
     /**
-     * 
-     * @return the first network node 
+     * @return the first network node
      */
     public NodePair<Integer, InetSocketAddress> getFirstNode() {
         return this.table.get(0);
@@ -56,6 +55,7 @@ public class FingerTable {
     /**
      * Lookups the "largest" node on the circle whose ID is smaller
      * than 'fileID'('k')
+     *
      * @param nodeID current node's ID
      * @param fileID wanted file's ID
      * @return InetSocketAddress of the "largest" node on the circle whose ID is smaller than 'fileID'('k')
@@ -88,10 +88,10 @@ public class FingerTable {
                     break;
                 }
             }
-            
+
             if (i == this.table.size())
                 this.table.set(0, new NodePair<>(pair.getKey(), pair.getValue()));
-        }          
+        }
     }
 
     /**
@@ -100,10 +100,10 @@ public class FingerTable {
     @Override
     public String toString() {
         return this.table.isEmpty()
-            ? "empty"
-            : this.table.stream()
+                ? "empty"
+                : this.table.stream()
                 .map(NodePair::toString)
-                .collect( Collectors.joining("\n"));
+                .collect(Collectors.joining("\n"));
 
     }
 }

@@ -4,13 +4,12 @@ import java.net.InetSocketAddress;
 
 /**
  * Chord Maintainer
- * 
+ * <p>
  * In order to ensure that lookups execute correctly as the set of participating
  * nodes changes, Chord must ensure that each node's successor is up to date. It
  * does this using a "stabilization" protocol that each node runs periodically
  * in the background and which updates Chord's finger tables and successor
  * pointers.
- * 
  */
 public class ChordMaintainer implements Runnable {
 
@@ -21,11 +20,11 @@ public class ChordMaintainer implements Runnable {
 
     /**
      * Default Constructor
-     * 
+     *
      * @param chord node in chord network
      */
     public ChordMaintainer(ChordNode chord) {
-		this.node = chord;
+        this.node = chord;
     }
 
     /**

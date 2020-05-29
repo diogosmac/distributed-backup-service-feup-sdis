@@ -71,7 +71,7 @@ public class ChunkStorage {
         else System.out.println("\n\tNo files found in memory!\n");
 
         if (this.availableMemory < 0) {
-            System.out.println("\tWARNING: Using " + (-0.001*this.availableMemory) + " KB over the memory limit!\n");
+            System.out.println("\tWARNING: Using " + (-0.001 * this.availableMemory) + " KB over the memory limit!\n");
         }
     }
 
@@ -84,7 +84,7 @@ public class ChunkStorage {
                 BufferedReader br = new BufferedReader(new FileReader(infoFile));
                 String line;
                 while ((line = br.readLine()) != null) {
-                    // <fildId> <chunkNumber> <InitiatorIp> <InitiatorPort>
+                    // <file-id> <chunk-number> <initiator-ip> <initiator-port>
                     String[] info = line.split(" ");
                     String key = info[0] + "_" + info[1];
 
@@ -113,29 +113,31 @@ public class ChunkStorage {
         }
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-                StringBuilder toWrite = new StringBuilder();
-                for (Map.Entry<String, List<Integer>> entry : fileChunks.entrySet()) {
-                    String fileID = entry.getKey();
-                    List<Integer> chunkNumbers = entry.getValue();
-                    for (Integer currentChunkNumber : chunkNumbers) {
-                        List<InetSocketAddress> initiators = this.chunkStorage.get(fileID + "_" + currentChunkNumber);
-                        for (InetSocketAddress currentInitiator : initiators) {
-                            StringBuilder sb = new StringBuilder();
-                            String address = currentInitiator.getHostString();
-                            int port = currentInitiator.getPort();
+            StringBuilder toWrite = new StringBuilder();
+            for (Map.Entry<String, List<Integer>> entry : fileChunks.entrySet()) {
+                String fileID = entry.getKey();
+                List<Integer> chunkNumbers = entry.getValue();
+                for (Integer currentChunkNumber : chunkNumbers) {
+                    List<InetSocketAddress> initiators = this.chunkStorage.get(fileID + "_" + currentChunkNumber);
+                    for (InetSocketAddress currentInitiator : initiators) {
+                        StringBuilder sb = new StringBuilder();
+                        String address = currentInitiator.getHostString();
+                        int port = currentInitiator.getPort();
 
-                            sb.append(fileID).append(" ");
-                            sb.append(currentChunkNumber).append(" ");
-                            sb.append(address).append(" ");
-                            sb.append(port).append("\n");
+                        sb.append(fileID).append(" ");
+                        sb.append(currentChunkNumber).append(" ");
+                        sb.append(address).append(" ");
+                        sb.append(port).append("\n");
 
-                            toWrite.append(sb.toString());
-                        }
+                        toWrite.append(sb.toString());
                     }
-                    bw.write(toWrite.toString());
                 }
+                bw.write(toWrite.toString());
+            }
             bw.close();
-        } catch (Exception e) { System.out.println("Exception while exporting chunk info to file: " + e.toString()); }
+        } catch (Exception e) {
+            System.out.println("Exception while exporting chunk info to file: " + e.toString());
+        }
     }
 
     public synchronized int addChunk(Chunk chunk, InetSocketAddress initiator) {
@@ -148,8 +150,7 @@ public class ChunkStorage {
         if (!this.fileChunks.containsKey(fileID)) {
             this.fileChunks.put(fileID, new ArrayList<>());
             this.fileChunks.get(fileID).add(chunkNumber);
-        }
-        else {
+        } else {
             List<Integer> presentChunks = this.fileChunks.get(fileID);
             if (!presentChunks.contains(chunkNumber))
                 presentChunks.add(chunkNumber);
@@ -231,17 +232,16 @@ public class ChunkStorage {
             if (cleanDataStructure) {
                 this.fileChunks.get(fileID).remove((Integer) chunkNumber);
             }
-        }
-        else {
+        } else {
             System.out.println("ERROR: Couldn't delete chunk #" + chunkNumber + " of file with ID " + fileID);
         }
 
     }
 
-    public synchronized boolean deleteFile(String fileID) {
+    public synchronized void deleteFile(String fileID) {
 
         if (!this.fileChunks.containsKey(fileID))
-            return true;
+            return;
 
         List<Integer> listChunks = this.fileChunks.get(fileID);
         System.out.println("Number chunks to delete:" + listChunks.size());
@@ -252,7 +252,7 @@ public class ChunkStorage {
         }
 
         this.fileChunks.remove(fileID);
-        return true;
+
     }
 
     private String buildRemovedMessage(String fileID, int chunkNumber) {
