@@ -6,6 +6,7 @@ import storage.FileRestorer;
 import storage.Occurrences;
 import utils.MyUtils;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -43,28 +44,28 @@ public class Peer implements PeerActionsInterface {
     }
 
     @Override
-    public void backup(String filePath, int replicationDegree) {
+    public void backup(String filePath, int replicationDegree) throws RemoteException {
         this.node.initiateBackup(filePath, replicationDegree);
     }
 
     @Override
-    public void restore(String filePath) {
+    public void restore(String filePath) throws RemoteException {
         this.node.initiateRestore(filePath);
     }
 
     @Override
-    public void delete(String filePath) {
+    public void delete(String filePath) throws RemoteException {
         this.node.initiateDelete(filePath);
     }
 
     @Override
-    public void reclaim(int amountOfSpace) {
+    public void reclaim(int amountOfSpace) throws RemoteException {
         int freed = this.node.initiateReclaim(amountOfSpace);
         System.out.println("Freed " + freed * 0.001 + " kB of space");
     }
 
     @Override
-    public String state() {
+    public String state() throws RemoteException {
         String header = "\nSTATE: Node " + this.node.getID() + "\n\n";
         String peerMemoryInfo = this.chunkStorage.getMemoryInfo();
         String backupFilesInfo = this.fileOccurrences.getOccurrencesInfo();
