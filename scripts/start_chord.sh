@@ -1,14 +1,14 @@
 #bin/bash
 
 argc=$#
-if ((argc < 1))
+if ((argc < 2))
 then
-  echo "Usage: $0 <port>"
+  echo "Usage: $0 <public-ip/localhost> <port>"
   exit 1
 fi
 
-
-port=$1
+address=$1
+port=$2
 
 cd build/
-java chord.ChordNode ${port}
+java chord.ChordNode ${address} ${port}

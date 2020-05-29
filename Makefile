@@ -15,19 +15,20 @@ rmi:
 	rmiregistry -J-Djava.class.path=$(OUT_DIR) &
 
 #execution
+ADDRESS = "localhost"
 PORT = 30001
 KNOWN_ADDR = "localhost"
 KNOWN_PORT = 30001
-AP = "ap64568"
+AP = "ap14661"
 FILE = "text.txt"
 RD = 1
 SIZE = 100
 
 start:
-	@sh scripts/start_chord.sh $(PORT)
+	@sh scripts/start_chord.sh $(ADDRESS) $(PORT)
 
 join:
-	@sh scripts/join_chord.sh $(PORT) $(KNOWN_ADDR) $(KNOWN_PORT)
+	@sh scripts/join_chord.sh $(ADDRESS) $(PORT) $(KNOWN_ADDR) $(KNOWN_PORT)
 
 backup:
 	@sh scripts/backup.sh $(AP) ../test/$(FILE) $(RD)

@@ -215,8 +215,6 @@ public class ChunkStorage {
 
     public synchronized void deleteChunk(String fileID, int chunkNumber, boolean cleanDataStructure) {
 
-        System.out.println("Trying to delete file with id=" + fileID + ", chunk #" + chunkNumber);
-
         String chunkKey = buildChunkKey(fileID, chunkNumber);
         String filePath = chunkKey + MyUtils.CHUNK_FILE_EXTENSION;
 
@@ -242,10 +240,8 @@ public class ChunkStorage {
 
     public synchronized boolean deleteFile(String fileID) {
 
-        if (!this.fileChunks.containsKey(fileID)) {
-            System.out.println("I DONT HAVE IT");
+        if (!this.fileChunks.containsKey(fileID))
             return true;
-        }
 
         List<Integer> listChunks = this.fileChunks.get(fileID);
         System.out.println("Number chunks to delete:" + listChunks.size());
