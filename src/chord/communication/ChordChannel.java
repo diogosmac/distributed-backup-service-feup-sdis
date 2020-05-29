@@ -51,8 +51,7 @@ public class ChordChannel implements Runnable {
     }
 
     /**
-     * Opens the SSLServerSocket through which the ChordChannel will
-     * function
+     * Opens the SSLServerSocket through which the ChordChannel will function
      * 
      * @param port Number of the port in which the socket will be opened
      */
@@ -80,9 +79,8 @@ public class ChordChannel implements Runnable {
     @Override
     public void run() {
 
-        boolean ended = false;
         SSLSocket socket = null;
-        while (!ended) {
+        while (true) {
             try {
                 socket = (SSLSocket) serverSocket.accept();
                 InputStream is = socket.getInputStream();
@@ -99,17 +97,14 @@ public class ChordChannel implements Runnable {
                 dis.close();
                 is.close();
             } catch (Exception e) {
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 e.printStackTrace();
                 System.err.println("Node disconnected while reading from socket");
-                ended = true;
             }
-        }
-
-        try {
-            if (socket != null)
-                socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
