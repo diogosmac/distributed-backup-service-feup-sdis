@@ -5,9 +5,7 @@ import storage.Chunk;
 import storage.SavedFile;
 import utils.MyUtils;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +37,7 @@ public class ChordNode {
     /**
      * The successorList's size, r < m
      */
-    private int r;
+    private final int r;
 
     /**
      * The node's address
@@ -81,7 +79,11 @@ public class ChordNode {
      */
     private Peer peer;
 
-    private List<String> protocolPropagationWall;
+    /**
+     * List of protocol call IDs, which stops the messages
+     * from propagating beyond what is necessary
+     */
+    private final List<String> protocolPropagationWall;
 
     public static void main(String[] args) {
 
@@ -92,12 +94,7 @@ public class ChordNode {
         if (args.length == 2) {
             String myAddr = args[0];
             port = Integer.parseInt(args[1]);
-            try {
-                node = new ChordNode(myAddr, port);
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-                return;
-            }
+            node = new ChordNode(myAddr, port);
         // Other node is joining
         } else if (args.length == 4) {
                 String myAddr = args[0];
@@ -119,7 +116,7 @@ public class ChordNode {
         timer.schedule(printer, 1000, 5000);
     }
     
-    public ChordNode(String address, int port) throws UnknownHostException {
+    public ChordNode(String address, int port) {
         this(new InetSocketAddress(address, port));
     }
 
@@ -301,7 +298,7 @@ public class ChordNode {
      * @return chord node's successor, which happens to be
      * the first element of 'successorList' and also the first
      * element of 'fingerTable'. In case of failure and node's successor is
-     * 'null', we get the next sucessor. In the rare case that there are none
+     * 'null', we get the next successor. In the rare case that there are none
      * we return the current node.
      */
     public NodePair<Integer, InetSocketAddress> getSuccessor() {
@@ -347,19 +344,6 @@ public class ChordNode {
     public void addSuccessor(NodePair<Integer, InetSocketAddress> node) {
         if (this.successorList.size() < r)
             this.successorList.add(node);
-    }
-
-    /**
-     * Given a node identifier, retrieve the closest preceding node, i.e. the
-     * node with the greatest identifier that is lower than 'id'. This is achieved
-     * by an enhancement of the original method, i.e. cross referencing the finger
-     * table with the successor list.
-     */
-    public void getSuccessorsPredecessor() {
-        NodePair<Integer, InetSocketAddress> successor = this.fingerTable.getFirstNode();
-        // send request to successor.getValue() (InetSocketAddress) for its predecessor
-        // build pair and return it
-        this.channel.sendGetPredecessorMessage(this.getAddress(), successor.getValue());
     }
 
     /**
@@ -425,7 +409,7 @@ public class ChordNode {
 
             Integer succKey = succ.getKey();
             
-            if (Utils.inBetween(succKey, key, id, this.m) && id != succKey)
+            if (Utils.inBetween(succKey, key, id, this.m) && !id.equals(succKey))
                 return succ.getValue();
         }
 
@@ -540,10 +524,6 @@ public class ChordNode {
         return this.peer.getChunkStorage().hasChunk(fileID, chunkNumber);
     }
 
-    public Chunk getStoredChunk(String fileID, int chunkNumber) {
-        return this.peer.getChunkStorage().getChunk(fileID, chunkNumber);
-    }
-
     public void initiateDelete(String filePath) {
         SavedFile sf = new SavedFile(filePath);
         String fileID = sf.getId();
@@ -579,8 +559,8 @@ public class ChordNode {
         return false;
     }
 
-    public void initiateReclaim(int space) {
-        this.peer.getChunkStorage().reclaimSpace(space);
+    public int initiateReclaim(int space) {
+        return this.peer.getChunkStorage().reclaimSpace(space);
     }
 
     public void sendMessage(InetSocketAddress destination, String message) {
@@ -612,7 +592,7 @@ public class ChordNode {
         }
 
         try {
-            // If the file isnt ready to be restored (still missing chunks), waits (max 8 seconds) for it to finish
+            // If the file isn't ready to be restored (still missing chunks), waits (max 8 seconds) for it to finish
             this.getPeer().getFileRestorer().getFileRestorationStatus(fileID).await(8, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             System.out.println("Restoration was interrupted by another Thread. Restoration failed");
@@ -654,7 +634,7 @@ public class ChordNode {
  */
 class ChordNodePrinter extends TimerTask {
 
-    private ChordNode node;
+    private final ChordNode node;
 
     public ChordNodePrinter(ChordNode node) {
         this.node = node;
@@ -673,4 +653,5 @@ class ChordNodePrinter extends TimerTask {
         System.out.println("\nPREDECESSOR");
         System.out.println(node.getPredecessor());
     }
+
 }

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
 public class SavedFile implements java.io.Serializable {
 
     private final String id;
@@ -32,14 +31,6 @@ public class SavedFile implements java.io.Serializable {
 
     public String getId() {
         return id;
-    }
-
-    public File getFile() {
-        return file;
-    }
-
-    public int getReplicationDegree() {
-        return replicationDegree;
     }
 
     public ArrayList<Chunk> getChunks() {

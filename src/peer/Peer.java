@@ -4,13 +4,9 @@ import chord.ChordNode;
 import storage.*;
 import utils.MyUtils;
 
-import java.io.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Peer implements PeerActionsInterface {
 
@@ -20,18 +16,7 @@ public class Peer implements PeerActionsInterface {
     private final ChunkStorage chunkStorage;
     private final Occurrences fileOccurrences;
 
-    // key    :     fileId:chunkNumber
-    // value  :     time of read
-//    private final ConcurrentHashMap<String, Long> receivedChunks;
-
-    // key    :     fileId:chunkNumber
-    // value  :     time of read
-//    private final ConcurrentHashMap<String, Long> putChunkMessagesReclaim;
-
     private final FileRestorer fileRestorer;
-
-    // elements are the IDs of the files to be deleted
-//    private final List<String> scheduledDeletes;
 
     public Peer(ChordNode node) {
 
@@ -41,14 +26,10 @@ public class Peer implements PeerActionsInterface {
 
         this.chunkStorage = new ChunkStorage(this);
         this.fileOccurrences = new Occurrences(this);
-//        this.receivedChunks = new ConcurrentHashMap<>();
-//        this.putChunkMessagesReclaim = new ConcurrentHashMap<>();
         this.fileRestorer = new FileRestorer(MyUtils.getRestorePath(this));
 
         this.initRMI();
 
-//        this.scheduledDeletes = new ArrayList<>();
-//        this.loadScheduledDeletes(this.scheduledDeletes);
     }
 
     public int getPeerId() { return this.peerId; }
@@ -72,7 +53,8 @@ public class Peer implements PeerActionsInterface {
 
     @Override
     public void reclaim(int amountOfSpace) {
-        this.node.initiateReclaim(amountOfSpace);
+        int freed = this.node.initiateReclaim(amountOfSpace);
+        System.out.println("Freed " + freed * 0.001 + " kB of space");
     }
 
     @Override
@@ -89,86 +71,6 @@ public class Peer implements PeerActionsInterface {
     public synchronized Occurrences getFileOccurrences() { return this.fileOccurrences; }
 
     public synchronized FileRestorer getFileRestorer() { return this.fileRestorer; }
-
-//    public void saveReceivedChunkTime(String fileId, int chunkNumber) {
-//        String key = String.join(":", fileId, Integer.toString(chunkNumber));
-//        this.receivedChunks.put(key, System.currentTimeMillis());
-//    }
-//
-//    public boolean notRecentlyReceived(String fileId, int chunkNumber) {
-//        String key = String.join(":", fileId, Integer.toString(chunkNumber));
-//        if (this.receivedChunks.containsKey(key)) {
-//            long value = this.receivedChunks.get(key);
-//            return (System.currentTimeMillis() - value) >= 400;
-//        }
-//
-//        return true;
-//    }
-//
-//    public void logPutChunkMessage(String fileId, int chunkNumber) {
-//        String key = String.join(":", fileId, Integer.toString(chunkNumber));
-//        this.putChunkMessagesReclaim.put(key, System.currentTimeMillis());
-//    }
-//
-//    public boolean noRecentPutChunkMessage(String fileId, int chunkNumber) {
-//        String key = String.join(":", fileId, Integer.toString(chunkNumber));
-//        if (this.putChunkMessagesReclaim.containsKey(key)) {
-//            long value = this.putChunkMessagesReclaim.get(key);
-//            return (System.currentTimeMillis() - value) >= 400;
-//        }
-//        return true;
-//    }
-//
-//    public List<String> getScheduledDeletes() { return this.scheduledDeletes; }
-//
-//    public void scheduleDelete(String fileId) {
-//        if (!this.scheduledDeletes.contains(fileId)) {
-//            this.scheduledDeletes.add(fileId);
-//            this.saveScheduledDeletes();
-//        }
-//    }
-//
-//    public void concludeDelete(String fileId) {
-//        if (this.scheduledDeletes.contains(fileId)) {
-//            this.scheduledDeletes.remove(fileId);
-//            this.saveScheduledDeletes();
-//        }
-//    }
-//
-//    private void saveScheduledDeletes() {
-//        String dirPath = MyUtils.getPeerPath(this);
-//        File file = new File(String.join("/", dirPath, MyUtils.DEFAULT_DELETE_BACKLOG_PATH));
-//        if (file.getParentFile().mkdirs())
-//            System.out.println("\tCreated " + dirPath + " directory.");
-//
-//        try {
-//            PrintWriter writer = new PrintWriter(file);
-//            StringBuilder output = new StringBuilder();
-//            for (String fileId : this.scheduledDeletes) {
-//                output.append(fileId).append("\n");
-//            }
-//            writer.print(output.toString());
-//            writer.close();
-//        } catch (Exception e) {
-//            System.out.println("Exception while writing scheduled deletes to file: " + e.toString()); }
-//    }
-//
-//    private void loadScheduledDeletes(List<String> scheduledDeletes) {
-//        String dirPath = MyUtils.getPeerPath(this);
-//        File file = new File(String.join("/", dirPath, MyUtils.DEFAULT_DELETE_BACKLOG_PATH));
-//        if (file.exists()) {
-//            try {
-//                BufferedReader br = new BufferedReader(new FileReader(file));
-//                String fileId;
-//                while ((fileId = br.readLine()) != null) {
-//                    scheduledDeletes.add(fileId);
-//                }
-//                br.close();
-//            } catch (Exception e) {
-//                System.out.println("Exception while reading from file: " + e.toString());
-//            }
-//        }
-//    }
 
     public void initRMI() {
         try {

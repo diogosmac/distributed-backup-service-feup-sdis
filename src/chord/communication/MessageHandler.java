@@ -45,13 +45,13 @@ public class MessageHandler extends Thread {
     /**
      * Default Constructor
      * 
-     * @param sk Socket
+     * @param socket Socket
      * @param message Message
      * @param channel Channel
      * @param node Node
      */
-    MessageHandler(SSLSocket sk, String message, ChordChannel channel, ChordNode node) {
-        this.socket = sk;
+    MessageHandler(SSLSocket socket, String message, ChordChannel channel, ChordNode node) {
+        this.socket = socket;
         this.message = message;
         this.channel = channel;
         this.node = node;
@@ -59,8 +59,8 @@ public class MessageHandler extends Thread {
 
     /**
      * Getter method for address
-     * @param socket
-     * @return
+     * @param socket the socket for which to obtain the address
+     * @return the InetSocketAddress of the socket
      */
     private InetSocketAddress getAddress(SSLSocket socket) {
         return (socket == null ? this.node.getAddress() : (InetSocketAddress) socket.getRemoteSocketAddress());
@@ -149,8 +149,7 @@ public class MessageHandler extends Thread {
                     NodePair<Integer, InetSocketAddress> successorsPredecessor = new NodePair<>(predecessorId,
                             predecessorInfo);
 
-                    // check if successor's predecessor ID is between 'chord' and 'chords's
-                    // successor
+                    // check if successor's predecessor ID is between 'chord' and 'chords's successor
                     // if so, then successorsPredecessor is our new successor
                     if (Utils.inBetween(successorsPredecessor.getKey(), this.node.getID(), successor.getKey(),
                             this.node.getM()))
@@ -299,7 +298,6 @@ public class MessageHandler extends Thread {
                 String fileID = args[1];
                 int chunkNumber = Integer.parseInt(args[2]);
 
-                // TODO: Mecanismo p/ impedir backup de ficheiro apagado com reclaim
                 this.node.getPeer().getFileOccurrences().incrementReplicationDegree(fileID, chunkNumber, -1);
 
                 if (!this.node.getPeer().getFileOccurrences().isReplicationDegreeMet(fileID, chunkNumber)) {
@@ -354,7 +352,7 @@ public class MessageHandler extends Thread {
 
                 if (firstSuccessor.equals(this.node.getAddress())) {
                     if (this.node.hitWall(hash)) {
-                        // Message has cycled, and came back => It wasnt possible to keep RD
+                        // Message has cycled, and came back => It wasn't possible to keep RD
                         System.out.println("Unable to keep desired rd of chunk #" + chunkNumber + " of file id=" + fileID + ":");
                         System.out.println("No nodes available to store chunk");
                         break;
@@ -384,16 +382,15 @@ public class MessageHandler extends Thread {
                     int addChunkResult = this.node.getPeer().getChunkStorage().addChunk(ck, initiatorAddress);
                     if (addChunkResult == 1 || addChunkResult == 2) {
                         this.channel.sendMessage(this.node.getSuccessorAddress(), message);
-                        break;
                     } else {
                         this.channel.sendChunkSavedMessage(fileID, chunkNumber, initiatorAddress);
-                        break;
                     }
                 }
                 else {
                     this.channel.sendMessage(this.node.getSuccessorAddress(), message);
-                    break;
                 }
+                break;
+
             }
 
             case "GETCHUNK": {
@@ -418,7 +415,7 @@ public class MessageHandler extends Thread {
 
                         if (this.node.hitWall(hash)) {
                             // Message has cycled, and came back => Chunk doesn't exist => End of chain
-                            System.out.println("Couldnt get chunk #" + chunkNumber + " of file with id=" + fileID);
+                            System.out.println("Couldn't get chunk #" + chunkNumber + " of file with id=" + fileID);
                             break;
                         } else {
                             this.node.placeWall(hash);

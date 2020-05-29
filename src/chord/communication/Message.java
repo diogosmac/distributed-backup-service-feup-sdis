@@ -33,12 +33,4 @@ public class Message {
         return arguments;
     }
 
-    /**
-     * Gets the entire Message in one String
-     * @return (self explanatory)
-     */
-    public String getMessage() {
-        return String.join(" ", arguments);
-    }
-
 }

@@ -4,7 +4,6 @@ import peer.Peer;
 import utils.MyUtils;
 
 import java.io.*;
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,19 +13,14 @@ public class Occurrences {
 
     private static class OccurrenceInfo {
 
-        private String filePath;
-        private int desiredReplicationDegree;
+        private final String filePath;
+        private final int desiredReplicationDegree;
         private final List<Integer> perceivedReplicationDegrees;
 
         private OccurrenceInfo(String filePath, int desired) {
             this.filePath = filePath;
             this.desiredReplicationDegree = desired;
             this.perceivedReplicationDegrees = new ArrayList<>();
-        }
-
-        private void reset(int desired) {
-            this.desiredReplicationDegree = desired;
-            this.perceivedReplicationDegrees.clear();
         }
 
         private void updateReplicationDegree(int chunkNumber, int missing) {
@@ -171,10 +165,6 @@ public class Occurrences {
     public synchronized void deleteFile(String fileID) {
         this.occurrenceTable.remove(fileID);
         exportToFile();
-    }
-
-    public void resetFile(String fileID, int desiredReplicationDegree) {
-        this.occurrenceTable.get(fileID).reset(desiredReplicationDegree);
     }
 
     public void incrementReplicationDegree(String fileID, int chunkNumber, int delta) {

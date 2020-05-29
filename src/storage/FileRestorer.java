@@ -33,10 +33,6 @@ public class FileRestorer {
         this.fileData.get(fileId).add(null);
     }
 
-    public byte[] getChunkData(String fileId, int chunkNumber) {
-        return this.fileData.get(fileId).get(chunkNumber);
-    }
-
     public void saveRestoredChunk(String fileId, int chunkNumber, byte[] data) {
         this.fileData.get(fileId).set(chunkNumber, data);
         this.fileRestorationStatus.get(fileId).countDown();

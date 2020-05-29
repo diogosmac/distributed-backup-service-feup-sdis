@@ -4,7 +4,6 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-
 /**
  * Finger Table
  * 
@@ -22,7 +21,7 @@ public class FingerTable {
      * List of NodePairs containing nodes' hashed ID as keys, and
      * Socket Address (IP and Port) as values
      */
-    private CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> table;
+    private final CopyOnWriteArrayList<NodePair<Integer, InetSocketAddress>> table;
 
     /**
      * Constructor
@@ -73,10 +72,10 @@ public class FingerTable {
     }
 
     public void removeNode(InetSocketAddress address, NodePair<Integer, InetSocketAddress> pair) {
-        for (int i = 0; i < this.table.size(); i++) {
-            if (this.table.get(i).getKey() != null && table.get(i).getValue().equals(address)) {
-                this.table.get(i).setKey(null);
-                this.table.get(i).setValue(null);
+        for (NodePair<Integer, InetSocketAddress> entry : this.table) {
+            if (entry.getKey() != null && entry.getValue().equals(address)) {
+                entry.setKey(null);
+                entry.setValue(null);
             }
         }
 
@@ -96,7 +95,7 @@ public class FingerTable {
     }
 
     /**
-     * Overriden toString method
+     * Overridden toString method
      */
     @Override
     public String toString() {

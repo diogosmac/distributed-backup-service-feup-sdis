@@ -13,7 +13,6 @@ import chord.Utils;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -109,9 +108,8 @@ public class ChordChannel implements Runnable {
     }
 
     /**
-     * 
-     * @param socket
-     * @param message
+     * @param socket The socket which sent the message
+     * @param message The message that was received
      */
     public void handleMessage(SSLSocket socket, String message) {
         new MessageHandler(socket, message, this, this.parent).start();

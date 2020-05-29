@@ -10,27 +10,17 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Random;
 
 public class MyUtils {
 
-    public final static int BASE_PORT = 1904;
-
     public final static int CHUNK_SIZE = 15 * 1000;
     public final static long PEER_MAX_MEMORY_USE = CHUNK_SIZE * 50000;
-    // allows for 1000 bytes of header (exaggeration for safety)
-    public final static int MESSAGE_SIZE = CHUNK_SIZE + 1000;
-
-    public final static char CR = '\r';
-    public final static char LF = '\n';
-    public final static String CRLF = new StringBuilder(CR).append(LF).toString();
 
     public final static int MAX_TRIES = 5;
 
     public final static String DEFAULT_BACKUP_PATH = "/backup/";
     public final static String DEFAULT_RESTORE_PATH = "/restored/";
     public final static String DEFAULT_STATUS_PATH = "/status.sdis";
-    public final static String DEFAULT_DELETE_BACKLOG_PATH = "/deleteRequests.sdis";
     public final static String DEFAULT_CHUNK_INFO_PATH = "/chunkInfo.sdis";
 
     public final static String CHUNK_FILE_EXTENSION = ".chk";
@@ -85,14 +75,6 @@ public class MyUtils {
         System.arraycopy(firstArr, 0, result, 0, firstArr.length);
         System.arraycopy(secondArr, 0, result, firstArr.length, secondArr.length);
         return result;
-    }
-
-
-    public static int randomNum(int lowest, int highest) {
-
-        Random r = new Random();
-        return r.nextInt(highest + 1 - lowest) + lowest;
-
     }
 
     public static String fileNameFromPath(String filePath) {
