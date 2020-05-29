@@ -570,7 +570,7 @@ public class ChordNode {
         int numberChunks = SavedFile.getNumChunks(filePath);
 
         String fileName = MyUtils.fileNameFromPath(filePath);
-        String fileID = MyUtils.encryptFileID(fileName);
+        String fileID = MyUtils.encryptFileID(filePath);
         this.getPeer().getFileRestorer().addFile(fileID, numberChunks);
 
         for (int currentChunk = 0; currentChunk < numberChunks; currentChunk++) {
